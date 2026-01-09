@@ -37,7 +37,7 @@ try:
 except ImportError:
     IN_MAX = False
 
-VERSION = "2.0"
+VERSION = "2.1"
 
 # Windows API for embedding
 user32 = ctypes.WinDLL("user32", use_last_error=True)
@@ -114,8 +114,6 @@ QPushButton, QToolButton {
     padding: 3px 8px; min-height: 20px; color: #ddd;
 }
 QPushButton:hover, QToolButton:hover { background: #555; border-color: #7af; color: #fff; }
-QPushButton:pressed { background: #333; color: #fff; }
-QPushButton:checked { background: #357; border-color: #7af; color: #fff; }
 QLineEdit {
     background: #333; border: 1px solid #555; border-radius: 2px;
     padding: 3px 5px; selection-background-color: #357; color: #ddd;
@@ -539,16 +537,46 @@ class TimeMachine(QDialog):
         
         self.btn_add_fav = QPushButton("★")
         self.btn_add_fav.setFixedWidth(28)
+        self.btn_add_fav.setFixedHeight(24)
+        self.btn_add_fav.setStyleSheet("""
+            QPushButton {
+                background: #4a4a4a; border: 1px solid #555; border-radius: 2px;
+                font-size: 16px; color: #ddd; padding: 0px;
+                min-width: 28px; max-width: 28px; min-height: 24px; max-height: 24px;
+            }
+            QPushButton:hover { background: #555; border-color: #7af; color: #fff; }
+            QPushButton:pressed { background: #333; color: #fff; }
+        """)
         self.btn_add_fav.setToolTip("收藏当前目录")
         path_row.addWidget(self.btn_add_fav)
         
         self.btn_explorer = QPushButton("📂")
         self.btn_explorer.setFixedWidth(28)
+        self.btn_explorer.setFixedHeight(24)
+        self.btn_explorer.setStyleSheet("""
+            QPushButton {
+                background: #4a4a4a; border: 1px solid #555; border-radius: 2px;
+                font-size: 16px; color: #ddd; padding: 0px;
+                min-width: 28px; max-width: 28px; min-height: 24px; max-height: 24px;
+            }
+            QPushButton:hover { background: #555; border-color: #7af; color: #fff; }
+            QPushButton:pressed { background: #333; color: #fff; }
+        """)
         self.btn_explorer.setToolTip("在资源管理器中打开")
         path_row.addWidget(self.btn_explorer)
         
         self.btn_settings = QPushButton("⚙")
         self.btn_settings.setFixedWidth(28)
+        self.btn_settings.setFixedHeight(24)
+        self.btn_settings.setStyleSheet("""
+            QPushButton {
+                background: #4a4a4a; border: 1px solid #555; border-radius: 2px;
+                font-size: 16px; color: #ddd; padding: 0px;
+                min-width: 28px; max-width: 28px; min-height: 24px; max-height: 24px;
+            }
+            QPushButton:hover { background: #555; border-color: #7af; color: #fff; }
+            QPushButton:pressed { background: #333; color: #fff; }
+        """)
         self.btn_settings.setToolTip("设置")
         path_row.addWidget(self.btn_settings)
         
@@ -590,6 +618,15 @@ class TimeMachine(QDialog):
         filter_input.addWidget(self.edt_filter)
         self.btn_filter_add = QPushButton("＋")
         self.btn_filter_add.setFixedSize(22, 22)
+        self.btn_filter_add.setStyleSheet("""
+            QPushButton {
+                background: #4a4a4a; border: 1px solid #555; border-radius: 2px;
+                font-size: 14px; color: #ddd; padding: 0px;
+                min-width: 22px; max-width: 22px; min-height: 22px; max-height: 22px;
+            }
+            QPushButton:hover { background: #555; border-color: #7af; color: #fff; }
+            QPushButton:pressed { background: #333; color: #fff; }
+        """)
         self.btn_filter_add.setToolTip("添加过滤词")
         filter_input.addWidget(self.btn_filter_add)
         lay_filter.addLayout(filter_input)
