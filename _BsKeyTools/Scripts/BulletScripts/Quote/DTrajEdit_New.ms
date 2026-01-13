@@ -390,6 +390,10 @@ struct yunTrajEdit_Globals_Struct
 ------生成轨迹函数  物体 显示 开点 开始色 结束色 开始帧数 结束帧数 点形状 播放是否显示 关键帧开关 是否颜色渐变
 fn yunMotionPathCallBackFn  obj vis isdot col_Start  col_End tStart tEnd dotShape isPlay keyVis isGradual =
 (
+	-- Wrap entire function in undo off to prevent at time evaluations from corrupting undo stack
+	-- This fixes the bug where Ctrl+Z doesn't work when trajectory plugin is active
+	undo off
+	(
 	-- Save all selected Biped poses before at time access (to restore later and prevent pose reset)
 	local savedBipeds = #()
 	local savedBipedPoses = #()
@@ -633,6 +637,7 @@ fn yunMotionPathCallBackFn  obj vis isdot col_Start  col_End tStart tEnd dotShap
 		gw.enlargeUpdateRect #whole
 		gw.updateScreen()
 	)
+	) -- end undo off
 )
 function yunMotionPathCallBackFn_exc =
 (
