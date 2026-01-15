@@ -85,7 +85,7 @@ def url_quote(s):
         # Python 3: 直接处理
         return _quote(str(s), safe='')
 
-VERSION = "1.1"
+VERSION = "1.2"
 
 # GitHub 仓库配置
 GITHUB_OWNER = "AnimatorBullet"
