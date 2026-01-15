@@ -651,8 +651,8 @@
     "08_镜头相关": [
       {
         "name": "构图辅助工具",
-        "version": "1.0",
-        "description": "构图辅助工具，帮助你更好地构图",
+        "version": "1.1.1",
+        "description": "构图辅助工具，帮助你更好地构图\n\n\n\n更新内容：修复窗口位置保存问题",
         "author": "未知",
         "optimizer": "Bullet.S",
         "modified_date": "2025-12-26",
