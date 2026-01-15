@@ -425,7 +425,7 @@
         "description": "飘带和布料的简易动力学解算工具",
         "author": "未知",
         "optimizer": "Bullet.S",
-        "modified_date": "",
+        "modified_date": "2025-05-28",
         "keywords": [
           "绑定",
           "飘带",
@@ -433,7 +433,7 @@
           "解算"
         ],
         "preview": "",
-        "script": "BulletScripts/Quote/飘带解算.ms",
+        "script": "BulletScripts/Quote/飘带解算.mse",
         "url": "",
         "tutorial": "",
         "category": "05_骨骼绑定"
@@ -849,7 +849,7 @@
         "description": "参考图管理工具，方便查看参考资料",
         "author": "伯仲",
         "optimizer": "Bullet.S",
-        "modified_date": "",
+        "modified_date": "2025-05-14",
         "keywords": [
           "渲染",
           "参考",
@@ -857,7 +857,7 @@
           "图片"
         ],
         "preview": "",
-        "script": "BulletScripts/Quote/参考大师.ms",
+        "script": "BulletScripts/Quote/参考大师.mse",
         "url": "",
         "tutorial": "",
         "category": "10_特效渲染"

@@ -1328,7 +1328,7 @@ rollout SubRollout3 "相机" width:140 height:165
 fn show = (
 try(destroydialog ::Test_OuterRollout) catch()
 registerCallbacks()
-createDialog Test_OuterRollout style:#(#style_titlebar, #style_border, #style_sysmenu)
+createDialog Test_OuterRollout style:#(#style_titlebar, #style_border, #style_sysmenu, #style_toolwindow)
 addSubRollout Test_OuterRollout.test_frame SubRollout1
 addSubRollout Test_OuterRollout.test_frame SubRollout2
 addSubRollout Test_OuterRollout.test_frame SubRollout3
