@@ -394,6 +394,10 @@ fn yunMotionPathCallBackFn  obj vis isdot col_Start  col_End tStart tEnd dotShap
 	-- This fixes the bug where Ctrl+Z doesn't work when trajectory plugin is active
 	undo off
 	(
+	-- Wrap in animate off to prevent auto-keying when accessing transforms via at time
+	-- This fixes the bug where Biped COM gets auto-keyed when a child bone has trajectory enabled
+	animate off
+	(
 	-- Save all selected Biped poses before at time access (to restore later and prevent pose reset)
 	local savedBipeds = #()
 	local savedBipedPoses = #()
@@ -637,6 +641,7 @@ fn yunMotionPathCallBackFn  obj vis isdot col_Start  col_End tStart tEnd dotShap
 		gw.enlargeUpdateRect #whole
 		gw.updateScreen()
 	)
+	) -- end animate off
 	) -- end undo off
 )
 function yunMotionPathCallBackFn_exc =
