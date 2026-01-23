@@ -1,0 +1,17 @@
+{
+    "name": "骨骼工具",
+    "version": "0.4",
+    "description": "无敌全能整合版（一方狂三）",
+    "author": "一方狂三",
+    "optimizer": "",
+    "modified_date": "",
+    "keywords": [
+        "绑定",
+        "骨骼",
+        "镜像"
+    ],
+    "preview": "",
+    "script": "BulletScripts/Quote/Bone_Tools.ms",
+    "url": "",
+    "tutorial": ""
+}

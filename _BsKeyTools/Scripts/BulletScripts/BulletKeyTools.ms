@@ -3,7 +3,7 @@
 * @Author: Bullet.S
 * @Date: 2019-09-28 11:48:53
  * @LastEditors: Bullet.S
- * @LastEditTime: 2026-01-15 20:03:59
+ * @LastEditTime: 2026-01-23 11:45:20
 * @Email: animator.bullet@foxmail.com
 */
 try(FileIn ((getDir #StartupScripts) + "\\BsKeyToolsMacro.ms"))
@@ -26,7 +26,7 @@ try (callbacks.removeScripts #filePostSave id:#BsRefreshRecentFilesSave) catch (
 try (callbacks.removeScripts #systemPostNew id:#BsRefreshRecentFilesNew) catch ()
 try (callbacks.removeScripts #systemPostReset id:#BsRefreshRecentFilesReset) catch ()
 
-global curVerBsKeyTools  = "1.3.2"
+global curVerBsKeyTools  = "1.3.3"
 global verUrlBsKeyTools  = "https://gitee.com/acebullet/BsKeyTools/raw/main/_BsKeyTools/version.dat"
 -- global oldUrlBskeyTools  = "https://gitee.com/acebullet/BsKeyTools/raw/main/_BsKeyTools/_BsKeyTools%EF%BC%88%E8%A3%85%E5%AE%8C%E9%87%8D%E5%90%AFMAX,%E8%AF%AF%E6%9D%80%E8%AF%B7%E4%BF%A1%E4%BB%BB%EF%BC%89.exe"
 -- global oldFileBsKeyTools = (getdir #temp) + "\\_BsKeyTools_Classic.exe"
@@ -2288,10 +2288,10 @@ rollout rolBsKeyTools "" width:355 height:250
 	tooltip:"欧拉和TCB互转" pos:btnPos
 	button btnEulerFilter "欧拉过滤" width:btnWidth height:btnHeight visible:false \
 	tooltip:"Bone骨骼过滤欧拉旋转" pos:btnPos
-	button btnDelOutKeys "清所有帧" width:btnWidth height:btnHeight visible:false \
-	toolTip:"清除所有关键帧" pos:btnPos
+	button btnBoneTools "骨骼工具" width:btnWidth height:btnHeight visible:false \
+	toolTip:"无敌全能整合版（一方狂三）" pos:btnPos
 	button btnCleanOutKeys "清无限帧" width:btnWidth height:btnHeight visible:false \
-	toolTip:"清范围外帧(无限帧)" pos:btnPos
+	toolTip:"左：清范围外帧(无限帧)\r\n\r\n右：清除所有关键帧" pos:btnPos
 	button btnEndBone "增删末端" width:btnWidth height:btnHeight visible:false \
 	toolTip:"添加选择的Bone末端，可回退\r\n右键清除（注意 \"tempBoneEndAll\" 层）" pos:btnPos
 	button btnRenameTools "改名工具" width:btnWidth height:btnHeight visible:false \
@@ -2581,7 +2581,7 @@ rollout rolBsKeyTools "" width:355 height:250
 		arrSourToolTabs[2] = #(rolBsKeyTools.btnTrackBarTools,rolBsKeyTools.btnDemoTool,
 						rolBsKeyTools.btnSelBiped,rolBsKeyTools.btnSelBone,
 						rolBsKeyTools.btnFnTCB,rolBsKeyTools.btnEulerFilter,
-						rolBsKeyTools.btnDelOutKeys,rolBsKeyTools.btnCleanOutKeys,
+						rolBsKeyTools.btnBoneTools,rolBsKeyTools.btnCleanOutKeys,
 						rolBsKeyTools.btnEndBone,rolBsKeyTools.btnRenameTools,
 						rolBsKeyTools.btnRootMotionTools,rolBsKeyTools.btnSelByColor)
 		arrSourToolTabs[3] = #(rolBsKeyTools.btnMeshToBone,rolBsKeyTools.btnMassFX,
@@ -4239,7 +4239,7 @@ rollout rolBsKeyTools "" width:355 height:250
 		)
 	)
 
-	on btnDelOutKeys pressed do with undo on --清理选择帧
+	on btnCleanOutKeys rightclick do with undo on --清理选择帧
 	(
 		if (queryBox "是否清除所有关键帧？\r\n\r\n有选择物体则删选择物体的帧，\r\n\r\n否则删所有物体的关键帧。\r\n\r\n(请注意保存 Skin Pose 和备份文件！)                                " \
 		title:"是否清除所有关键帧" beep:false) then
@@ -4952,6 +4952,12 @@ rollout rolBsKeyTools "" width:355 height:250
 	on btnResetIncrement pressed do (tmGizmos.rotationIncrement = spnRotationIncrement.value = 0.5)
 
 	on btnResetIncrementMini pressed do (tmGizmos.rotationIncrement = spnRotationIncrement.value = 0.5)
+
+	on btnBoneTools pressed do 
+	(
+		try(FileIn ((getDir #scripts) + "\\BulletScripts\\Quote\\Bone_Tools.ms"))
+		catch(try(massagebox (getCurrentException()));catch();messagebox "打开 Bone_Tools.ms 失败，可能脚本错误或安装不完全，\r\n\r\n建议查看设置中的帮助或重新安装，还有问题烦请联系我...                            " beep:false title:"BsKeyTools")
+	)
 )
 if (iniPos != 0) then (Createdialog rolBsKeyTools fgcolor:myFgColor pos:iniPos style:#())
 else (Createdialog rolBsKeyTools fgcolor:myFgColor style:#())
