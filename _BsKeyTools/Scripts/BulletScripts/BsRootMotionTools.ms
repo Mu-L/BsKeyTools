@@ -5,7 +5,7 @@
 plugin modifier BsRootMotionModifier
 	name:"Bs_RootMotion_Ctrl"
 	classID:#(0x7b72aada, 0x1462108b)
-	version:1
+	version:2
 	category:"BsKeyTools"
 	extends:EmptyModifier
 (
@@ -29,10 +29,16 @@ plugin modifier BsRootMotionModifier
 		ManualYaw type:#float ui:spnManualYaw default:0
 		TrackYaw type:#float ui:sliderTrackYaw default:0
 		TrackYaw_Offset type:#float ui:spnTrackYaw_Offset default:90
+		
+		-- 根骨骼模式参数
+		RootBoneMode type:#integer ui:ddlRootBoneMode default:2
+		BaseRotationX type:#float default:0
+		BaseRotationY type:#float default:0
+		BaseRotationZ type:#float default:0
 	)
 
 	-- UI定义
-	rollout BsRMRollout "Bs_RootMotion_Ctrl" width:160 height:680 (
+	rollout BsRMRollout "Bs_RootMotion_Ctrl" width:160 height:870 (
 		local animStateBackup
 
 		label labelPelvisObj "质心: " align:#left pos:[5, 12]
@@ -61,26 +67,30 @@ plugin modifier BsRootMotionModifier
 		spinner spnTrackZ_Offset "TrackZ 偏移:  " type:#float range:[-99999.0, 99999.0, 0.0] align:#left width:100 pos:[10, 442]
 		button btnGetPelvisPosZ "获取质心Z位置" align:#center width:140 pos:[10, 467] tooltip:"自动获取质心距离地面的高度值并应用到TrackZ偏移中。"
 		
-		groupbox gpbRot "旋转控制" pos:[5, 512] width:150 height:100
+		groupbox gpbRot "旋转控制" pos:[5, 512] width:150 height:165
 
-		spinner spnManualYaw "手动 yaw:  " type:#float range:[-99999.0, 99999.0, 0.0] align:#left width:100 pos:[10, 532]
-		label labelTrackYaw "Track yaw:  " align:#left width:60 pos:[10, 557]
-		slider sliderTrackYaw "" type:#float range:[0.0, 1.0, 0.0] width:90 align:#left pos:[70, 547]
-		spinner spnTrackYaw_Offset "Track yaw 偏移:   " type:#float range:[-99999.0, 99999.0, 90.0] align:#left width:118 pos:[10, 582] tooltip:"默认值 = 90"
+		label labelRootBoneMode "根骨骼模式:" align:#left pos:[10, 532]
+		dropdownlist ddlRootBoneMode "" items:#("Unity", "Unreal") width:135 pos:[10, 550]
+		label lblRootAxisInfo "轴向: (90°, 0°, 0°) - Z轴朝上" align:#left pos:[10, 575] height:16
+		
+		spinner spnManualYaw "手动 yaw:  " type:#float range:[-99999.0, 99999.0, 0.0] align:#left width:100 pos:[10, 597]
+		label labelTrackYaw "Track yaw:  " align:#left width:60 pos:[10, 622]
+		slider sliderTrackYaw "" type:#float range:[0.0, 1.0, 0.0] width:90 align:#left pos:[70, 612]
+		spinner spnTrackYaw_Offset "Track yaw 偏移:   " type:#float range:[-99999.0, 99999.0, 90.0] align:#left width:118 pos:[10, 647] tooltip:"默认值 = 90"
 		
 		-- 添加快捷功能区域
-		groupbox gpbQuickTools "快捷工具" pos:[5, 622] width:150 height:80
+		groupbox gpbQuickTools "快捷工具" pos:[5, 687] width:150 height:80
 		
-		button btnStraightenCurves "打直关键帧曲柄" width:95 height:25 pos:[10, 642] tooltip:"将临时根节点的位移和旋转曲线打直"
-		button btnRestoreCurves "还原" width:40 height:25 pos:[110, 642] tooltip:"还原临时根节点的位移和旋转曲线"
-		button btnSwitchTrajectory "Root轨迹" width:70 height:20 pos:[10, 672] tooltip:"显示隐藏选中物体的运动轨迹"
-		button btnCurvePanel "曲线面板" width:65 height:20 pos:[85, 672] tooltip:"打开曲线面板,修改和删帧"
+		button btnStraightenCurves "打直关键帧曲柄" width:95 height:25 pos:[10, 707] tooltip:"将临时根节点的位移和旋转曲线打直"
+		button btnRestoreCurves "还原" width:40 height:25 pos:[110, 707] tooltip:"还原临时根节点的位移和旋转曲线"
+		button btnSwitchTrajectory "Root轨迹" width:70 height:20 pos:[10, 737] tooltip:"显示隐藏选中物体的运动轨迹"
+		button btnCurvePanel "曲线面板" width:65 height:20 pos:[85, 737] tooltip:"打开曲线面板,修改和删帧"
 
 		-- 添加烘焙功能区域
-		groupbox gpbBakeTools "烘焙工具" pos:[5, 710] width:150 height:85
+		groupbox gpbBakeTools "烘焙工具" pos:[5, 775] width:150 height:85
 		
-		button btnBakeToTempKey "记录到控制器(关键帧)" width:140 height:25 pos:[10, 730] tooltip:"为修改器参数设置关键帧(仅质心关键帧)"
-		button btnBakeToTempFull "记录到控制器  (满帧)" width:140 height:25 pos:[10, 760] tooltip:"为修改器参数设置关键帧(所有帧)"
+		button btnBakeToTempKey "记录到控制器(关键帧)" width:140 height:25 pos:[10, 795] tooltip:"为修改器参数设置关键帧(仅质心关键帧)"
+		button btnBakeToTempFull "记录到控制器  (满帧)" width:140 height:25 pos:[10, 825] tooltip:"为修改器参数设置关键帧(所有帧)"
 
 		fn Initialize = (
 			local pelvisObj = maxOps.getNodeByHandle PelvisObjHandle
@@ -128,6 +138,19 @@ plugin modifier BsRootMotionModifier
 			if (ManualYaw.controller == undefined) do (ManualYaw.controller = bezier_float ())
 			if (TrackYaw.controller == undefined) do (TrackYaw.controller = bezier_float ())
 			if (TrackYaw_Offset.controller == undefined) do (TrackYaw_Offset.controller = bezier_float ())
+			if (BaseRotationX.controller == undefined) do (BaseRotationX.controller = bezier_float ())
+			if (BaseRotationY.controller == undefined) do (BaseRotationY.controller = bezier_float ())
+			if (BaseRotationZ.controller == undefined) do (BaseRotationZ.controller = bezier_float ())
+			
+			-- 根据当前模式更新轴向说明
+			if RootBoneMode == 1 then (
+				lblRootAxisInfo.text = "轴向: (90°, 0°, 0°) - Z轴朝上"
+			) else if RootBoneMode == 2 then (
+				lblRootAxisInfo.text = "轴向: (0°, 0°, 0°) - X轴向前"
+			) else (
+				-- 兼容旧场景文件，默认显示Unreal
+				lblRootAxisInfo.text = "轴向: (0°, 0°, 0°) - X轴向前"
+			)
 		)
 
 		on pickAnimPelvisObj picked obj do (
@@ -218,18 +241,22 @@ plugin modifier BsRootMotionModifier
 			-- 设置旋转控制器
 			rootObj.rotation.controller = Euler_XYZ ()
 			rootObj.rotation.controller.X_Rotation.controller = Float_Expression ()
-			rootObj.rotation.controller.X_Rotation.controller.SetExpression "0"
+			rootObj.rotation.controller.X_Rotation.controller.AddScalarTarget "BaseRotationX" BaseRotationX.controller
+			rootObj.rotation.controller.X_Rotation.controller.SetExpression "degToRad(BaseRotationX)"
 			rootObj.rotation.controller.Y_Rotation.controller = Float_Expression ()
-			rootObj.rotation.controller.Y_Rotation.controller.SetExpression "0"
+			rootObj.rotation.controller.Y_Rotation.controller.AddScalarTarget "BaseRotationY" BaseRotationY.controller
+			rootObj.rotation.controller.Y_Rotation.controller.SetExpression "degToRad(BaseRotationY)"
 			rootObj.rotation.controller.Z_Rotation.controller = float_script ()
+			rootObj.rotation.controller.Z_Rotation.controller.AddTarget "BaseRotationZ" BaseRotationZ.controller
 			rootObj.rotation.controller.Z_Rotation.controller.AddTarget "ManualYaw" ManualYaw.controller
 			rootObj.rotation.controller.Z_Rotation.controller.AddTarget "TrackYaw" TrackYaw.controller
 			rootObj.rotation.controller.Z_Rotation.controller.AddTarget "TrackYaw_Offset" TrackYaw_Offset.controller
 			rootObj.rotation.controller.Z_Rotation.controller.AddNode "PelvisObj" pelvisObj
-			rootObj.rotation.controller.Z_Rotation.controller.SetExpression ("local pelvisYaw = degToRad (PelvisObj.transform.rotation as EulerAngles).z\n" + 
+			rootObj.rotation.controller.Z_Rotation.controller.SetExpression ("local baseZ = degToRad(BaseRotationZ)\n" + 
+				"local pelvisYaw = degToRad (PelvisObj.transform.rotation as EulerAngles).z\n" + 
 				"local track = (pelvisYaw + degToRad (TrackYaw_Offset)) * TrackYaw\n" + 
 				"local manual = degToRad(ManualYaw) * (1-TrackYaw)\n" + 
-				"return (track + manual)")
+				"return (baseZ + track + manual)")
 			
 			-- 更新按钮状态
 			btnAddLink.enabled = false
@@ -267,6 +294,24 @@ plugin modifier BsRootMotionModifier
 
 		on BsRMRollout open do (
 			Initialize()
+		)
+		
+		-- 根骨骼模式下拉框选择事件
+		on ddlRootBoneMode selected sel do (
+			RootBoneMode = sel
+			if sel == 1 then (
+				-- Unity模式
+				BaseRotationX = 90
+				BaseRotationY = 0
+				BaseRotationZ = 0
+				lblRootAxisInfo.text = "轴向: (90°, 0°, 0°) - Z轴朝上"
+			) else (
+				-- Unreal模式
+				BaseRotationX = 0
+				BaseRotationY = 0
+				BaseRotationZ = 0
+				lblRootAxisInfo.text = "轴向: (0°, 0°, 0°) - X轴向前"
+			)
 		)
 
 		-- 防止播放时产生意外关键帧的函数
@@ -703,7 +748,7 @@ plugin modifier BsRootMotionModifier
 
 -- 创建.NET Windows Forms UI
 global bsRootMotionForm
-global verBsRootTools = "v1.2"
+global verBsRootTools = "v1.3"
 -- 检测Max主题并返回适合的颜色
 function GetThemeColor colorType = (
 	-- 获取系统背景色来判断主题类型
@@ -872,18 +917,22 @@ struct rolRootMotionTools (
 				-- 设置旋转控制器
 				rootNode.rotation.controller = Euler_XYZ ()
 				rootNode.rotation.controller.X_Rotation.controller = Float_Expression ()
-				rootNode.rotation.controller.X_Rotation.controller.SetExpression "0"
+				rootNode.rotation.controller.X_Rotation.controller.AddScalarTarget "BaseRotationX" modifier.BaseRotationX.controller
+				rootNode.rotation.controller.X_Rotation.controller.SetExpression "degToRad(BaseRotationX)"
 				rootNode.rotation.controller.Y_Rotation.controller = Float_Expression ()
-				rootNode.rotation.controller.Y_Rotation.controller.SetExpression "0"
+				rootNode.rotation.controller.Y_Rotation.controller.AddScalarTarget "BaseRotationY" modifier.BaseRotationY.controller
+				rootNode.rotation.controller.Y_Rotation.controller.SetExpression "degToRad(BaseRotationY)"
 				rootNode.rotation.controller.Z_Rotation.controller = float_script ()
+				rootNode.rotation.controller.Z_Rotation.controller.AddTarget "BaseRotationZ" modifier.BaseRotationZ.controller
 				rootNode.rotation.controller.Z_Rotation.controller.AddTarget "ManualYaw" modifier.ManualYaw.controller
 				rootNode.rotation.controller.Z_Rotation.controller.AddTarget "TrackYaw" modifier.TrackYaw.controller
 				rootNode.rotation.controller.Z_Rotation.controller.AddTarget "TrackYaw_Offset" modifier.TrackYaw_Offset.controller
 				rootNode.rotation.controller.Z_Rotation.controller.AddNode "PelvisObj" selectedObj
-				rootNode.rotation.controller.Z_Rotation.controller.SetExpression ("local pelvisYaw = degToRad (PelvisObj.transform.rotation as EulerAngles).z\n" + 
+				rootNode.rotation.controller.Z_Rotation.controller.SetExpression ("local baseZ = degToRad(BaseRotationZ)\n" + 
+					"local pelvisYaw = degToRad (PelvisObj.transform.rotation as EulerAngles).z\n" + 
 					"local track = (pelvisYaw + degToRad (TrackYaw_Offset)) * TrackYaw\n" + 
 					"local manual = degToRad(ManualYaw) * (1-TrackYaw)\n" + 
-					"return (track + manual)")
+					"return (baseZ + track + manual)")
 				
 				-- 更新按钮状态
 				try (
@@ -1143,6 +1192,9 @@ fn OnHelpClick sender args = (
 	helpContent += "   • 生成完整的根运动修改器\n\n"
 	
 	helpContent += "🔹 参数调整（修改面板）\n"
+	helpContent += "   • 根骨骼模式: 选择Unity或Unreal根骨骼轴向\n"
+	helpContent += "     - Unity: (90°, 0°, 0°) Z轴朝上\n"
+	helpContent += "     - Unreal: (0°, 0°, 0°) X轴向前\n"
 	helpContent += "   • Manual X/Y/Z: 手动位移调整\n"
 	helpContent += "   • Track X/Y/Z: 追踪质心位移（0-1混合）\n"
 	helpContent += "   • Track偏移: 设置追踪的偏移量\n"
@@ -1162,6 +1214,9 @@ fn OnHelpClick sender args = (
 	
 	helpContent += "💡 使用技巧\n\n"
 	helpContent += "🔸 质心选择: 对于Biped选择Bip001，对于普通骨骼选择质心骨骼\n"
+	helpContent += "🔸 根骨骼模式: 根据目标引擎选择Unity或Unreal模式\n"
+	helpContent += "   - Unity模式适用于Z轴朝上的骨骼系统\n"
+	helpContent += "   - Unreal模式适用于X轴向前的骨骼系统\n"
 	helpContent += "🔸 参数调整: Track值控制跟随程度，0=完全手动，1=完全跟随\n"
 	helpContent += "🔸 偏移设置: 使用「获取质心Z位置」快速设置高度偏移\n"
 	helpContent += "🔸 曲线工具: 使用「打直关键帧曲柄」去除意外的缓动\n"
@@ -1174,7 +1229,7 @@ fn OnHelpClick sender args = (
 	helpContent += "🔺 对于复杂约束系统，建议谨慎使用\n\n"
 	
 	helpContent += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-	helpContent += "🏷️ 版本信息: v1.0 | 原作者: 李相元 | 修改: Bullet.S"
+	helpContent += "🏷️ 版本信息: v1.3 | 原作者: 李相元 | 修改: Bullet.S"
 	
 	helpText.Text = helpContent
 	
@@ -1297,18 +1352,17 @@ fn OnApplyNewRoot sender args = (
 	
 	try (
 		-- 首先采样临时Root在所有目标时间点的世界空间变换
-		local tempRootPosList = #()
-		local tempRootRotList = #()
+		local tempRootTransformList = #()
 		
 		for t in bakeTimes do (
 			at time t (
-				append tempRootPosList tempRootObj.transform.pos
-				append tempRootRotList tempRootObj.transform.rotation
+				append tempRootTransformList (copy tempRootObj.transform)
 			)
 		)
 		
 		-- 确定目标Root节点
 		local targetRoot = originalRootObj
+		local isNewRoot = false
 		if targetRoot == undefined then (
 			-- 没有原Root：创建新Root
 			targetRoot = Point()
@@ -1317,17 +1371,31 @@ fn OnApplyNewRoot sender args = (
 			targetRoot.size = 80
 			targetRoot.cross = true
 			targetRoot.box = true
+			isNewRoot = true
 			
 			-- 更新修改器引用
 			modifier.OriginalRootHandle = targetRoot.inode.handle
 			setUserProp controllerObj "BsRMOriginalRoot" targetRoot.name
 		)
 		
+		-- 检查质心是否是原Root的子物体
+		local pelvisIsChild = (pelvisObj.parent == targetRoot)
+		local pelvisOriginalTransformList = #()
+		
+		if pelvisIsChild then (
+			-- 如果质心是原Root的子物体，记录质心的世界变换以便稍后恢复
+			for t in bakeTimes do (
+				at time t (
+					append pelvisOriginalTransformList (copy pelvisObj.transform)
+				)
+			)
+		)
+		
 		-- 确保目标Root有普通的动画控制器
 		targetRoot.pos.controller = Position_XYZ()
 		targetRoot.rotation.controller = Euler_XYZ()
 		
-		-- 将临时Root的动画烘焙到目标Root
+		-- 将临时Root的世界变换烘焙到目标Root
 		local successCount = 0
 		local originalAnimState = animButtonState
 		
@@ -1338,13 +1406,29 @@ fn OnApplyNewRoot sender args = (
 				at time t (
 					try (
 						with animate on (
-							targetRoot.pos = tempRootPosList[i]
-							targetRoot.rotation = tempRootRotList[i]
+							-- 设置世界变换
+							targetRoot.transform = tempRootTransformList[i]
 						)
 						successCount += 1
 					) catch ()
 				)
 			)
+			
+			-- 如果质心是原Root的子物体，恢复质心的世界变换
+			if pelvisIsChild then (
+				for i = 1 to bakeTimes.count do (
+					local t = bakeTimes[i]
+					at time t (
+						try (
+							with animate on (
+								-- 恢复质心的世界变换，保持角色动画不变
+								pelvisObj.transform = pelvisOriginalTransformList[i]
+							)
+						) catch ()
+					)
+				)
+			)
+			
 			animButtonState = originalAnimState
 		) catch (
 			animButtonState = originalAnimState
