@@ -137,6 +137,12 @@ BsKeyTools 是一个面向 **Autodesk 3ds Max** 的综合性动画工具集，
 
 ![自动安装](https://raw.githubusercontent.com/AniBullet/BsKeyTools/main/SetupPrev.gif)
 
+**版本更新检测**
+
+安装程序会自动检测是否有新版本可用，并提示您更新：
+
+![版本更新检测](https://raw.githubusercontent.com/AniBullet/BsKeyTools/main/PreviewRes/11.png)
+
 ### 🔧 手动安装
 
 ![手动安装](https://raw.githubusercontent.com/AniBullet/BsKeyTools/main/PreviewRes/10.png)
