@@ -25,14 +25,19 @@ powershell -ExecutionPolicy Bypass -File ".\.cursor\install-superpowers.ps1"
 ```powershell
 # 1. 创建必要目录
 New-Item -ItemType Directory -Path "$env:USERPROFILE\.codex" -Force
-New-Item -ItemType Directory -Path "$env:USERPROFILE\.cursor\skills-cursor" -Force
+New-Item -ItemType Directory -Path "$env:USERPROFILE\.cursor\skills" -Force
 New-Item -ItemType Directory -Path "$env:USERPROFILE\.cursor\rules" -Force
 
 # 2. 克隆仓库
 git clone --depth 1 https://github.com/obra/superpowers.git "$env:USERPROFILE\.codex\superpowers"
 
 # 3. 创建技能链接（需要管理员权限）
-cmd /c mklink /J "$env:USERPROFILE\.cursor\skills-cursor\superpowers" "$env:USERPROFILE\.codex\superpowers\skills"
+# 注意：每个技能必须是 .cursor\skills\ 的直接子目录
+# 不能嵌套在 superpowers 子目录中
+$skillsSource = "$env:USERPROFILE\.codex\superpowers\skills"
+Get-ChildItem $skillsSource -Directory | ForEach-Object {
+    cmd /c mklink /J "$env:USERPROFILE\.cursor\skills\$($_.Name)" "$($_.FullName)"
+}
 
 # 4. 复制规则文件（从项目中复制，或手动创建）
 Copy-Item ".\.cursor\rules\superpowers.md" "$env:USERPROFILE\.cursor\rules\superpowers.md"
@@ -124,7 +129,7 @@ Copy-Item ".\.cursor\rules\superpowers.md" "$env:USERPROFILE\.cursor\rules\super
 %USERPROFILE%\
 ├── .codex\
 │   └── superpowers\                    # superpowers 仓库 (git clone)
-│       ├── skills\                     # 技能定义文件
+│       ├── skills\                     # 技能源文件
 │       │   ├── brainstorming\
 │       │   │   └── SKILL.md
 │       │   ├── systematic-debugging\
@@ -133,13 +138,21 @@ Copy-Item ".\.cursor\rules\superpowers.md" "$env:USERPROFILE\.cursor\rules\super
 │       └── ...
 │
 └── .cursor\
-    ├── skills-cursor\
-    │   └── superpowers\                # 目录联接 (Junction)
-    │       └── -> %USERPROFILE%\.codex\superpowers\skills
+    ├── skills\                         # 用户自定义技能目录
+    │   ├── brainstorming\              # 每个技能是直接子目录（Junction）
+    │   │   └── -> .codex\superpowers\skills\brainstorming
+    │   ├── systematic-debugging\
+    │   │   └── -> .codex\superpowers\skills\systematic-debugging
+    │   └── ...（共 14 个链接）
+    │
+    ├── skills-cursor\                  # Cursor 内置技能（系统保留，勿修改）
     │
     └── rules\
         └── superpowers.md              # 全局规则文件
 ```
+
+> **重要**：Cursor 只扫描 `skills` 的**直接子目录**，不会递归扫描嵌套目录。
+> 所以不能用 `skills/superpowers/brainstorming/`，必须是 `skills/brainstorming/`。
 
 ---
 
@@ -166,7 +179,16 @@ A: 确保 `%USERPROFILE%\.cursor\rules\superpowers.md` 存在，并包含正确�
 A: 编辑规则文件，删除或注释掉对应技能的描述。
 
 ### Q: 如何添加自定义技能？
-A: 在 `%USERPROFILE%\.cursor\skills-cursor\` 下创建新目录，包含 `SKILL.md` 文件。
+A: 在 `%USERPROFILE%\.cursor\skills\` 下创建新目录，包含 `SKILL.md` 文件。
+> **注意**：不要使用 `skills-cursor` 目录，那是 Cursor 内置技能的保留目录。
+
+### Q: 安装后技能不显示？
+A: 检查技能是否安装到了正确的位置。Cursor 只扫描 `skills` 的**直接子目录**：
+- ✅ 正确：`%USERPROFILE%\.cursor\skills\brainstorming\SKILL.md`
+- ❌ 错误：`%USERPROFILE%\.cursor\skills\superpowers\brainstorming\SKILL.md`（嵌套太深）
+- ❌ 错误：`%USERPROFILE%\.cursor\skills-cursor\...`（内置技能目录）
+
+运行安装脚本可自动修复此问题。
 
 ---
 

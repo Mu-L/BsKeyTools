@@ -11,9 +11,10 @@ Write-Host ""
 $superpowersRepo = "https://github.com/obra/superpowers.git"
 $codexDir = Join-Path $env:USERPROFILE ".codex"
 $superpowersDir = Join-Path $codexDir "superpowers"
-$cursorSkillsDir = Join-Path $env:USERPROFILE ".cursor\skills-cursor"
+# NOTE: Use ~/.cursor/skills/ (NOT skills-cursor/) for user-defined skills
+# skills-cursor/ is reserved for Cursor's internal built-in skills
+$cursorSkillsDir = Join-Path $env:USERPROFILE ".cursor\skills"
 $cursorRulesDir = Join-Path $env:USERPROFILE ".cursor\rules"
-$skillLinkPath = Join-Path $cursorSkillsDir "superpowers"
 
 # Step 1: Check Git
 Write-Host "[1/5] Checking Git..."
@@ -73,41 +74,52 @@ else {
     }
 }
 
-# Step 4: Create link
-Write-Host "[4/5] Creating skill link..."
+# Step 4: Create skill links
+# Cursor requires each skill to be a DIRECT subdirectory of ~/.cursor/skills/
+# NOT nested like ~/.cursor/skills/superpowers/brainstorming/
+Write-Host "[4/5] Creating skill links..."
 
-# Check if link exists and is valid (can access brainstorming skill)
-$linkValid = (Test-Path $skillLinkPath) -and (Test-Path (Join-Path $skillLinkPath "brainstorming"))
-
-if ($linkValid) {
-    Write-Host "  [-] Link exists and valid" -ForegroundColor Gray
+$skillDirs = Get-ChildItem $skillsSourcePath -Directory -ErrorAction SilentlyContinue
+if ($null -eq $skillDirs -or $skillDirs.Count -eq 0) {
+    Write-Host "  [X] No skills found in $skillsSourcePath" -ForegroundColor Red
+    Read-Host "Press Enter to exit"
+    exit 1
 }
-else {
-    # Remove broken link if exists
-    if (Test-Path $skillLinkPath) {
-        Write-Host "  [-] Removing broken link..."
-        Remove-Item -Path $skillLinkPath -Recurse -Force -ErrorAction SilentlyContinue
+
+$createdCount = 0
+$skippedCount = 0
+
+foreach ($skillDir in $skillDirs) {
+    $linkPath = Join-Path $cursorSkillsDir $skillDir.Name
+    $skillMdPath = Join-Path $linkPath "SKILL.md"
+    
+    # Check if valid link already exists
+    if ((Test-Path $linkPath) -and (Test-Path $skillMdPath)) {
+        $skippedCount++
+        continue
     }
     
-    # Try to create junction
-    $linkResult = cmd /c mklink /J "$skillLinkPath" "$skillsSourcePath" 2>&1
+    # Remove broken link/dir if exists
+    if (Test-Path $linkPath) {
+        Remove-Item -Path $linkPath -Recurse -Force -ErrorAction SilentlyContinue
+    }
     
-    if ((Test-Path $skillLinkPath) -and (Test-Path (Join-Path $skillLinkPath "brainstorming"))) {
-        Write-Host "  [OK] Link created" -ForegroundColor Green
+    # Create junction
+    $null = cmd /c mklink /J "$linkPath" "$($skillDir.FullName)" 2>&1
+    
+    if (Test-Path $skillMdPath) {
+        $createdCount++
     }
     else {
-        Write-Host "  [!] Link failed ($linkResult), copying..." -ForegroundColor Yellow
-        Copy-Item -Path $skillsSourcePath -Destination $skillLinkPath -Recurse -Force
-        if (Test-Path (Join-Path $skillLinkPath "brainstorming")) {
-            Write-Host "  [OK] Copied" -ForegroundColor Green
-        }
-        else {
-            Write-Host "  [X] Copy failed" -ForegroundColor Red
-            Read-Host "Press Enter to exit"
-            exit 1
+        # Fallback: copy directory
+        Copy-Item -Path $skillDir.FullName -Destination $linkPath -Recurse -Force
+        if (Test-Path $skillMdPath) {
+            $createdCount++
         }
     }
 }
+
+Write-Host "  [OK] $createdCount created, $skippedCount already exist" -ForegroundColor Green
 
 # Step 5: Create rule file
 Write-Host "[5/5] Creating rule file..."
@@ -121,7 +133,7 @@ You have superpowers. Superpowers are specialized skills for software developmen
 
 ## Available Skills
 
-Skills are in ~/.cursor/skills-cursor/superpowers/
+Skills are in ~/.cursor/skills/
 
 ### Core Skills (MANDATORY)
 
@@ -161,7 +173,7 @@ Write-Host "========================================"
 Write-Host ""
 Write-Host "Installed:"
 Write-Host "  - Repo: $superpowersDir"
-Write-Host "  - Link: $skillLinkPath"
+Write-Host "  - Skills: $cursorSkillsDir (14 skills linked)"
 Write-Host "  - Rule: $globalRulePath"
 Write-Host ""
 Write-Host "Usage: Restart Cursor, AI will use superpowers automatically"
