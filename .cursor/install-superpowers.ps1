@@ -33,33 +33,79 @@ Write-Host "  [OK] Directories ready" -ForegroundColor Green
 
 # Step 3: Clone or update repo
 Write-Host "[3/5] Getting Superpowers repo..."
-if (Test-Path $superpowersDir) {
+$skillsSourcePath = Join-Path $superpowersDir "skills"
+
+# Check if repo exists and is valid (has skills directory)
+$repoValid = (Test-Path $superpowersDir) -and (Test-Path $skillsSourcePath)
+
+if ($repoValid) {
     Write-Host "  [-] Repo exists, updating..."
-    Set-Location $superpowersDir
-    git pull --quiet 2>&1 | Out-Null
-    Write-Host "  [OK] Updated" -ForegroundColor Green
+    Push-Location $superpowersDir
+    $pullResult = git pull 2>&1
+    $pullExitCode = $LASTEXITCODE
+    Pop-Location
+    if ($pullExitCode -eq 0) {
+        Write-Host "  [OK] Updated" -ForegroundColor Green
+    }
+    else {
+        Write-Host "  [!] Update failed: $pullResult" -ForegroundColor Yellow
+    }
 }
 else {
+    # Remove incomplete/corrupted directory if exists
+    if (Test-Path $superpowersDir) {
+        Write-Host "  [-] Removing incomplete repo..."
+        Remove-Item -Path $superpowersDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    
     Write-Host "  [-] Cloning repo..."
-    git clone --depth 1 $superpowersRepo $superpowersDir 2>&1 | Out-Null
-    Write-Host "  [OK] Cloned" -ForegroundColor Green
+    $cloneResult = git clone --depth 1 $superpowersRepo $superpowersDir 2>&1
+    $cloneExitCode = $LASTEXITCODE
+    
+    if ($cloneExitCode -eq 0 -and (Test-Path $skillsSourcePath)) {
+        Write-Host "  [OK] Cloned" -ForegroundColor Green
+    }
+    else {
+        Write-Host "  [X] Clone failed: $cloneResult" -ForegroundColor Red
+        Write-Host "  Please check network connection and try again."
+        Read-Host "Press Enter to exit"
+        exit 1
+    }
 }
 
 # Step 4: Create link
 Write-Host "[4/5] Creating skill link..."
-$skillsSourcePath = Join-Path $superpowersDir "skills"
-if (Test-Path $skillLinkPath) {
-    Write-Host "  [-] Link exists" -ForegroundColor Gray
+
+# Check if link exists and is valid (can access brainstorming skill)
+$linkValid = (Test-Path $skillLinkPath) -and (Test-Path (Join-Path $skillLinkPath "brainstorming"))
+
+if ($linkValid) {
+    Write-Host "  [-] Link exists and valid" -ForegroundColor Gray
 }
 else {
-    cmd /c mklink /J "$skillLinkPath" "$skillsSourcePath" 2>&1 | Out-Null
+    # Remove broken link if exists
     if (Test-Path $skillLinkPath) {
+        Write-Host "  [-] Removing broken link..."
+        Remove-Item -Path $skillLinkPath -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    
+    # Try to create junction
+    $linkResult = cmd /c mklink /J "$skillLinkPath" "$skillsSourcePath" 2>&1
+    
+    if ((Test-Path $skillLinkPath) -and (Test-Path (Join-Path $skillLinkPath "brainstorming"))) {
         Write-Host "  [OK] Link created" -ForegroundColor Green
     }
     else {
-        Write-Host "  [!] Link failed, copying..." -ForegroundColor Yellow
+        Write-Host "  [!] Link failed ($linkResult), copying..." -ForegroundColor Yellow
         Copy-Item -Path $skillsSourcePath -Destination $skillLinkPath -Recurse -Force
-        Write-Host "  [OK] Copied" -ForegroundColor Green
+        if (Test-Path (Join-Path $skillLinkPath "brainstorming")) {
+            Write-Host "  [OK] Copied" -ForegroundColor Green
+        }
+        else {
+            Write-Host "  [X] Copy failed" -ForegroundColor Red
+            Read-Host "Press Enter to exit"
+            exit 1
+        }
     }
 }
 
