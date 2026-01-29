@@ -205,6 +205,7 @@ struct yunTrajEdit_Globals_Struct
 (
 	bmp_Background = openbitmap (pathIcons + "\DTools\DTrajEdit\BackGround.bmp"),
 	bmp_Title = openbitmap (pathIcons + "\DTools\DTrajEdit\Title.bmp"),
+	bmp_Title_Tip = undefined,
 	bmp_New = openbitmap (pathIcons + "\DTools\DTrajEdit\New_Poly.bmp"),
 	bmp_New_Pivot = openbitmap (pathIcons + "\DTools\DTrajEdit\New_Pivot.bmp"),
 	bmp_About = openbitmap (pathIcons + "\DTools\DTrajEdit\About.bmp"),
@@ -394,6 +395,8 @@ fn yunMotionPathCallBackFn  obj vis isdot col_Start  col_End tStart tEnd dotShap
 	-- This fixes the bug where Ctrl+Z doesn't work when trajectory plugin is active
 	undo off
 	(
+	-- Save Auto Key state BEFORE animate off (animate off sets animButtonState to false)
+	local wasAutoKeyOn = animButtonState
 	-- Wrap in animate off to prevent auto-keying when accessing transforms via at time
 	-- This fixes the bug where Biped COM gets auto-keyed when a child bone has trajectory enabled
 	animate off
@@ -416,7 +419,7 @@ fn yunMotionPathCallBackFn  obj vis isdot col_Start  col_End tStart tEnd dotShap
 	playCheck = true  --默认画曲线
 	if isPlay and isAnimPlaying() then (playCheck = false )  ---隐藏被勾选切在播放就不画了
 
-	--if vis and  not isAnimPlaying()  do
+	-- if vis and  not isAnimPlaying()  do
 	---画轨迹
 	if vis and   playCheck  do
 	if vis   do
@@ -631,10 +634,15 @@ fn yunMotionPathCallBackFn  obj vis isdot col_Start  col_End tStart tEnd dotShap
 		gw.wMarker posRescue #smallDiamond color:col_End
 
 		-- Restore all selected Biped poses after at time access to prevent pose reset bug
-		for i = 1 to savedBipeds.count do
+		-- Only execute when Auto Key is OFF to avoid interfering with keyframe cursor
+		-- Use wasAutoKeyOn (saved before animate off) instead of animButtonState
+		if (wasAutoKeyOn == false) then
 		(
-			biped.setTransform savedBipeds[i] #pos savedBipedPoses[i] false
-			biped.setTransform savedBipeds[i] #rotation savedBipedRots[i] false
+			for i = 1 to savedBipeds.count do
+			(
+				biped.setTransform savedBipeds[i] #pos savedBipedPoses[i] false
+				biped.setTransform savedBipeds[i] #rotation savedBipedRots[i] false
+			)
 		)
 
 		-- Update the viewports
@@ -712,6 +720,38 @@ Fn yun_refreshDT_byTime_new_fn  =
 ---实例化
 (yunTrajEdit_Globals = yunTrajEdit_Globals_Struct())
 
+---动态生成Auto Key提示bitmap（用.NET生成到temp目录）
+fn yunTrajEdit_CreateTipBitmap =
+(
+	local tempPath = (getDir #temp) + "\\yunTrajEdit_Tip.png"
+	local srcPath = pathIcons + "\\DTools\\DTrajEdit\\Title.bmp"
+	-- Load source bitmap and crop left part
+	local srcNet = dotNetObject "System.Drawing.Bitmap" srcPath
+	local cropRect = dotNetObject "System.Drawing.Rectangle" 0 0 110 40
+	local bmpNet = srcNet.Clone cropRect srcNet.PixelFormat
+	srcNet.Dispose()
+	-- Get Graphics from cropped bitmap
+	local g = (dotNetClass "System.Drawing.Graphics").fromImage bmpNet
+	-- Draw text using TextRenderer
+	local textColor = (dotNetClass "System.Drawing.Color").Black
+	local font = dotNetObject "System.Drawing.Font" "Microsoft YaHei" 6.0
+	local pt1 = dotNetObject "System.Drawing.Point" 2 4
+	local pt2 = dotNetObject "System.Drawing.Point" 2 20
+	local textRenderer = dotNetClass "System.Windows.Forms.TextRenderer"
+	textRenderer.DrawText g "请开启自动K帧" font pt1 textColor
+	textRenderer.DrawText g "不然不能拖帧(T_T)" font pt2 textColor
+	font.Dispose()
+	g.Dispose()
+	bmpNet.Save tempPath
+	bmpNet.Dispose()
+	-- Load generated bitmap
+	if doesFileExist tempPath then
+		openbitmap tempPath
+	else
+		yunTrajEdit_Globals.bmp_Title
+)
+yunTrajEdit_Globals.bmp_Title_Tip = yunTrajEdit_CreateTipBitmap()
+
 -----界面出生函数
 global yunTrajEdit_Rollout
 function yunTrajEdit_UpdateRollout =
@@ -729,20 +769,29 @@ function yunTrajEdit_UpdateRollout =
 	button btn_DisplayAll \"\" pos:[1,4] width:34 height:34 tooltip:\"1，左键大小如意\n2，右键开关轨迹显示\n3，shift+左键开关实时更新轨迹长度\n（关闭则按时间轴长度显示）\n4，ctrl+左键开关显示关键帧数\n5,alt+左键开关颜色渐变\"
 	---logo图标
 	bitmap bmp_Titlebmp pos:[35,1] width:255 height:40 bitmap:yunTrajEdit_Globals.bmp_Title
+	---Auto Key提示覆盖层（只覆盖左侧文字区域，不影响按钮）
+	bitmap bmp_TipOverlay pos:[35,1] width:110 height:40 bitmap:yunTrajEdit_Globals.bmp_Title_Tip visible:false
+
 	---关于按钮
 	button btn_About \"\" pos:[152,4] width:34 height:34 images:#(yunTrajEdit_Globals.bmp_About, undefined, 1, 1, 1, 1, 1) tooltip:\"左键关于信息，右键随机轨迹颜色\"
 
-	
+
 	---新建轨迹
 	button btn_New \"\" pos:[186,4] width:34 height:17 images:#(yunTrajEdit_Globals.bmp_New, undefined, 1, 1, 1, 1, 1) tooltip:\"左键改变点标形状，右键恢复默认\"
 	button btn_New_Pivot \"\" pos:[186,21] width:34 height:17 images:#(yunTrajEdit_Globals.bmp_New_Pivot, undefined, 1, 1, 1, 1, 1) tooltip:\"新建轨迹\"
-	
+
 	---退出按钮
 	button btn_Exit \"\" pos:[220,4] width:34 height:34 images:#(yunTrajEdit_Globals.bmp_Exit, undefined, 1, 1, 1, 1, 1) tooltip:\"EXIT\"
+	---Auto Key状态检查定时器（只控制overlay可见性，不切换主logo）
+	timer tmr_AutoKeyCheck interval:200 active:true
+	on tmr_AutoKeyCheck tick do
+	(
+		bmp_TipOverlay.visible = (animButtonState == false)
+	)
 	-- 窗口移动功能
 	on yunTrajedit_rollout mousemove pos do yunTrajEdit_Globals.MoveWindow yunTrajedit_rollout
 	on yunTrajedit_rollout lbuttondown pos do yunTrajEdit_Globals.IsReadyToMove yunTrajedit_rollout pos
-	on yunTrajedit_rollout lbuttonup pos do yunTrajEdit_Globals.LetGoTheWindow()	
+	on yunTrajedit_rollout lbuttonup pos do yunTrajEdit_Globals.LetGoTheWindow()
 	
 	----改变点标形状功能
 	on btn_New pressed do
