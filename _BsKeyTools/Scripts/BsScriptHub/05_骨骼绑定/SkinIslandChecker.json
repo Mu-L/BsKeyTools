@@ -1,0 +1,16 @@
+{
+    "name": "蒙皮飞点检查",
+    "version": "1.1",
+    "description": "尝试检查蒙皮中的飞点",
+    "author": "虹",
+    "optimizer": "",
+    "modified_date": "",
+    "keywords": [
+        "绑定",
+        "飞点"
+    ],
+    "preview": "",
+    "script": "BulletScripts/Quote/SkinIslandChecker.ms",
+    "url": "",
+    "tutorial": ""
+}
