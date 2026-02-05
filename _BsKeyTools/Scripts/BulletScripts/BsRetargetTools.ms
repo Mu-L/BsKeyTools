@@ -3,7 +3,7 @@
  * @Author: Bullet.S
  * @Date: 2022-11-17 13:05:32
  * @LastEditors: Bullet.S
- * @LastEditTime: 2025-12-11 17:37:52
+ * @LastEditTime: 2026-02-05 15:20:55
  * @Email: animator.bullet@foxmail.com
  */
 -- BipedRigCreator_v3.3.2_Enhanced
@@ -407,31 +407,31 @@ rcmenu menuQuickCreateNode
 
 	fn fnDuplicateNub arrID isFoot:false isHead:false =
 	(
-		for i in arrID do 
+	for i in arrID do 
+	(
+		parentNub = (GetSkeletalNode i false)
+		nubNode = (GetSkeletalNode (i + 1) false)
+		if isvalidnode parentNub and parentNub != undefined and parentNub.parent != undefined and nubNode == undefined then
 		(
-			parentNub = (GetSkeletalNode i false)
-			nubNode = (GetSkeletalNode (i + 1) false)
-			if isvalidnode parentNub and parentNub != undefined and nubNode == undefined then
+			local vec = parentNub.pos - parentNub.parent.pos
+			if isHead then vec = vec * 3
+			local pos = parentNub.pos + (normalize vec) * (length vec)
+			if isHead then pos.y = parentNub.pos.y
+			if isFoot then pos.z = parentNub.pos.z
+			in parentNub nB = bone pos:pos
+			nB.name = parentNub.name + " nub"
+			if i > 37 then 
 			(
-				local vec = parentNub.pos - parentNub.parent.pos
-				if isHead then vec = vec * 3
-				local pos = parentNub.pos + (normalize vec) * (length vec)
-				if isHead then pos.y = parentNub.pos.y
-				if isFoot then pos.z = parentNub.pos.z
-				in parentNub nB = bone pos:pos
-				nB.name = parentNub.name + " nub"
-				if i > 37 then 
-				(
-					tempItems = rolBsRetarget.characterBones_B.items
-					tempItems[i - 37 + 1] = nB.name
-					rolBsRetarget.characterBones_B.items = tempItems
-				)
-				else 
-				(
-					tempItems = rolBsRetarget.characterBones.items
-					tempItems[i+ 1] = nB.name
-					rolBsRetarget.characterBones.items = tempItems
-				)
+				tempItems = rolBsRetarget.characterBones_B.items
+				tempItems[i - 37 + 1] = nB.name
+				rolBsRetarget.characterBones_B.items = tempItems
+			)
+			else 
+			(
+				tempItems = rolBsRetarget.characterBones.items
+				tempItems[i+ 1] = nB.name
+				rolBsRetarget.characterBones.items = tempItems
+			)
 			)
 			-- else (messageBox "请先验证并检查映射列表是否完整！                                       " title:"BsRetargetTools")
 		)
@@ -473,16 +473,22 @@ rcmenu menuQuickCreateNode
 
 	fn fnQuickTempRoot =
 	(
-		try
+	try
+	(
+		local leftLeg = GetSkeletalNode 12 false
+		local rightLeg = GetSkeletalNode 17 false
+		
+		local hip = GetSkeletalNode 1 false
+		local pelvis = GetSkeletalNode 2 false
+		
+		if hip == undefined or pelvis == undefined then
 		(
-			local leftLeg = GetSkeletalNode 12 false
-			local rightLeg = GetSkeletalNode 17 false
-			
-			local hip = GetSkeletalNode 1 false
-			local pelvis = GetSkeletalNode 2 false
-			
-			local dummyHip = point name:("NewHip_" + hip.name)
-			local dummyPelvis = point name:("NewPelvis_" + pelvis.name)
+			messagebox "未找到质心或盆骨骨骼！请先验证映射列表。                          " title:"BsRetargetTools"
+			return undefined
+		)
+		
+		local dummyHip = point name:("NewHip_" + hip.name)
+		local dummyPelvis = point name:("NewPelvis_" + pelvis.name)
 
 			dummyHip.constantscreensize = false
 			dummyHip.size = 0.01
@@ -745,7 +751,7 @@ rcmenu menuBsRetarget
 )
 
 -- The rollout used for this script.
-rollout rolBsRetarget "BsRetargetTools_v5.0 （ FBX 转 BIP + 动画重定向 ）"
+rollout rolBsRetarget "BsRetargetTools_v5.1 （ FBX 转 BIP + 动画重定向 ）"
 (
 	local LastSubRollout = 1
 	local winW = 655  -- 窗口宽度
@@ -3008,11 +3014,31 @@ rollout rolBsRetarget "BsRetargetTools_v5.0 （ FBX 转 BIP + 动画重定向 �
 		)
 	)
 
-	fn fnCopyChildSubBone boneFBXRoot =
+fn fnCopyChildSubBone boneFBXRoot =
+(
+	hips = (GetSkeletalNode 1 false)
+	if hips == undefined then
 	(
-		hips = (GetSkeletalNode 1 false)
-		tempRM = (if matchpattern hips.name pattern:"NewHip_*" then hips.parent.parent else hips.parent)
-		if boneFBXRoot == tempRM then 
+		return undefined
+	)
+	-- 安全获取 rootMotion，处理 NewHip_* 模式
+	if matchpattern hips.name pattern:"NewHip_*" then
+	(
+		if hips.parent != undefined and hips.parent.parent != undefined then
+			tempRM = hips.parent.parent
+		else if hips.parent != undefined then
+			tempRM = hips.parent
+		else
+			tempRM = hips
+	)
+	else
+	(
+		if hips.parent != undefined then
+			tempRM = hips.parent
+		else
+			tempRM = hips
+	)
+	if boneFBXRoot == tempRM then
 		(
 			for c in boneFBXRoot.children do
 			(
@@ -3079,16 +3105,36 @@ rollout rolBsRetarget "BsRetargetTools_v5.0 （ FBX 转 BIP + 动画重定向 �
 		)
 	)
 
-	fn fnCopySubBones =
+fn fnCopySubBones =
+(
+	boneFBXRoot = (GetSkeletalNode 1 false)
+	if boneFBXRoot == undefined then
 	(
-		boneFBXRoot = (GetSkeletalNode 1 false)
-		boneAllRoot = (if matchpattern boneFBXRoot.name pattern:"NewHip_*" then boneFBXRoot.parent.parent else boneFBXRoot.parent)
-		if boneAllRoot != undefined then 
-		(
-			fnCopyChildSubBone boneAllRoot
-		)
-		else (fnCopyChildSubBone boneFBXRoot)
+		return undefined
 	)
+	-- 安全获取 boneAllRoot，处理 NewHip_* 模式
+	if matchpattern boneFBXRoot.name pattern:"NewHip_*" then
+	(
+		if boneFBXRoot.parent != undefined and boneFBXRoot.parent.parent != undefined then
+			boneAllRoot = boneFBXRoot.parent.parent
+		else if boneFBXRoot.parent != undefined then
+			boneAllRoot = boneFBXRoot.parent
+		else
+			boneAllRoot = boneFBXRoot
+	)
+	else
+	(
+		if boneFBXRoot.parent != undefined then
+			boneAllRoot = boneFBXRoot.parent
+		else
+			boneAllRoot = boneFBXRoot
+	)
+	if boneAllRoot != undefined then 
+	(
+		fnCopyChildSubBone boneAllRoot
+	)
+	else (fnCopyChildSubBone boneFBXRoot)
+)
 
 	fn fnCleanRootCurve x:false y:false z:false =
 	(
@@ -3182,15 +3228,20 @@ rollout rolBsRetarget "BsRetargetTools_v5.0 （ FBX 转 BIP + 动画重定向 �
 	(
 		if mappingCheckState then
 		(
-			pgbBar.value = 0
-			lblBarValue.text = (pgbBar.value as string) + " %"
-			max Create mode
-			---断开质心防止旋转出问题，后面连上
-			hips = (GetSkeletalNode 1 false)
-			-- rootMotionBone = (if matchpattern hips.name pattern:"NewHip_*" then hips.parent.parent else hips.parent)
-			bsRootBone = (getnodebyname lbxRoot.items[1])
-			rootMotionBone = bsRootBone
-			hips.parent = undefined
+		pgbBar.value = 0
+		lblBarValue.text = (pgbBar.value as string) + " %"
+		max Create mode
+		---断开质心防止旋转出问题，后面连上
+		hips = (GetSkeletalNode 1 false)
+		if hips == undefined then
+		(
+			messagebox "未找到骨架质心骨骼！请先验证映射列表。                          " title:"BsRetargetTools"
+			return undefined
+		)
+		-- rootMotionBone = (if matchpattern hips.name pattern:"NewHip_*" then hips.parent.parent else hips.parent)
+		bsRootBone = (getnodebyname lbxRoot.items[1])
+		rootMotionBone = bsRootBone
+		hips.parent = undefined
 
 			-- 创建 Helper
 			if isValidNode headNub == false then headNub = point name:"_Helper_Head Nub" wirecolor:(color 0 255 0)
@@ -3695,29 +3746,32 @@ rollout rolBsRetarget "BsRetargetTools_v5.0 （ FBX 转 BIP + 动画重定向 �
 			(GetBipedNode 1).parent = bipedRetargetRM
 			rootBone.parent = boneRetargetRM
 
-			if chkCopySubs.state then fnCopySubBones()
-			else 
+		if chkCopySubs.state then fnCopySubBones()
+		else 
+		(
+			local skelNode1 = (GetSkeletalNode 1 false)
+			local skelNode2 = (GetSkeletalNode 2 false)
+			if skelNode1 != undefined and skelNode2 != undefined and \
+			   matchpattern skelNode1.name pattern:"NewHip_*" and matchpattern skelNode2.name pattern:"NewPelvis_*" then 
 			(
-				if matchpattern (GetSkeletalNode 1 false).name pattern:"NewHip_*" and matchpattern (GetSkeletalNode 2 false).name pattern:"NewPelvis_*" then 
-				(
-					tarHipBone = getnodebyname (substituteString (GetSkeletalNode 1 false).name "NewHip_" "")
-					tempHipBone = (copy tarHipBone)
-					tempHipBone.name = tarHipBone.name
-					strTempName = tempHipBone.name
-					tempHipBone.name = "RTHelper_" + strTempName
-					tempHipBone.parent = (GetSkeletalNode 1 true)
-					lc = Link_Constraint();
-					tempHipBone.transform.controller = lc
-					lc.key_mode = 0
-					lc.addTarget tarHipBone 0
-					tempHipBone.transform = tarHipBone.transform
+			tarHipBone = getnodebyname (substituteString skelNode1.name "NewHip_" "")
+			tempHipBone = (copy tarHipBone)
+			tempHipBone.name = tarHipBone.name
+			strTempName = tempHipBone.name
+			tempHipBone.name = "RTHelper_" + strTempName
+			tempHipBone.parent = (GetSkeletalNode 1 true)
+				lc = Link_Constraint();
+				tempHipBone.transform.controller = lc
+				lc.key_mode = 0
+				lc.addTarget tarHipBone 0
+				tempHipBone.transform = tarHipBone.transform
 
-					tarPelvisBone = getnodebyname (substituteString (GetSkeletalNode 2 false).name "NewPelvis_" "")
-					tempPelvisBone = (copy tarPelvisBone)
-					tempPelvisBone.name = tarPelvisBone.name
-					strTempName = tempPelvisBone.name
-					tempPelvisBone.name = "RTHelper_" + strTempName
-					tempPelvisBone.parent = (GetSkeletalNode 2 true)
+			tarPelvisBone = getnodebyname (substituteString skelNode2.name "NewPelvis_" "")
+			tempPelvisBone = (copy tarPelvisBone)
+			tempPelvisBone.name = tarPelvisBone.name
+			strTempName = tempPelvisBone.name
+			tempPelvisBone.name = "RTHelper_" + strTempName
+			tempPelvisBone.parent = (GetSkeletalNode 2 true)
 					lc = Link_Constraint();
 					tempPelvisBone.transform.controller = lc
 					lc.key_mode = 0
@@ -4267,19 +4321,21 @@ rollout rolBsRetarget "BsRetargetTools_v5.0 （ FBX 转 BIP + 动画重定向 �
 				tarBiped = (GetBipedNode (i + 37))
 			)
 
-			if chkFbxMixBip.state then 
+		if chkFbxMixBip.state then 
+		(
+			local skelNode1 = (GetSkeletalNode 1 false)
+			local skelNode2 = (GetSkeletalNode 2 false)
+			if not (i == 2 and skelNode1 != undefined and skelNode2 != undefined and skelNode1.name == skelNode2.name) then
 			(
-				if not (i == 2 and (GetSkeletalNode 1 false).name == (GetSkeletalNode 2 false).name) then
-				(
-					local pC = Position_Constraint()
-					pC.appendTarget tarBiped 100
-					tarBone.Position.controller = pC
-					pC.relative = true
-					
-					local oC = Orientation_Constraint()
-					oC.appendTarget tarBiped 100
-					tarBone.Rotation.controller = oC
-					oC.relative = true
+				local pC = Position_Constraint()
+				pC.appendTarget tarBiped 100
+				tarBone.Position.controller = pC
+				pC.relative = true
+				
+				local oC = Orientation_Constraint()
+				oC.appendTarget tarBiped 100
+				tarBone.Rotation.controller = oC
+				oC.relative = true
 					tarBiped.name = "BipCtrl_" + tarBiped.name
 				)
 			)
@@ -4366,12 +4422,33 @@ rollout rolBsRetarget "BsRetargetTools_v5.0 （ FBX 转 BIP + 动画重定向 �
 		-- escapeEnable = true
 		if mappingCheckState then
 		(
-			pgbBar.color = green
-			pgbBar.value = 0
-			lblBarValue.text = (pgbBar.value as string) + " %"
-			hips = (GetSkeletalNode 1 false)
-			boneRootMotion = (if matchpattern hips.name pattern:"NewHip_*" then hips.parent.parent else hips.parent)
-			bipRootMotion = (GetBipedNode 1).parent
+	pgbBar.color = green
+	pgbBar.value = 0
+	lblBarValue.text = (pgbBar.value as string) + " %"
+	hips = (GetSkeletalNode 1 false)
+	if hips == undefined then
+	(
+		messagebox "未找到骨架质心骨骼！请先验证映射列表。                          " title:"BsRetargetTools"
+		return undefined
+	)
+	-- 处理 NewHip_* 模式时需要检查 parent.parent 是否存在
+	if matchpattern hips.name pattern:"NewHip_*" then
+	(
+		if hips.parent != undefined and hips.parent.parent != undefined then
+			boneRootMotion = hips.parent.parent
+		else if hips.parent != undefined then
+			boneRootMotion = hips.parent
+		else
+			boneRootMotion = hips
+	)
+	else
+	(
+		if hips.parent != undefined then
+			boneRootMotion = hips.parent
+		else
+			boneRootMotion = hips
+	)
+	bipRootMotion = (GetBipedNode 1).parent
 			(GetBipedNode 1).transform.controller.figureMode = false
 
 			if not chkFbxMixBip.state then
