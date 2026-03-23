@@ -380,8 +380,7 @@ fn axSerializeSettings isLoading =
 fn ErrorMessage text =
 (
 	local msg = ("ERROR: " + text + "\n")
-	format "%\n" msg
-	messageBox msg
+	format "[BulletMod] %\n" msg
 	throw msg
 )
 
@@ -1164,7 +1163,7 @@ fn ImportPskFile filename skelOnly:false =
 	catch
 	(
 		fclose file
-		messageBox("Error loading file " + filename)
+		format "[BulletMod] ERROR: Error loading file %\n" filename
 		format "FATAL ERROR: %\n" (getCurrentException())
 		return undefined
 	)
@@ -1851,7 +1850,7 @@ fn ImportPsaFile filename trackNum all:false =
 	catch
 	(
 		fclose file
-		messageBox ("Error loading file " + filename)
+		format "[BulletMod] ERROR: Error loading file %\n" filename
 		format "FATAL ERROR: %\n" (getCurrentException())
 		throw()
 		return undefined
@@ -1901,7 +1900,7 @@ fn ImportPsaFile filename trackNum all:false =
 	-- verify for found root bone
 	if MaxBones[1] == undefined then
 	(
-		messageBox ("WARNING: Unable to find root bone \"" + Bones[1].Name + "\"\nAnimation may appear incorrectly!")
+		format "[BulletMod] WARNING: Unable to find root bone \"%\" — Animation may appear incorrectly!\n" Bones[1].Name
 	)
 
 	set coordsys world
@@ -2253,7 +2252,7 @@ rollout axAnimImportRollout "Animation Import"
 			)
 			else
 			(
-				messageBox "在选定的文件夹及其子文件夹中未找到任何PSA文件。"
+				format "[BulletMod] WARNING: 在选定的文件夹及其子文件夹中未找到任何PSA文件。\n"
 			)
 		)
 	)
