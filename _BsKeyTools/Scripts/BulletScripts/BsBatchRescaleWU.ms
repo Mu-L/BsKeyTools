@@ -18,7 +18,7 @@ if (rol_RescaleWorldUnits != undefined and rol_RescaleWorldUnits.open == true) d
 )
 --  <Start Script>
 --  Variables  --
-Global RescaleWU_ver = "1.50";
+Global RescaleWU_ver = "1.60";
 
 Global rescaleWU_sign = 0;
 Global rescaleWU_temp = 1;
@@ -177,25 +177,25 @@ function fn_RWUdone size sel dia = /* Sent after click button:OK,RescaleWU done 
 --  Start Rollout --
 rollout rol_RescaleWorldUnits ("蒙皮缩放_v" + RescaleWU_ver)
 (
-	checkbox chkBatch "是否批量处理？" pos:[10,35] width:100
-    button btnGetFiles "选择处理路径" pos:[125,30] width:120 height:25 enabled:false border:true
-    edittext edtDirPath "" pos:[0,5] fieldWidth:240 height:20 readOnly:true enabled:false
+	checkbox chkBatch "批量处理" pos:[10,35] width:72
+	dropdownList ddlFileType "" pos:[82,32] width:55 items:#("MAX","FBX") enabled:false
+    button btnGetFiles "选择处理路径" pos:[142,30] width:128 height:25 enabled:false border:true
+    edittext edtDirPath "" pos:[0,5] fieldWidth:265 height:20 readOnly:true enabled:false
 	spinner spn_scale "缩放系数" pos:[40,65] width:80 height:16 fieldWidth:50 range:[0.0001,10000,1] scale:0.01
-	-- groupBox grp_affect "影响范围" pos:[90,65] width:240 height:40
 	radioButtons rdo_affect "" pos:[145,67] labels:#("场景","所选物体") default:1 columns:1 width:220
-	button btn_ok "应用缩放" pos:[5,110] width:120 height:24
-	button btn_cancel "取消" pos:[125,110] width:120 height:24
+	button btn_ok "应用缩放" pos:[5,110] width:132 height:24
+	button btn_cancel "取消" pos:[140,110] width:132 height:24
 	label lblMe "Bullet.S" pos:[20,88] width:120 height:16
 
     local maxFiles = #()
 
     function GetFilesRecursive root pattern =
     (
-        dir_array = GetDirectories (root+"\*")
+        local dir_array = GetDirectories (root+"\*")
         for d in dir_array do
             join dir_array (GetDirectories (d+"*"))    
         
-        my_files = #()                
+        local my_files = #()                
         for f in dir_array do
             join my_files (getFiles (f + pattern))
                 
@@ -204,8 +204,15 @@ rollout rol_RescaleWorldUnits ("蒙皮缩放_v" + RescaleWU_ver)
 
 	on chkBatch changed state do 
 	(
+		ddlFileType.enabled = state
 		btnGetFiles.enabled = state
 		edtDirPath.enabled = state	
+	)
+
+	on ddlFileType selected sel do
+	(
+		maxFiles = #()
+		edtDirPath.text = ""
 	)
 
     on btnGetFiles pressed do
@@ -213,9 +220,10 @@ rollout rol_RescaleWorldUnits ("蒙皮缩放_v" + RescaleWU_ver)
         local dir = getSavePath caption:"选择目录" initialDir:(maxFilePath)
         if dir != undefined do
         (
+            local ext = if (ddlFileType.selection == 2) then ".FBX" else ".max"
             maxFiles = #()
-            maxFiles = getFiles (dir+"\*" + ".max")
-            subFiles = GetFilesRecursive dir ("*.max")
+            maxFiles = getFiles (dir + "\*" + ext)
+            local subFiles = GetFilesRecursive dir ("*" + ext)
             if subFiles.count != 0 then
             (
                 msg = "所选路径包含子文件夹\r\n\r\n"
@@ -271,28 +279,79 @@ rollout rol_RescaleWorldUnits ("蒙皮缩放_v" + RescaleWU_ver)
 		(
 			if maxFiles.count != 0 then 
 			(
-				-- 创建新的输出文件夹
 				local outputDir = edtDirPath.text + "_Rescaled"
 				if not doesFileExist outputDir do makeDir outputDir
+				local isFBX = (ddlFileType.selection == 2)
+				
+				local savedRdoState = rdo_affect.state
+				rdo_affect.state = 1
+				local failCount = 0
 				
 				for i in maxFiles where doesfileexist i do
 				(
-					resetMaxFile #noPrompt
-					loadMaxFile i useFileUnits:true quiet:true
-					fn_RWUspnSetChanged spn_scale rdo_affect
-					local iScale = rol_RescaleWorldUnits.spn_scale.value
-					fn_RWUdone spn_scale rdo_affect rol_RescaleWorldUnits;
-					--version 1.01 add bone's length.
-					for obj in objects where (classof obj == BoneGeometry and obj.children.count == 0) do
+					try
 					(
-						obj.length = obj.length*iScale;
+						resetMaxFile #noPrompt
+						
+						if isFBX then
+						(
+							FbxImporterSetParam "Mode" #merge
+							FbxImporterSetParam "Animation" true
+							FbxImporterSetParam "FillTimeline" true
+							FbxImporterSetParam "BakeAnimationLayers" false
+							FbxImporterSetParam "PointCache" false
+							importFile i #noPrompt using:FBXIMP
+						)
+						else
+						(
+							loadMaxFile i useFileUnits:true quiet:true
+						)
+						
+						rescaleWU_temp = 1
+						fn_RWUspnSetChanged spn_scale rdo_affect
+						local iScale = rol_RescaleWorldUnits.spn_scale.value
+						fn_RWUdone spn_scale rdo_affect rol_RescaleWorldUnits;
+						for obj in objects where (classof obj == BoneGeometry and obj.children.count == 0) do
+						(
+							obj.length = obj.length*iScale;
+						)
+						
+						if isFBX then
+						(
+							FBXExporterSetParam "Animation" true
+							FBXExporterSetParam "BakeAnimation" true
+							FBXExporterSetParam "BakeResampleAnimation" false
+							FBXExporterSetParam "SplitAnimationIntoTakes" "-c"
+							FBXExporterSetParam "BakeFrameStart" animationRange.start
+							FBXExporterSetParam "BakeFrameEnd" animationRange.end
+							FBXExporterSetParam "Cameras" false
+							FBXExporterSetParam "Lights" false
+							FBXExporterSetParam "EmbedTextures" false
+							FBXExporterSetParam "AxisConversionMethod" "None"
+							FBXExporterSetParam "UpAxis" "Y"
+							FBXExporterSetParam "ShowWarnings" true
+							FBXExporterSetParam "GenerateLog" false
+							FBXExporterSetParam "ASCII" false
+							FBXExporterSetParam "FileVersion" "FBX201200"
+							local newFileName = getFilenameFile i + ".FBX"
+							exportFile (outputDir + "\\" + newFileName) #noPrompt using:FBXEXP
+						)
+						else
+						(
+							local newFileName = getFilenameFile i + ".max"
+							savemaxfile (outputDir + "\\" + newFileName)
+						)
 					)
-					
-					-- 保存到新文件夹，保持原文件名
-					local newFileName = getFilenameFile i + ".max"
-					savemaxfile (outputDir + "\\" + newFileName)
+					catch
+					(
+						failCount += 1
+						format "** 处理失败: % - %\n" (getFilenameFile i) (getCurrentException())
+					)
 				)
-				messagebox ("处理完成\n文件已保存到: " + outputDir)
+				rdo_affect.state = savedRdoState
+				local resultMsg = "处理完成\n文件已保存到: " + outputDir
+				if failCount > 0 do resultMsg += "\n\n失败 " + failCount as string + " 个，详见 Listener"
+				messagebox resultMsg
 			)
 			else (messagebox "请重新添加待处理文件目录           ")
 		)
@@ -316,5 +375,5 @@ rollout rol_RescaleWorldUnits ("蒙皮缩放_v" + RescaleWU_ver)
 	)
 )
 --  End Rollout --
-createdialog rol_RescaleWorldUnits 250 140
+createdialog rol_RescaleWorldUnits 275 140
 --  <End Script 0_o! ţ���̹�>
