@@ -3,7 +3,7 @@ Unicode true
 
 ; 安装程序初始定义常量
 !define PRODUCT_NAME "BsKeyTools"
-!define PRODUCT_VERSION_NUM "1.3.5"
+!define PRODUCT_VERSION_NUM "1.3.6"
 !define PRODUCT_VERSION "_v${PRODUCT_VERSION_NUM}"
 !define PRODUCT_PUBLISHER "Bullet.S"
 !define PRODUCT_WEB_SITE "anibullet.com"
@@ -14,27 +14,28 @@ BrandingText "BsKeyTools - 动画师 K 帧工具"
 
 ; 定义Section ID
 !define SEC_MANUAL 0
-!define SEC_2026 1
-!define SEC_2025 2
-!define SEC_2024 3
-!define SEC_2023 4
-!define SEC_2022 5
-!define SEC_2021 6
-!define SEC_2020 7
-!define SEC_2019 8
-!define SEC_2018 9
-!define SEC_2017 10
-!define SEC_2016 11
-!define SEC_2015 12
-!define SEC_2014 13
-!define SEC_2013 14
-!define SEC_2012 15
-!define SEC_2011 16
-!define SEC_2010 17
-!define SEC_2009 18
-!define SEC_2008 19
-!define SEC_9 20
-!define SEC_ALL 21 ; 添加一个隐藏的Section，用于手动安装
+!define SEC_2027 1
+!define SEC_2026 2
+!define SEC_2025 3
+!define SEC_2024 4
+!define SEC_2023 5
+!define SEC_2022 6
+!define SEC_2021 7
+!define SEC_2020 8
+!define SEC_2019 9
+!define SEC_2018 10
+!define SEC_2017 11
+!define SEC_2016 12
+!define SEC_2015 13
+!define SEC_2014 14
+!define SEC_2013 15
+!define SEC_2012 16
+!define SEC_2011 17
+!define SEC_2010 18
+!define SEC_2009 19
+!define SEC_2008 20
+!define SEC_9 21
+!define SEC_ALL 22 ; 添加一个隐藏的Section，用于手动安装
 
 ; 定义变量
 var v9
@@ -57,6 +58,7 @@ var v2023
 var v2024
 var v2025
 var v2026
+var v2027
 
 var InstallMode ; 安装模式: 0=自动检测, 1=手动选择
 var MAXPATH ; 手动选择的3dsMax安装路径
@@ -136,6 +138,15 @@ Function VerifyAutoInstall
   StrCpy $R0 0 ; 计数器
   
   ; 重新设置各版本Section状态，确保界面与当前状态同步
+  ${If} $v2027 != ""
+    SectionSetText ${SEC_2027} "3dsMax 2027"
+    SectionSetFlags ${SEC_2027} 1
+    IntOp $R0 $R0 + 1
+  ${Else}
+    SectionSetText ${SEC_2027} ""
+    SectionSetFlags ${SEC_2027} 0
+  ${EndIf}
+  
   ${If} $v2026 != ""
     SectionSetText ${SEC_2026} "3dsMax 2026"
     SectionSetFlags ${SEC_2026} 1
@@ -415,6 +426,8 @@ Function SetManualMode
   DetailPrint "隐藏所有自动检测的版本"
   
   ; 隐藏所有自动版本Section
+  SectionSetText ${SEC_2027} ""
+  SectionSetFlags ${SEC_2027} 0
   SectionSetText ${SEC_2026} ""
   SectionSetFlags ${SEC_2026} 0
   SectionSetText ${SEC_2025} ""
@@ -481,6 +494,16 @@ Function SetAutoMode
   
   ; 检查每个版本，仅显示已检测到的版本
   StrCpy $R0 0 ; 计数器，用于统计检测到的版本数量
+  
+  ${If} $v2027 != ""
+    SectionSetText ${SEC_2027} "3dsMax 2027"
+    SectionSetFlags ${SEC_2027} 1
+    IntOp $R0 $R0 + 1
+    DetailPrint "已启用3dsMax 2027版本安装选项"
+  ${Else}
+    SectionSetText ${SEC_2027} ""
+    SectionSetFlags ${SEC_2027} 0
+  ${EndIf}
   
   ${If} $v2026 != ""
     SectionSetText ${SEC_2026} "3dsMax 2026"
@@ -734,6 +757,7 @@ Function CustomPathPage
   Pop $DropListHwnd
   
   ; 向下拉列表添加版本选项
+  ${NSD_CB_AddString} $DropListHwnd "3dsMax 2027"
   ${NSD_CB_AddString} $DropListHwnd "3dsMax 2026"
   ${NSD_CB_AddString} $DropListHwnd "3dsMax 2025"
   ${NSD_CB_AddString} $DropListHwnd "3dsMax 2024"
@@ -756,10 +780,10 @@ Function CustomPathPage
   ${NSD_CB_AddString} $DropListHwnd "3dsMax 9"
   
   ; 默认选择最新版本
-  ${NSD_CB_SelectString} $DropListHwnd "3dsMax 2026"
+  ${NSD_CB_SelectString} $DropListHwnd "3dsMax 2027"
   
   ; 添加说明标签
-  ${NSD_CreateLabel} 10 70 390 60 "请指定要安装的3dsMax根目录，$\r$\n$\r$\n并选择对应的3dsMax版本以安装适合该版本的插件。$\r$\n$\r$\n（比如：C:\Program Files\Autodesk\3ds Max 2026）"
+  ${NSD_CreateLabel} 10 70 390 60 "请指定要安装的3dsMax根目录，$\r$\n$\r$\n并选择对应的3dsMax版本以安装适合该版本的插件。$\r$\n$\r$\n（比如：C:\Program Files\Autodesk\3ds Max 2027）"
   Pop $0
   
   nsDialogs::Show
@@ -877,7 +901,9 @@ Function InstallVersionFiles
   SetOutPath "$R0plugins"
   
   ; 根据不同版本安装对应的插件文件
-  ${If} $R9 == "2026"
+  ${If} $R9 == "2027"
+    File /r "GhostTrails\2027\plugins\*.*"
+  ${ElseIf} $R9 == "2026"
     File /r "GhostTrails\2026\plugins\*.*"
   ${ElseIf} $R9 == "2025"
     File /r "GhostTrails\2025\plugins\*.*"
@@ -935,6 +961,17 @@ Section "-InstallSelectedVersions" ; 隐藏的安装处理Section
 SectionEnd
 
 ; 修改自动安装的版本Section，使用通用安装函数
+Section "3dsMax 2027" ${SEC_2027}
+  SectionGetFlags ${SEC_2027} $0
+  IntOp $0 $0 & ${SECTION_SELECTED}
+  ${If} $0 == ${SECTION_SELECTED}
+    ; 设置版本参数
+    StrCpy $R9 "2027"
+    StrCpy $R8 $v2027
+    Call InstallVersionFiles
+  ${EndIf}
+SectionEnd
+
 Section "3dsMax 2026" ${SEC_2026}
   SectionGetFlags ${SEC_2026} $0
   IntOp $0 $0 & ${SECTION_SELECTED}
@@ -1245,6 +1282,11 @@ StrCpy $MAXPATH ""     ; 初始化手动路径变量
 
 ; 检测所有版本的3dsMax
 ; 调用改进的检测函数
+StrCpy $R9 "2027"
+StrCpy $R8 "SOFTWARE\Autodesk\3dsMax\29.0"
+StrCpy $R7 ${SEC_2027}
+Call DetectMaxVersion
+
 StrCpy $R9 "2026"
 StrCpy $R8 "SOFTWARE\Autodesk\3dsMax\28.0"
 StrCpy $R7 ${SEC_2026}
@@ -1438,6 +1480,7 @@ SectionEnd
 
 ; 版本描述
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_2027} $v2027
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_2026} $v2026
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_2025} $v2025
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_2024} $v2024
@@ -1472,7 +1515,9 @@ Function DetectMaxVersion
   ReadRegStr $0 HKLM "$R8" "Installdir"
   
   ; 存储路径到对应的变量
-  ${If} $R9 == "2026"
+  ${If} $R9 == "2027"
+    StrCpy $v2027 $0
+  ${ElseIf} $R9 == "2026"
     StrCpy $v2026 $0
   ${ElseIf} $R9 == "2025"
     StrCpy $v2025 $0
