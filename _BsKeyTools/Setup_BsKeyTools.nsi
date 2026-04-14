@@ -1,6 +1,9 @@
 ﻿; 添加Unicode支持
 Unicode true
 
+; 使用项目内置的NSIS插件（nsProcess, INetC等），确保跨机器可编译
+!addplugindir /x86-unicode ".\NsisPlugins\x86-unicode"
+
 ; 安装程序初始定义常量
 !define PRODUCT_NAME "BsKeyTools"
 !define PRODUCT_VERSION_NUM "1.3.6"

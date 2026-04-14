@@ -1,6 +1,9 @@
 ﻿; 添加Unicode支持
 Unicode true
 
+; 使用项目内置的NSIS插件（nsProcess等），确保跨机器可编译
+!addplugindir /x86-unicode ".\NsisPlugins\x86-unicode"
+
 ; 安装程序初始定义常量
 !define PRODUCT_NAME "BsCleanVirus"
 !define PRODUCT_VERSION "_v2.1"
