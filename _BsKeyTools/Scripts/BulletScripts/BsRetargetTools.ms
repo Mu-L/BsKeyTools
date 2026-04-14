@@ -751,7 +751,7 @@ rcmenu menuBsRetarget
 )
 
 -- The rollout used for this script.
-rollout rolBsRetarget "BsRetargetTools_v5.1 （ FBX 转 BIP + 动画重定向 ）"
+rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 ）"
 (
 	local LastSubRollout = 1
 	local winW = 655  -- 窗口宽度
@@ -1347,7 +1347,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.1 （ FBX 转 BIP + 动画重定向 �
 			
 			loadMaxFile skinFile useFileUnits:true quiet:true
 			if fixNierFramerate then framerate = 60
-			(GetBipedNode 1).transform.controller.figureMode = false
+			try ((GetBipedNode 1).transform.controller.figureMode = false) catch (print "[BsRetarget] figureMode already off or cannot switch")
 
 			FbxImporterSetParam "Mode" #exmerge
 			FbxImporterSetParam "Animation" true
@@ -1538,7 +1538,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.1 （ FBX 转 BIP + 动画重定向 �
 			resetMaxFile #noPrompt
 			loadMaxFile skinFile useFileUnits:true quiet:true
 			if fixNierFramerate then framerate = 60
-			(GetBipedNode 1).transform.controller.figureMode = false
+			try ((GetBipedNode 1).transform.controller.figureMode = false) catch (print "[BsRetarget] figureMode already off or cannot switch")
 			-- (GetBipedNode 1).parent = undefined  --质心已经没动画了,不用断开父子级
 			slidertime = zeroFrame
 			LoadSaveAnimation.loadAnimation tempRootAnim $'Root' relative:false insert:false

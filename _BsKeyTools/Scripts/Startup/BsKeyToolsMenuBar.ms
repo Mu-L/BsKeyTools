@@ -209,6 +209,14 @@ fn fnCreateBsKeyToolsMenu =
         menuBsTool.addItem mItemTool -1
         
         menuMan.updateMenuBar()
+
+        try
+        (
+            local menuFile = menuMan.getMenuFile()
+            if menuFile != undefined and menuFile != "" then
+                menuMan.saveMenuFile menuFile
+        )
+        catch()
     )
     else
     (
@@ -273,17 +281,28 @@ fn fnCreateBsKeyToolsMenu =
     )
 )
 
--- 使用延迟执行来避免在Max启动或UI重载期间创建菜单导致崩溃
--- 使用单次回调，确保只在Max完全启动后才创建菜单
-if (callbacks.notificationParam() == undefined) then
+-- Max >= 27: cuiRegisterMenus 回调（已在 fnCreateBsKeyToolsMenu 内处理）
+-- Max < 27: findMenu guard + timer 延迟创建 + saveMenuFile
+-- 已知限制: 重启 Max 后首次切换主题可能崩溃（Max 内部 bug），崩溃后再次启动即恢复
+if ((maxVersion())[1] / 1000) >= 27 then
 (
-    -- 在startup执行期间，使用systemPostNew延迟创建菜单
-    callbacks.addScript #systemPostNew "fnCreateBsKeyToolsMenu(); try(callbacks.removeScripts id:#BsKeyToolsMenuInit)catch()" id:#BsKeyToolsMenuInit persistent:false
-)
-else
-(
-    -- 如果是手动执行此脚本（非startup），则立即创建
     fnCreateBsKeyToolsMenu()
+)
+else if (menuMan.findMenu "BsKeyTools") == undefined then
+(
+    try(destroydialog _rolBsKeyToolsMenuInit)catch()
+    rollout _rolBsKeyToolsMenuInit "" width:1 height:1
+    (
+        timer tmrInit interval:1000 active:true
+        on tmrInit tick do
+        (
+            tmrInit.active = false
+            try(destroydialog _rolBsKeyToolsMenuInit)catch()
+            fnCreateBsKeyToolsMenu()
+            format "[BsKeyTools] 提示: Max 2025 以下版本重启后首次切换颜色主题可能导致崩溃，崩溃后再次启动即可恢复。\n"
+        )
+    )
+    createDialog _rolBsKeyToolsMenuInit pos:[-10000,-10000] style:#(#style_toolwindow)
 )
 
 ---通用方法预加载------

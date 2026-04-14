@@ -11,25 +11,65 @@ global noesis_path
 global output_path
 global arrMotFilesLoaded
 
-rollout rolREAnimTools "RE_AnimTools_v1.6_Bullet.S" height:105 width:305
+rollout rolREAnimTools "RE_AnimTools_v2.0_Bullet.S" height:105 width:305
 (
-	local arrGamesName = #("MHWsOBT-怪物猎人荒野公测版","MHWs-怪物猎人荒野正式版","MHRise-怪物猎人崛起","MHRSunbreak-怪物猎人崛起曙光","MHS3-怪物猎人物语3体验版","Pragmata-体验版")
+	local arrGamesName = #(\
+		"MHRise-怪物猎人崛起",\
+		"MHRise SB-崛起曙光",\
+		"MHWilds OBT-荒野公测版",\
+		"MHWilds-怪物猎人荒野",\
+		"MH Stories3-物语3",\
+		"RE2-生化危机2重制版",\
+		"RE3-生化危机3重制版",\
+		"RE4-生化危机4重制版",\
+		"RE7-生化危机7",\
+		"RE8-生化危机8村庄",\
+		"RE9-生化危机9",\
+		"RE2+3 RT-光追版",\
+		"RE7 RT-光追版",\
+		"RE:Verse",\
+		"DMC5-鬼泣5",\
+		"SF6-街头霸王6",\
+		"DD2-龙之信条2",\
+		"ExoPrimal-恐龙浩劫",\
+		"DRDR-丧尸围城重制版",\
+		"逆转裁判456合集",\
+		"Pragmata"\
+	)
 
 	label lblSelectGameMode "请选择目标游戏：" pos:[12,8] width:80
 	dropdownlist ddlCurGames "" items:arrGamesName pos:[100,5] width:190
-	subrollout subRolImporter "Importer" height:820 width:280
+	subrollout subRolImporter "Importer" height:870 width:280
 	
 	fn fnRefreshMotExt selCurGameID =
 	(
 		case (selCurGameID as string) of
 		(
-			"1":motExt = ".959"
-			"2":motExt = ".992"
-			"3":motExt = ".484"
-			"4":motExt = ".528"
-			"5":motExt = ".1004"
-			"6":motExt = ".1057"
-			default:motExt = ".959"
+			-- MH 系列
+			"1":motExt  = ".484"		-- MHRise
+			"2":motExt  = ".528"		-- MHRise Sunbreak
+			"3":motExt  = ".959"		-- MHWilds OBT
+			"4":motExt  = ".992"		-- MHWilds
+			"5":motExt  = ".1004"		-- MH Stories 3
+			-- RE 系列
+			"6":motExt  = ".85"			-- RE2
+			"7":motExt  = ".99"			-- RE3
+			"8":motExt  = ".663"		-- RE4
+			"9":motExt  = ".60"			-- RE7
+			"10":motExt = ".486"		-- RE8
+			"11":motExt = ".1047"		-- RE9
+			"12":motExt = ".524"		-- RE2+3 RT
+			"13":motExt = ".524"		-- RE7 RT
+			"14":motExt = ".500"		-- RE:Verse
+			-- 其他
+			"15":motExt = ".85"			-- DMC5
+			"16":motExt = ".653"		-- SF6
+			"17":motExt = ".751"		-- DD2
+			"18":motExt = ".643"		-- ExoPrimal
+			"19":motExt = ".854"		-- DRDR
+			"20":motExt = ".750"		-- 逆转裁判456
+			"21":motExt = ".1057"		-- Pragmata
+			default:motExt = ".992"
 		)
 		motExt
 	)
@@ -38,7 +78,7 @@ rollout rolREAnimTools "RE_AnimTools_v1.6_Bullet.S" height:105 width:305
 	(
 		setdialogpos rolREAnimTools ((getdialogpos rolREAnimTools) + [400,-500])
 		if selCurGameID != undefined and selCurGameID != 0 then ddlCurGames.selection = selCurGameID
-		else selCurGameID = 2
+		else selCurGameID = 4
 		ddlCurGames.selection = selCurGameID
 		fnRefreshMotExt selCurGameID
 		-- print selCurGameID
@@ -54,13 +94,14 @@ rollout rolREAnimTools "RE_AnimTools_v1.6_Bullet.S" height:105 width:305
 
 rollout formNoesisCMD "Motlist Anim Importer"
 (
-	on formNoesisCMD rolledUp state do (if not state then rolREAnimTools.height -= 360 else rolREAnimTools.height += 360)
+	on formNoesisCMD rolledUp state do (if not state then rolREAnimTools.height -= 380 else rolREAnimTools.height += 380)
 	
 	group "Import" (
 		button btn_import "Import MHWs Animation" width:230 align:#center
 		checkbox chk_resetScene "导入时重置场景 | Reset On Import" checked:true align:#left
 		checkbox chk_legacyFBX "使用旧板FBX | Use Legacy FBX" checked:false align:#left 
 		checkbox chk_noefbxmulti "导出分离动画片断 | noefbxmulti" checked:false align:#left enabled:true
+		checkbox chk_autoLoadAll "默认导入所有动画 | Auto Load All" checked:true align:#left
 	)
 	group "Config" (
 		checkbox chk_OnlyAnim "仅导入更新动画 | Only Update Anim" checked:false align:#left
@@ -139,7 +180,8 @@ rollout formNoesisCMD "Motlist Anim Importer"
 					
 					cmd = (
 						"\"" + noesis_path + "\" ?cmode \"" + cmd + "\" \"" + fbx_path + "\"" \
-						+ " " + (if chk_legacyFBX.checked then " -fbxoldexport -fbxexportver FBX201400" else "")
+						+ (if chk_autoLoadAll.checked then " -noprompt" else "") \
+						+ (if chk_legacyFBX.checked then " -fbxoldexport -fbxexportver FBX201400" else "")
 					)
 					if chk_noefbxmulti.checked then
 					(
@@ -266,7 +308,8 @@ rollout rolMotViewer "Motlist Viewer"
 	editText edtMotlistPath "" text:"" labelOnTop:true height:20 fieldWidth:190 pos:[5,5]
 	button btnOpenMotlistPath "选择" height:20 width:35 pos:[200,5]
 	button btnRefreshFolder "刷新" height:20 width:30 pos:[235,5]
-	ListBox ltbMotlistFiles "" selection:0 height:15 width:260 pos:[5,30]
+	checkbox chkSubFolders "包含子文件夹" checked:false align:#left pos:[5,30]
+	ListBox ltbMotlistFiles "" selection:0 height:13 width:260 pos:[5,50]
 	button btnImportSel "导入或分离选中" height:25 width:125 pos:[5,235]
 	button btnConvertAll "分离列表所有" height:25 width:130 pos:[135,235]
 
@@ -320,10 +363,13 @@ rollout rolMotViewer "Motlist Viewer"
 	(
 		if (edtMotlistPath.text != undefined) and (edtMotlistPath.text != "") then 
         (
-            arrMotFilesLoaded = (rolMotViewer.GetMotFilesRecursive rolMotViewer.edtMotlistPath.text (@"*" + motExt))
+            if rolMotViewer.chkSubFolders.checked then
+				arrMotFilesLoaded = (rolMotViewer.GetMotFilesRecursive rolMotViewer.edtMotlistPath.text (@"*" + motExt))
+			else
+				arrMotFilesLoaded = getFiles (edtMotlistPath.text + @"\" + (@"*" + motExt))
 			qsort arrMotFilesLoaded rolMotViewer.fnPseudoNaturalSort
 			rolMotViewer.ltbMotlistFiles.items = for i in arrMotFilesLoaded collect ((getfilenamefile i) + motExt)
-			if arrMotFilesLoaded.count == 0 then (messagebox"请确认置顶目标游戏选择正确!                                         ")
+			if arrMotFilesLoaded.count == 0 then (messagebox"未找到动画文件，请确认置顶目标游戏选择正确!                                         ")
 			arrMotFilesLoaded
 		)
 	)
@@ -401,13 +447,16 @@ rollout rolMotViewer "Motlist Viewer"
 
 rollout FBXBatchProcessor "Bone Anim FBX Fix (荒野专用)"
 (
-	on FBXBatchProcessor rolledUp state do (if not state then rolREAnimTools.height -= 120 else rolREAnimTools.height += 120)
+	on FBXBatchProcessor rolledUp state do (if not state then rolREAnimTools.height -= 160 else rolREAnimTools.height += 160)
 
 	local fbxFiles = #()
 	local outputPath = ""
+	local rootPath = ""
 	local arrFixTarget = #("Camera", "Ground_Angle", "L_Leg_IK", "R_Leg_IK", "COG", "Hip", "root")
 
 	button btnSelectFolder "选择动画 FBX 文件夹" align:#center offset:[0,0] width:240 height:25
+	checkbox chkSubFolders "包含子文件夹" checked:false align:#left
+	checkbox chkKeepFolderStructure "保持文件夹结构" checked:false align:#left
 	button btnProcess "开始批量处理并修复帧率" align:#center width:240 height:30 enabled:false
 	progressBar pbProgress align:#center width:240 height:12 color:white
 	label lblStatus "状态：等待操作" align:#left width:220 height:20
@@ -450,7 +499,10 @@ rollout FBXBatchProcessor "Bone Anim FBX Fix (荒野专用)"
 	(
 		local dir = dotNetClass "System.IO.Directory"
 		local searchOption = dotNetClass "System.IO.SearchOption"
-		dir.GetFiles rootPath "*.fbx"
+		if chkSubFolders.checked then
+			dir.GetFiles rootPath "*.fbx" searchOption.AllDirectories
+		else
+			dir.GetFiles rootPath "*.fbx"
 	)
 	
 	fn parseFrameCount filename = 
@@ -485,7 +537,18 @@ rollout FBXBatchProcessor "Bone Anim FBX Fix (荒野专用)"
 			local outputName = newName[1]
 			outputName = substituteString outputName ".fbx" "_fixed.fbx"
 			-- outputMaxName = substituteString outputName ".fbx" "_fixed.max"
-			local finalPath = outputPath + "\\" + outputName
+			local finalDir = outputPath
+			if chkKeepFolderStructure.checked and rootPath != "" then
+			(
+				local fileDir = getFilenamePath inputFile
+				local relativePath = trimRight (substring fileDir (rootPath.count + 2) -1) "\\"
+				if relativePath != undefined and relativePath != "" then
+				(
+					finalDir = outputPath + "\\" + relativePath
+					makeDir finalDir all:true
+				)
+			)
+			local finalPath = finalDir + "\\" + outputName
 
 			FBXExporterSetParam "Animation" true
 			FBXExporterSetParam "BakeAnimation" true
@@ -506,6 +569,7 @@ rollout FBXBatchProcessor "Bone Anim FBX Fix (荒野专用)"
 		local path = getSavePath caption:"选择包含FBX文件的文件夹"
 		if path != undefined do
 		(
+			rootPath = path
 			outputPath = path + "\\Fixed"
 			makeDir outputPath
 			fbxFiles = getAllFBXFiles path
@@ -523,7 +587,7 @@ rollout FBXBatchProcessor "Bone Anim FBX Fix (荒野专用)"
 		pbProgress.value = 0
 		
 		local successCount = 0
-		if selCurGameID >= 1 and selCurGameID <= 2 then 
+		if selCurGameID == 3 or selCurGameID == 4 then 
 		(
 			for i = 1 to fbxFiles.count do
 			(

@@ -3,7 +3,7 @@
 * @Author: Bullet.S
 * @Date: 2019-09-28 11:48:53
  * @LastEditors: Bullet.S
- * @LastEditTime: 2026-02-02 11:43:55
+ * @LastEditTime: 2026-02-23 17:23:09
 * @Email: animator.bullet@foxmail.com
 */
 try(FileIn ((getDir #StartupScripts) + "\\BsKeyToolsMacro.ms"))
@@ -26,7 +26,7 @@ try (callbacks.removeScripts #filePostSave id:#BsRefreshRecentFilesSave) catch (
 try (callbacks.removeScripts #systemPostNew id:#BsRefreshRecentFilesNew) catch ()
 try (callbacks.removeScripts #systemPostReset id:#BsRefreshRecentFilesReset) catch ()
 
-global curVerBsKeyTools  = "1.3.5"
+global curVerBsKeyTools  = "1.3.6"
 global verUrlBsKeyTools  = "https://gitee.com/acebullet/BsKeyTools/raw/main/_BsKeyTools/version.dat"
 -- global oldUrlBskeyTools  = "https://gitee.com/acebullet/BsKeyTools/raw/main/_BsKeyTools/_BsKeyTools%EF%BC%88%E8%A3%85%E5%AE%8C%E9%87%8D%E5%90%AFMAX,%E8%AF%AF%E6%9D%80%E8%AF%B7%E4%BF%A1%E4%BB%BB%EF%BC%89.exe"
 -- global oldFileBsKeyTools = (getdir #temp) + "\\_BsKeyTools_Classic.exe"
@@ -171,48 +171,52 @@ global arrToolNewC1 = #(), arrToolNewC2 = #(), arrToolNewC3 = #(), arrToolNewC4 
 global arrToolsAll, arrToolsNameAll, arrMlbToolBtns = #()
 
 -----------------------------------------------------------------------------------------------------
--- 特别贡献者展示面板
+-- 特别贡献者展示面板 (从 contributors.ini 动态加载，构建时由 download_contributors.py 生成)
 -----------------------------------------------------------------------------------------------------
-rollout rolContributors "Special Thanks" width:340 height:400
+rollout rolContributors "Special Thanks" width:340 height:420
 (
-	-- 标题
 	label lblTitle "Thanks to All Contributors!" pos:[85,10]
-	
+
 	-- 代码贡献者区域
 	groupbox gbxCodeContrib " Code Contributors " pos:[10,35] width:320 height:105
 	bitmap bmpContributors width:300 height:60 pos:[20,55]
 	button btnGitHubContrib "View on GitHub" width:140 height:22 pos:[100,115] tooltip:"查看 GitHub 贡献者"
-	
+
 	-- 特别感谢区域
-	groupbox gbxSpecialThanks " Special Thanks " pos:[10,150] width:320 height:165
+	groupbox gbxSpecialThanks " Special Thanks " pos:[10,150] width:320 height:195
 	label lblThanksDesc "感谢以下个人的代码贡献与灵感支持:" pos:[20,170]
-	
-	-- 贡献者列表 (两列布局)
-	label lblC1 "- Crazyone" pos:[40,195]
-	label lblC2 "- 东见云" pos:[40,215]
-	label lblC3 "- 祥子" pos:[40,235]
-	label lblC4 "- SiChun Yuan" pos:[40,255]
-	
-	label lblC5 "- 动画大白" pos:[185,195]
-	label lblC6 "- 哈库呐玛哒哒" pos:[185,215]
-	label lblC7 "- z.ven 子墨" pos:[185,235]
-	label lblC8 "- 一方狂三" pos:[185,255]
-	
-	label lblMore "...以及所有提供反馈和建议的朋友们!" pos:[60,285]
-	
+
+	-- 预分配标签槽位 (左列 6 + 右列 6 = 最多展示 12 人)
+	label lblL1 "" pos:[40,195] width:130 align:#left
+	label lblL2 "" pos:[40,215] width:130 align:#left
+	label lblL3 "" pos:[40,235] width:130 align:#left
+	label lblL4 "" pos:[40,255] width:130 align:#left
+	label lblL5 "" pos:[40,275] width:130 align:#left
+	label lblL6 "" pos:[40,295] width:130 align:#left
+	label lblR1 "" pos:[185,195] width:130 align:#left
+	label lblR2 "" pos:[185,215] width:130 align:#left
+	label lblR3 "" pos:[185,235] width:130 align:#left
+	label lblR4 "" pos:[185,255] width:130 align:#left
+	label lblR5 "" pos:[185,275] width:130 align:#left
+	label lblR6 "" pos:[185,295] width:130 align:#left
+
+	label lblMore "...以及所有提供反馈和建议的朋友们!" pos:[60,320]
+
 	-- 底部按钮
-	groupbox gbxBottom " " pos:[10,325] width:320 height:65
-	button btnReadme "Full List" width:95 height:22 pos:[20,343] tooltip:"查看完整列表"
-	button btnContribute "Contribute" width:95 height:22 pos:[122,343] tooltip:"参与贡献"
-	button btnClose "Close" width:95 height:22 pos:[225,343] tooltip:"关闭"
-	label lblCopyright "BsKeyTools - Since 2019.11" pos:[105,370]
-	
-	-- 加载贡献者头像
+	groupbox gbxBottom " " pos:[10,350] width:320 height:65
+	button btnReadme "Full List" width:95 height:22 pos:[20,368] tooltip:"查看完整列表"
+	button btnContribute "Contribute" width:95 height:22 pos:[122,368] tooltip:"参与贡献"
+	button btnClose "Close" width:95 height:22 pos:[225,368] tooltip:"关闭"
+	label lblCopyright "BsKeyTools - Since 2019.11" pos:[105,395]
+
 	on rolContributors open do
 	(
+		local basePath = (getDir #scripts) + "\\BulletScripts\\Res\\"
+
+		-- 加载头像 BMP
 		try
 		(
-			local imgPath = (getDir #scripts) + "\\BulletScripts\\Res\\contributors.bmp"
+			local imgPath = basePath + "contributors.bmp"
 			if doesFileExist imgPath then
 			(
 				local img = openBitmap imgPath
@@ -220,33 +224,80 @@ rollout rolContributors "Special Thanks" width:340 height:400
 			)
 		)
 		catch()
+
+		-- 从 contributors.ini 读取感谢名单 (UTF-8, 通过 .NET StreamReader 兼容所有 Max 版本)
+		local names = #()
+		try
+		(
+			local iniPath = basePath + "contributors.ini"
+			if doesFileExist iniPath then
+			(
+				local encoding = (dotNetClass "System.Text.Encoding").UTF8
+				local reader = dotNetObject "System.IO.StreamReader" iniPath encoding
+				local inSection = false
+				while (reader.EndOfStream == false) do
+				(
+					local line = reader.ReadLine()
+					if line == "[Thanks]" then
+						inSection = true
+					else if inSection and line.count > 0 and line[1] == "[" then
+						inSection = false
+					else if inSection and line.count > 2 then
+					(
+						local eqPos = findString line "="
+						if eqPos != undefined and eqPos > 1 do
+						(
+							local key = substring line 1 (eqPos - 1)
+							if key != "count" do
+							(
+								local val = substring line (eqPos + 1) -1
+								if val.count > 0 do append names val
+							)
+						)
+					)
+				)
+				reader.Close()
+			)
+		)
+		catch()
+
+		-- 回退: INI 不存在或为空时使用内置默认值
+		if names.count == 0 do names = #("Crazyone", "包包", "东见云", "祥子", "SiChun Yuan", "动画大白", "哈库呐玛哒哒", "z.ven 子墨", "一方狂三", "夏奈", "虹", "CG大猫哥")
+
+		-- 按行优先顺序填充两列标签 (左→右→换行, 自然阅读顺序)
+		local leftArr  = #(lblL1, lblL2, lblL3, lblL4, lblL5, lblL6)
+		local rightArr = #(lblR1, lblR2, lblR3, lblR4, lblR5, lblR6)
+		for i = 1 to 6 do
+		(
+			leftArr[i].text = ""
+			rightArr[i].text = ""
+		)
+
+		local maxDisplay = if names.count > 12 then 12 else names.count
+		for i = 1 to maxDisplay do
+		(
+			local row = (floor ((i - 1) / 2.0)) + 1
+			if (mod i 2) == 1 then
+				leftArr[row].text = "- " + names[i]
+			else
+				rightArr[row].text = "- " + names[i]
+		)
 	)
-	
-	-- 事件处理
+
 	on bmpContributors click do
-	(
 		shellLaunch "https://github.com/AniBullet/BsKeyTools/graphs/contributors" ""
-	)
-	
+
 	on btnGitHubContrib pressed do
-	(
 		shellLaunch "https://github.com/AniBullet/BsKeyTools/graphs/contributors" ""
-	)
-	
+
 	on btnReadme pressed do
-	(
-		shellLaunch "https://github.com/AniBullet/BsKeyTools#-特别感谢" ""
-	)
-	
+		shellLaunch "https://github.com/AniBullet/BsKeyTools#-致谢" ""
+
 	on btnContribute pressed do
-	(
 		shellLaunch "https://github.com/AniBullet/BsKeyTools/blob/main/CONTRIBUTING.md" ""
-	)
-	
+
 	on btnClose pressed do
-	(
 		try(destroyDialog rolContributors)catch()
-	)
 )
 
 rollout rolCustomBtn "自定义功能按钮排序" width:660 height:240
@@ -4914,6 +4965,8 @@ rollout rolBsKeyTools "" width:355 height:250
 		iconCurStr = (fnChangeBtnElement iconCurStr)
 		iconElement = (iconPath + @"\\" + iconCurStr)
 		btnElement.image = (fnDotnetBitmap iconElement)
+		try(FileIn ((getDir #scripts) + "\\BulletScripts\\BsScriptHub.ms"))
+		catch(try(messagebox (getCurrentException()));catch();messagebox "打开 BsScriptHub.ms 失败，可能脚本错误或安装不完全，\r\n\r\n建议查看设置中的帮助或重新安装，还有问题烦请联系我...                            " beep:false title:"BsKeyTools")
 	)
 
 	on btnPrimogem mouseDown senderArg arg do

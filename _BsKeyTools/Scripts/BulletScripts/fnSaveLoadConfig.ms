@@ -107,6 +107,7 @@ struct stLoadConfigAll
 		iniWidthOpenTools = fnGetConfig iniWidthOpenTools "BsOpenToolsSet" "WidthOpenTools" (iniWidthOpenTools as string)
 		iniDesktop        = fnGetConfig iniDesktop "BsOpenToolsSet" "Desktop" (iniDesktop as string)
 		iniAutoFbxPreview = fnGetConfig iniAutoFbxPreview "BsOpenToolsSet" "AutoFbxPreview" (iniAutoFbxPreview as string)
+		iniSortMode       = fnGetConfig iniSortMode "BsOpenToolsSet" "SortMode" (iniSortMode as string)
 	),
 	fn fnLoadConfigBsRefTools =
 	(
@@ -182,6 +183,7 @@ struct stSetConfigAll
 		SetINISetting BulletConfig "BsOpenToolsSet" "WidthOpenTools" (iniWidthOpenTools as string)
 		SetINISetting BulletConfig "BsOpenToolsSet" "Desktop" (iniDesktop as string)
 		SetINISetting BulletConfig "BsOpenToolsSet" "AutoFbxPreview" (iniAutoFbxPreview as string)
+		SetINISetting BulletConfig "BsOpenToolsSet" "SortMode" (iniSortMode as string)
 	),
 	fn fnSetConfigBsRefTools =
 	(

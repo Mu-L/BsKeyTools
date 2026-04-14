@@ -1,6 +1,9 @@
 .vscode/*
 .venv/*
 
+# ActorX Importer local config (user-specific)
+ActorXImporter_BulletS.ini
+
 # Python
 *.pyc
 *.pyo

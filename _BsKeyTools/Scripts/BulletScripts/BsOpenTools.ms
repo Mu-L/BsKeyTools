@@ -19,6 +19,7 @@ Global iniSelectedID     = 1
 Global iniLikedFolder    = #()
 Global iniFilterPrefix   = #()
 Global iniAutoFbxPreview = true  -- 默认自动弹出 FBX 预览
+Global iniSortMode       = 1    -- 排序模式: 1=名称↑ 2=名称↓ 3=日期↑ 4=日期↓
 
 try(FileIn ((getDir #scripts) + "\\BulletScripts\\fnSaveLoadConfig.ms"))
 catch(messagebox "脚本安装可能不完全,建议重新安装...        " beep:false)
@@ -126,7 +127,7 @@ rollout rolAddItem "添加常用路径" width:340 height:80
 
 rollout rolBsOpenTools "" width:580 height:400
 (
-	groupbox grpMain "时光机_v1.2" \
+	groupbox grpMain "时光机_v1.3" \
 	width:570 height:395 pos:[5,0]
 	button btnClose "X" pos:[rolBsOpenTools.width - 15,0] height:15 width:15 border:false
 	editText edtBrowseFolder "" text:"" labelOnTop:false align:#right \
@@ -163,10 +164,11 @@ rollout rolBsOpenTools "" width:580 height:400
 	height:18 width:18 pos:[200,50] tooltip:"删除选中过滤词缀"
 	listBox ltbFilterPrefix "" align:#left selection:0 \
 	height:10 width:100 pos:[120,100]
-	checkbutton ckbReverse "倒序" pos:[420,50] height:18 width:40 border:true
+	dropdownList ddlSort "" pos:[410,47] width:60 items:#("名称 ↑", "名称 ↓", "日期 ↑", "日期 ↓") \
+	tooltip:"文件排序方式"
 	button btnPrevFolder "上层" tooltip:"返回上层目录，也可右击面板空白处" \
-	height:18 width:40 pos:[465,50] border:true
-	checkbutton chePreview "预览 >>" pos:[510,50] height:18 width:55 border:true tooltip:"展开预览窗口" checked:false
+	height:18 width:40 pos:[475,50] border:true
+	checkbutton chePreview "预览 >>" pos:[520,50] height:18 width:50 border:true tooltip:"展开预览窗口" checked:false
 	
 	-- 预览窗口相关UI元素
 	groupbox grpPreview "Max文件预览窗口，FBX会弹出额外预览窗（仅高版本max）" width:360 height:200 pos:[585,5] visible:false
@@ -238,6 +240,19 @@ rollout rolBsOpenTools "" width:580 height:400
 		(a > b): 1
 		)
 	)
+	fn fnSortByDateFile a b =  --按修改日期排序（文件）
+	(
+		local fiA = dotNetObject "System.IO.FileInfo" a
+		local fiB = dotNetObject "System.IO.FileInfo" b
+		fiA.LastWriteTime.CompareTo fiB.LastWriteTime
+	)
+
+	fn fnSortByDateFolder a b =  --按修改日期排序（文件夹）
+	(
+		local diA = dotNetObject "System.IO.DirectoryInfo" a
+		local diB = dotNetObject "System.IO.DirectoryInfo" b
+		diA.LastWriteTime.CompareTo diB.LastWriteTime
+	)
 -------------------------------------↑ 文件排序方法 --------------------------------------------------
 
 	Fn fnLoadRecentFileList = -------获取最近打开文件列表
@@ -300,8 +315,14 @@ rollout rolBsOpenTools "" width:580 height:400
 				(
 					append arrFolders (substring i 1 (i.count-1))
 				)
+			if ddlSort.selection >= 3 then
+				qsort arrFolders fnSortByDateFolder
+			else
 				qsort arrFolders fnPseudoNaturalSort
-				(arrFilesBeforeFilter = getFiles (strFilesDir + "\\*" + type))
+			(arrFilesBeforeFilter = getFiles (strFilesDir + "\\*" + type))
+			if ddlSort.selection >= 3 then
+				qsort arrFilesBeforeFilter fnSortByDateFile
+			else
 				qsort arrFilesBeforeFilter fnPseudoNaturalSort
 				if (filename != undefined) then
 				(
@@ -329,7 +350,8 @@ rollout rolBsOpenTools "" width:580 height:400
 						(append arrFilesName ("📄 " + (getFilenameFile c) + type))
 					)
 				)
-				if rolBsOpenTools.ckbReverse.state == true then 
+				local isReversed = (ddlSort.selection == 2 or ddlSort.selection == 4)
+				if isReversed then 
 				(
 					arrAll = (arrFoldersName + arrFilesName)
 					tempArray = for i = arrAll.count to 1 by -1 collect arrAll[i]
@@ -748,7 +770,7 @@ rollout rolBsOpenTools "" width:580 height:400
 		if selectedID == 0 then return undefined
 		
 		local idNew = selectedID
-		if ckbReverse.state == true then 
+		if (ddlSort.selection == 2 or ddlSort.selection == 4) then 
 		(
 			idNew = (arrFiles.count + arrFolders.count) + 1 - selectedID
 		)
@@ -791,6 +813,7 @@ rollout rolBsOpenTools "" width:580 height:400
 		
 		stLoadConfigAll.fnLoadConfigBsOpenTools ()  ---------------脚本位置等赋值
 		stSetConfigAll.fnSetConfigBsOpenTools ()  ----------------保存位置信息到ini文件	
+		ddlSort.selection = iniSortMode
 		fnRefLikedFolderItems ()
 		fnRefreshAddress ()
 		fnRefreshList maxFilePath type: arrFileType[rdoFileType.state]
@@ -807,7 +830,8 @@ rollout rolBsOpenTools "" width:580 height:400
 		iniPosOpenTools   = (GetDialogPos rolBsOpenTools)
 		iniSelectedID     = rolBsOpenTools.ltbLikedFolder.selection
 		iniWidthOpenTools = rolBsOpenTools.width
-		iniAutoFbxPreview = ckbAutoFbxPreview.checked  -- 保存 FBX 自动预览设置
+		iniAutoFbxPreview = ckbAutoFbxPreview.checked
+		iniSortMode       = ddlSort.selection
 		stSetConfigAll.fnSetConfigBsOpenTools ()
 	)
 
@@ -1046,7 +1070,7 @@ rollout rolBsOpenTools "" width:580 height:400
 		if (doesDirectoryExist edtBrowseFolder.text) then
 		(
 			idNew = id
-			if rolBsOpenTools.ckbReverse.state == true then 
+			if (ddlSort.selection == 2 or ddlSort.selection == 4) then 
 			(
 				idNew = (arrFiles.count + arrFolders.count) + 1 - id
 			)
@@ -1208,12 +1232,11 @@ rollout rolBsOpenTools "" width:580 height:400
 		fnRefreshList edtBrowseFolder.text filename:textFolder type:arrFileType[rdoFileType.state]
 	)
 
-	on ckbReverse changed state do 
+	on ddlSort selected sel do
 	(
-		rolBsOpenTools.fnRefreshList edtBrowseFolder.text type:arrFileType[rdoFileType.state]
-		arrAll = (arrFoldersName + arrFilesName)
-		id = rolBsOpenTools.ltbFilesList.selection
-		rolBsOpenTools.ltbFilesList.selection = arrAll.count + 1 - id
+		iniSortMode = sel
+		fnRefreshList edtBrowseFolder.text type:arrFileType[rdoFileType.state]
+		stSetConfigAll.fnSetConfigBsOpenTools ()
 	)
 
 	-- 预览相关事件

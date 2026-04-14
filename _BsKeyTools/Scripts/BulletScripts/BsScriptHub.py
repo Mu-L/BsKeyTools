@@ -85,7 +85,30 @@ def url_quote(s):
         # Python 3: 直接处理
         return _quote(str(s), safe='')
 
-VERSION = "1.3"
+def get_short_path(long_path):
+    """Convert path to Windows 8.3 short path format to handle Unicode paths in MaxScript
+    MaxScript has issues with Unicode (Chinese) characters in file paths.
+    This function converts to short path format which only uses ASCII characters.
+    """
+    if sys.platform != 'win32':
+        return long_path
+
+    import ctypes
+    GetShortPathNameW = ctypes.windll.kernel32.GetShortPathNameW
+    GetShortPathNameW.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint32]
+    GetShortPathNameW.restype = ctypes.c_uint32
+
+    buffer_size = 260
+    buffer = ctypes.create_unicode_buffer(buffer_size)
+    result = GetShortPathNameW(long_path, buffer, buffer_size)
+
+    if result == 0 or result > buffer_size:
+        # Fallback to original path if conversion fails
+        return long_path
+
+    return buffer.value
+
+VERSION = "1.4"
 
 # GitHub 仓库配置
 GITHUB_OWNER = "AnimatorBullet"
@@ -293,6 +316,101 @@ class NetworkWorker(QThread):
             self.finished.emit(None, "[网络] 连接失败: %s" % str(e.reason))
         except Exception as e:
             self.finished.emit(None, "[异常] %s" % str(e))
+
+
+class DirectoryDownloadWorker(QThread):
+    """Directory download worker - recursively downloads all files in a directory"""
+    finished = Signal(bool, str)  # success, error_message
+    progress = Signal(int, int, str)  # current, total, current_file
+
+    def __init__(self, api_url, raw_base_url, local_base_dir, branch, parent=None):
+        super(DirectoryDownloadWorker, self).__init__(parent)
+        self.api_url = api_url
+        self.raw_base_url = raw_base_url
+        self.local_base_dir = local_base_dir
+        self.branch = branch
+        self.files_to_download = []
+        self.downloaded_count = 0
+        self.total_count = 0
+
+    # region Directory Listing
+    def _fetch_json(self, url):
+        """Fetch JSON from URL"""
+        req = Request(url)
+        req.add_header('User-Agent', 'BsScriptHub/1.0')
+        req.add_header('Accept', 'application/vnd.github.v3+json')
+        response = urlopen(req, timeout=30)
+        return json.loads(response.read().decode('utf-8'))
+
+    def _list_directory_recursive(self, api_url, relative_path=""):
+        """Recursively list all files in directory via GitHub API"""
+        items = self._fetch_json(api_url)
+        for item in items:
+            item_name = item.get("name", "")
+            item_type = item.get("type", "")
+            item_path = "%s/%s" % (relative_path, item_name) if relative_path else item_name
+
+            if item_type == "file":
+                download_url = item.get("download_url", "")
+                if download_url:
+                    self.files_to_download.append({
+                        "relative_path": item_path,
+                        "download_url": download_url
+                    })
+            elif item_type == "dir":
+                # Recursively list subdirectory
+                sub_url = item.get("url", "")
+                if sub_url:
+                    self._list_directory_recursive(sub_url, item_path)
+    # endregion
+
+    # region File Download
+    def _download_file(self, download_url, local_path):
+        """Download a single file"""
+        makedirs_safe(os.path.dirname(local_path))
+        req = Request(download_url)
+        req.add_header('User-Agent', 'BsScriptHub/1.0')
+        response = urlopen(req, timeout=30)
+        data = response.read()
+        with open(local_path, 'wb') as f:
+            f.write(data)
+    # endregion
+
+    # region Main Run
+    def run(self):
+        """Main execution"""
+        try:
+            # Step 1: List all files recursively
+            self._list_directory_recursive(self.api_url)
+            self.total_count = len(self.files_to_download)
+
+            if self.total_count == 0:
+                self.finished.emit(False, "Directory is empty or not found")
+                return
+
+            # Step 2: Download each file
+            for file_info in self.files_to_download:
+                relative_path = file_info["relative_path"]
+                download_url = file_info["download_url"]
+                local_path = os.path.join(self.local_base_dir, relative_path.replace('/', os.sep))
+
+                self.progress.emit(self.downloaded_count + 1, self.total_count, relative_path)
+                self._download_file(download_url, local_path)
+                self.downloaded_count += 1
+
+            self.finished.emit(True, "")
+        except HTTPError as e:
+            if e.code == 404:
+                self.finished.emit(False, "[404] Directory not found")
+            elif e.code == 403:
+                self.finished.emit(False, "[403] API rate limit exceeded, try again later")
+            else:
+                self.finished.emit(False, "[%d] HTTP Error" % e.code)
+        except URLError as e:
+            self.finished.emit(False, "[Network] Connection failed: %s" % str(e.reason))
+        except Exception as e:
+            self.finished.emit(False, "[Error] %s" % str(e))
+    # endregion
 
 
 class AboutDialog(QDialog):
@@ -1672,7 +1790,11 @@ class BsScriptHub(QDialog):
     def _show_about(self):
         """显示关于对话框"""
         dialog = AboutDialog(self, VERSION, self.current_branch)
-        dialog.exec_() if hasattr(dialog, 'exec_') else dialog.exec()
+        # Python 2.7: exec is a keyword, use exec_() or getattr
+        if hasattr(dialog, 'exec_'):
+            dialog.exec_()
+        else:
+            getattr(dialog, 'exec')()
     
     def _toggle_branch(self):
         """切换分支"""
@@ -2515,87 +2637,200 @@ class BsScriptHub(QDialog):
         )
         self.preview_label.setPixmap(scaled)
     
+    # region Script Path Helpers
+    def _is_directory_script(self, script_data):
+        """Check if script is a directory type (contains multiple files)
+        Directory scripts have path ending with .ms/.mse but the path contains subdirectory
+        e.g. 'BulletScripts/Quote/final_auto_animator/autoAnim_main.ms'
+        """
+        script_file = script_data.get("script", "")
+        if not script_file:
+            return False
+
+        # Check if path has directory structure (more than just filename)
+        # e.g. 'folder/subfolder/file.ms' has depth > 1
+        if script_file.startswith("BulletScripts/"):
+            # Extract path after 'BulletScripts/Quote/'
+            parts = script_file.split("/")
+            # BulletScripts/Quote/folder/file.ms -> folder is directory
+            # BulletScripts/Quote/file.ms -> single file
+            if len(parts) > 3:  # Has subdirectory
+                return True
+        return False
+
+    def _get_directory_entry_file(self, script_data):
+        """Get the entry file name for directory type scripts
+        e.g. 'BulletScripts/Quote/final_auto_animator/autoAnim_main.ms' -> 'autoAnim_main.ms'
+        """
+        script_file = script_data.get("script", "")
+        return os.path.basename(script_file)
+
+    def _get_directory_name(self, script_data):
+        """Get directory name for directory type scripts
+        e.g. 'BulletScripts/Quote/final_auto_animator/autoAnim_main.ms' -> 'final_auto_animator'
+        """
+        script_file = script_data.get("script", "")
+        # Get parent directory of the entry file
+        return os.path.basename(os.path.dirname(script_file))
+
     def _get_script_remote_path(self, script_data):
         """获取脚本的远程路径
         如果 script 以 'BulletScripts/' 开头，从源脚本路径获取
         否则从 BsScriptHub 分类目录获取
         """
         script_file = script_data.get("script", "")
-        
+
         # 包装脚本：script 以 'BulletScripts/' 开头
         if script_file.startswith("BulletScripts/"):
             return "_BsKeyTools/Scripts/%s" % script_file
-        
+
         # 真实脚本：从 BsScriptHub 目录获取
         category = script_data.get("category", "未分类")
         return "%s/%s/%s" % (SCRIPTS_PATH, category, script_file)
-    
+
+    def _get_directory_remote_path(self, script_data):
+        """Get remote directory path for directory type scripts
+        e.g. 'BulletScripts/Quote/final_auto_animator/autoAnim_main.ms'
+             -> '_BsKeyTools/Scripts/BulletScripts/Quote/final_auto_animator'
+        """
+        script_file = script_data.get("script", "")
+        if script_file.startswith("BulletScripts/"):
+            # Get directory part (remove entry file)
+            dir_path = os.path.dirname(script_file)
+            return "_BsKeyTools/Scripts/%s" % dir_path
+        return ""
+
     def _get_script_local_path(self, script_data):
         """获取脚本的本地缓存路径
         包装脚本缓存源脚本文件名，真实脚本缓存自己
+        目录类型脚本返回入口文件的完整路径
         """
         script_file = script_data.get("script", "")
         category = script_data.get("category", "未分类")
-        
+
         # 包装脚本：提取源脚本文件名
         if script_file.startswith("BulletScripts/"):
-            source_filename = os.path.basename(script_file)
-            return os.path.join(self.local_cache_dir, category, source_filename)
-        
+            # Directory type script: keep directory structure
+            if self._is_directory_script(script_data):
+                dir_name = self._get_directory_name(script_data)
+                entry_file = self._get_directory_entry_file(script_data)
+                return os.path.join(self.local_cache_dir, category, dir_name, entry_file)
+            else:
+                source_filename = os.path.basename(script_file)
+                return os.path.join(self.local_cache_dir, category, source_filename)
+
         # 真实脚本：使用原始文件名
         return os.path.join(self.local_cache_dir, category, script_file)
+
+    def _get_directory_local_path(self, script_data):
+        """Get local directory path for directory type scripts"""
+        category = script_data.get("category", "未分类")
+        dir_name = self._get_directory_name(script_data)
+        return os.path.join(self.local_cache_dir, category, dir_name)
+    # endregion
     
     def _run_script(self):
         """运行脚本"""
         if not self.current_script:
             return
-        
+
         script_file = self.current_script.get("script", "")
         if not script_file:
             QMessageBox.warning(self, "错误", "脚本文件未指定")
             return
-        
+
         # 先检查本地缓存是否已有脚本
         local_path = self._get_script_local_path(self.current_script)
         if os.path.exists(local_path):
             # 本地已有，直接运行
             self._execute_script(local_path)
             return
-        
+
         # 本地没有，需要下载
-        self.status_label.setText("正在下载脚本...")
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setRange(0, 0)
-        
-        # 下载脚本（自动识别包装脚本或真实脚本）
-        remote_path = self._get_script_remote_path(self.current_script)
-        url = self._get_github_url(remote_path)
-        worker = NetworkWorker(url)
-        worker.finished.connect(lambda d, e: self._on_script_downloaded(d, e, self.current_script, True))
-        self.workers.append(worker)
-        worker.start()
-    
+        self._start_script_download(self.current_script, run_after=True)
+
     def _download_script(self):
         """下载脚本到本地"""
         if not self.current_script:
             return
-        
+
         script_file = self.current_script.get("script", "")
         if not script_file:
             QMessageBox.warning(self, "错误", "脚本文件未指定")
             return
-        
+
+        self._start_script_download(self.current_script, run_after=False)
+
+    def _start_script_download(self, script_data, run_after=False):
+        """Start downloading script (single file or directory)"""
         self.status_label.setText("正在下载脚本...")
         self.progress_bar.setVisible(True)
         self.progress_bar.setRange(0, 0)
-        
-        # 下载脚本（自动识别包装脚本或真实脚本）
-        remote_path = self._get_script_remote_path(self.current_script)
-        url = self._get_github_url(remote_path)
-        worker = NetworkWorker(url)
-        worker.finished.connect(lambda d, e: self._on_script_downloaded(d, e, self.current_script, False))
+
+        # Check if this is a directory type script
+        if self._is_directory_script(script_data):
+            self._start_directory_download(script_data, run_after)
+        else:
+            # Single file download
+            remote_path = self._get_script_remote_path(script_data)
+            url = self._get_github_url(remote_path)
+            worker = NetworkWorker(url)
+            worker.finished.connect(lambda d, e: self._on_script_downloaded(d, e, script_data, run_after))
+            self.workers.append(worker)
+            worker.start()
+
+    # region Directory Download
+    def _start_directory_download(self, script_data, run_after=False):
+        """Start downloading a directory type script"""
+        dir_remote_path = self._get_directory_remote_path(script_data)
+        local_dir = self._get_directory_local_path(script_data)
+
+        # Build GitHub API URL for directory listing
+        encoded_path = "/".join(url_quote(p) for p in dir_remote_path.split("/"))
+        api_url = "%s/%s?ref=%s" % (GITHUB_API_BASE, encoded_path, self.current_branch)
+        raw_base = "%s/%s" % (GITHUB_REPO_BASE, self.current_branch)
+
+        self.status_label.setText("正在获取目录内容...")
+
+        worker = DirectoryDownloadWorker(api_url, raw_base, local_dir, self.current_branch)
+        worker.progress.connect(self._on_directory_download_progress)
+        worker.finished.connect(lambda ok, err: self._on_directory_downloaded(ok, err, script_data, run_after))
         self.workers.append(worker)
         worker.start()
+
+    def _on_directory_download_progress(self, current, total, filename):
+        """Directory download progress callback"""
+        self.progress_bar.setRange(0, total)
+        self.progress_bar.setValue(current)
+        self.status_label.setText("下载中 (%d/%d): %s" % (current, total, filename))
+
+    def _on_directory_downloaded(self, success, error, script_data, run_after):
+        """Directory download completed callback"""
+        self.progress_bar.setVisible(False)
+
+        if not success:
+            self.status_label.setText("下载失败: " + error)
+            QMessageBox.warning(self, "下载失败", error)
+            return
+
+        # Update version record
+        script_name = script_data.get("name", "")
+        script_version = script_data.get("version", "1.0.0")
+        if script_name:
+            self._update_script_version(script_name, script_version)
+            if self.current_script and self.current_script.get("name") == script_name:
+                self._on_script_selected(self.current_script)
+
+        if run_after:
+            local_path = self._get_script_local_path(script_data)
+            self.status_label.setText("正在执行脚本...")
+            self._execute_script(local_path)
+        else:
+            dir_name = self._get_directory_name(script_data)
+            self.status_label.setText("目录已下载: " + dir_name)
+            local_dir = self._get_directory_local_path(script_data)
+            QMessageBox.information(self, "下载完成", "脚本目录已保存到:\n" + local_dir)
+    # endregion
     
     def _on_script_downloaded(self, data, error, script_data, run_after=False):
         """脚本下载完成"""
@@ -2638,9 +2873,25 @@ class BsScriptHub(QDialog):
             self.status_label.setText("非 3ds Max 环境，无法执行脚本")
             QMessageBox.information(self, "提示", "请在 3ds Max 中运行此脚本")
             return
-        
+
+        # Verify file exists before conversion
+        if not os.path.exists(script_path):
+            self.status_label.setText("执行失败: 文件不存在")
+            QMessageBox.warning(self, "执行失败", "脚本文件不存在:\n" + script_path)
+            return
+
+        # Convert to short path to handle Unicode (Chinese) characters in path
+        # MaxScript has issues with non-ASCII characters in file paths
+        script_path = get_short_path(script_path)
+
+        # Normalize path for MaxScript (use forward slashes)
+        script_path = script_path.replace('\\', '/')
+
         try:
             ext = os.path.splitext(script_path)[1].lower()
+            # Print debug info to Max listener
+            print("[BsScriptHub] Executing script: %s" % script_path)
+
             if ext in ['.ms', '.mse', '.mcr', '.mzp']:
                 # MaxScript 脚本
                 rt.fileIn(script_path)
@@ -2652,8 +2903,34 @@ class BsScriptHub(QDialog):
             else:
                 self.status_label.setText("不支持的脚本格式: " + ext)
         except Exception as e:
-            self.status_label.setText("执行失败: " + str(e))
-            QMessageBox.warning(self, "执行失败", str(e))
+            # Handle Unicode encoding issues in exception messages
+            error_msg = self._safe_exception_str(e)
+            # Also print to Max listener for debugging
+            print("[BsScriptHub] Execution error: %s" % error_msg)
+            print("[BsScriptHub] Script path was: %s" % script_path)
+            self.status_label.setText("执行失败: " + error_msg)
+            QMessageBox.warning(self, "执行失败", error_msg + "\n\n脚本路径:\n" + script_path)
+
+    def _safe_exception_str(self, e):
+        """Safely convert exception to string, handling Unicode issues"""
+        try:
+            # Try normal string conversion first
+            msg = str(e)
+            # Test if it can be encoded (catch issues early)
+            msg.encode('utf-8')
+            return msg
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            # Fallback: use repr() which is always safe
+            try:
+                return repr(e)
+            except Exception:
+                return "Unknown error (encoding issue)"
+        except Exception:
+            # Last resort
+            try:
+                return repr(e)
+            except Exception:
+                return "Unknown error"
     
     def _open_github(self):
         """打开 GitHub 源码页面（定位到具体脚本文件）"""

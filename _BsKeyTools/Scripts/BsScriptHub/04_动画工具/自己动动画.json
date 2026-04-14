@@ -1,0 +1,25 @@
+{
+    "name": "自己动动画",
+    "version": "2.0.0",
+    "description": "骨骼链程序化次级动画工具（自己动）\n\n用于创建尾巴、头发、触手等骨骼链的自动动画效果。\n\n功能特点：\n- 一键创建控制器、层级和表达式\n- 正弦波表达式驱动动画\n- Spline权重曲线控制振幅分布\n- 4层层级系统(Wave/Master/Copy定位器)\n- 支持X/Y/Z轴动画\n\n使用方法：\n1. 创建骨骼链(建议3-10根)\n2. 选择所有骨骼\n3. 点击^O^按钮一键生成动画",
+    "author": "Auto Animation Tool Team",
+    "optimizer": "东见云",
+    "modified_date": "",
+    "keywords": [
+        "动画",
+        "次级动画",
+        "骨骼链",
+        "尾巴",
+        "头发",
+        "触手",
+        "程序化",
+        "正弦波",
+        "自己动",
+        "表达式"
+    ],
+    "preview": "",
+    "script": "BulletScripts/Quote/final_auto_animator/autoAnim_main.ms",
+    "url": "",
+    "tutorial": ""
+}
+

@@ -191,6 +191,25 @@
         "category": "04_动画工具"
       },
       {
+        "name": "bip批处理",
+        "version": "1.1.0",
+        "description": "1. 递归扫描文件夹，按关键词过滤 MAX 文件（自动排除 *skin.max）\n2. 批量导出 Biped 动画为 BIP 文件（支持滑动关键点转自由关键点）\n3. 批量导入 BIP 动画到蒙皮模板，另存为新的 MAX 文件\n4. 支持自定义 BIP 源文件夹、手动添加/删除文件、右键重置导出路径等",
+        "author": "CG大猫哥",
+        "optimizer": "",
+        "modified_date": "2026-02-23",
+        "keywords": [
+          "bip",
+          "批处理",
+          "导出",
+          "导入"
+        ],
+        "preview": "",
+        "script": "bip批处理.ms",
+        "url": "https://space.bilibili.com/603091?spm_id_from=333.1007.0.0",
+        "tutorial": "https://space.bilibili.com/603091?spm_id_from=333.1007.0.0",
+        "category": "04_动画工具"
+      },
+      {
         "name": "专业轨迹控制",
         "version": "1.0",
         "description": "专业级轨迹控制手柄，精确调整运动路径",
@@ -305,6 +324,31 @@
         "category": "04_动画工具"
       },
       {
+        "name": "自己动动画",
+        "version": "2.0.0",
+        "description": "骨骼链程序化次级动画工具（自己动）\n\n用于创建尾巴、头发、触手等骨骼链的自动动画效果。\n\n功能特点：\n- 一键创建控制器、层级和表达式\n- 正弦波表达式驱动动画\n- Spline权重曲线控制振幅分布\n- 4层层级系统(Wave/Master/Copy定位器)\n- 支持X/Y/Z轴动画\n\n使用方法：\n1. 创建骨骼链(建议3-10根)\n2. 选择所有骨骼\n3. 点击^O^按钮一键生成动画",
+        "author": "Auto Animation Tool Team",
+        "optimizer": "东见云",
+        "modified_date": "2026-02-18",
+        "keywords": [
+          "动画",
+          "次级动画",
+          "骨骼链",
+          "尾巴",
+          "头发",
+          "触手",
+          "程序化",
+          "正弦波",
+          "自己动",
+          "表达式"
+        ],
+        "preview": "",
+        "script": "BulletScripts/Quote/final_auto_animator/autoAnim_main.ms",
+        "url": "",
+        "tutorial": "",
+        "category": "04_动画工具"
+      },
+      {
         "name": "补间动画工具",
         "version": "1.0",
         "description": "在关键帧之间快速创建补间动画，支持多种缓动曲线",
@@ -329,7 +373,7 @@
         "description": "可视化编辑运动轨迹，支持轨迹修改和平滑",
         "author": "未知",
         "optimizer": "Bullet.S",
-        "modified_date": "2026-01-17",
+        "modified_date": "2026-02-10",
         "keywords": [
           "动画",
           "轨迹",
@@ -368,7 +412,7 @@
         "description": "尝试检查蒙皮中的飞点",
         "author": "虹",
         "optimizer": "",
-        "modified_date": "2026-01-30",
+        "modified_date": "2026-02-27",
         "keywords": [
           "绑定",
           "飞点"
@@ -1116,7 +1160,7 @@
         "description": "ActorX 模型(psk)和动画(psa)导入工具\n\n支持导入 Unreal Engine 导出的 ActorX 格式文件，包括模型网格和骨骼动画。\n\n功能特性：\n- 支持 PSK/PSA 格式\n- 支持顶点色导入\n- 支持 PNG 贴图\n- 支持批量导入",
         "author": "Gildor",
         "optimizer": "Bullet.S",
-        "modified_date": "2025-12-25",
+        "modified_date": "2026-03-23",
         "keywords": [
           "ActorX",
           "PSK",
@@ -1155,7 +1199,7 @@
         "description": "ActorX 批量转换工具\n\n将 PSK/PSA 文件批量转换为 FBX 格式。\n\n功能特性：\n- 支持批量转换\n- 支持多动画合并为单个 FBX\n- 支持子文件夹递归处理",
         "author": "Gildor",
         "optimizer": "Bullet.S",
-        "modified_date": "2025-12-25",
+        "modified_date": "2026-03-23",
         "keywords": [
           "ActorX",
           "FBX",
@@ -1207,11 +1251,11 @@
       },
       {
         "name": "RE引擎动画工具",
-        "version": "1.6",
-        "description": "更新 MH Stories3 和 Pragmata 动作支持\n\nRE Engine 游戏动画导入工具\n\n支持 Capcom RE 引擎游戏的动画文件导入。\n\n支持游戏：\n- 怪物猎人荒野公测版\n- 怪物猎人荒野正式版\n- 怪物猎人崛起\n- 怪物猎人崛起曙光\n- 怪物猎人物语3体验版\n- Pragmata体验版\n\n需要配合 Noesis 使用。",
+        "version": "2.0",
+        "description": "更新支持RE更多游戏的动画导入\n\nRE Engine 游戏动画导入工具\n\n支持 Capcom RE 引擎游戏的动画文件导入。\n\n支持游戏：\n- 怪物猎人荒野公测版\n- 怪物猎人荒野正式版\n- 怪物猎人崛起\n- 怪物猎人崛起曙光\n- 怪物猎人物语3体验版\n- Pragmata体验版\n- Resident Evil 9\n\n需要配合 Noesis 使用。",
         "author": "Bullet.S",
         "optimizer": "",
-        "modified_date": "2026-02-09",
+        "modified_date": "2026-02-27",
         "keywords": [
           "RE引擎",
           "怪物猎人",

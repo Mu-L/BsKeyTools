@@ -8,7 +8,15 @@
 
  Web page:	http://www.gildor.org/projects/unactorx
 
+ ============================================================
+  [BulletMod] Modified by BulletS Team
+  - auto unique-name: skip overwrite, append _001 / _002 ...
+ ============================================================
+
  Revision History:
+
+	[BulletMod] v1.07-bullet.1
+	- added auto unique-name on export to avoid overwriting existing files
 
 	06.12.2017 v1.07
 	- renamed "recurse" option to "look in subfolders" to be less confising to new users
@@ -65,12 +73,12 @@ fn VerifyAXI =
 (
 	if (g_axImporterVersion == undefined) then
 	(
-		messageBox "ActorX Importer is not loaded!"
+		format "[BulletMod] ERROR: ActorX Importer is not loaded!\n"
 		return false
 	)
 	if (g_axImporterVersion < 133) then
 	(
-		messageBox "Your ActorX Importer script is too old, please update!"
+		format "[BulletMod] ERROR: ActorX Importer script is too old, please update!\n"
 		return false
 	)
 	return true
@@ -80,6 +88,10 @@ fn VerifyAXI =
 -- configure FBX exporter
 fn SetupFBX =
 (
+	-- [BulletMod] Always suppress FBX warning dialogs regardless of settings mode
+	pluginManager.loadClass FBXEXP
+	FbxExporterSetParam "ShowWarnings" false
+
 	if g_useDefaultFBXSettings then return undefined
 
 	-- http://www.the-area.com/forum/autodesk-fbx/fbx-plug-ins-import-export-discussions/maxscript-export-dialog-properties/
@@ -134,23 +146,43 @@ fn GetExportSubDir =
 )
 
 
+-- [BulletMod] Return a non-colliding path by appending _001, _002 … when the file already exists.
+fn MakeUniqueName basePath ext =
+(
+	local fullPath = basePath + ext
+	if not (doesFileExist fullPath) then return basePath
+
+	local idx = 1
+	local candidate = basePath + "_" + (formattedPrint idx format:"03d")
+	while (doesFileExist (candidate + ext)) do
+	(
+		idx += 1
+		candidate = basePath + "_" + (formattedPrint idx format:"03d")
+	)
+	format "[BulletMod] File exists, renamed: % -> %\n" (filenameFromPath fullPath) (filenameFromPath (candidate + ext))
+	return candidate
+)
+
 fn SaveAXFile filename =
 (
 	if (g_outFormat == 1) then
 	(
 		-- FBX
+		filename = MakeUniqueName filename ".fbx"
 		exportFile filename #noPrompt using:FBXEXP
 		return undefined
 	)
 	if (g_outFormat == 2) then
 	(
 		-- ASE
+		filename = MakeUniqueName filename ".ase"
 		exportFile (filename + ".ase") #noPrompt
 		return undefined
 	)
 	if (g_outFormat == 3) then
 	(
 		-- MAX
+		filename = MakeUniqueName filename ".max"
 		saveMaxFile filename
 		return undefined
 	)
@@ -164,13 +196,13 @@ fn ExportFbxAnim =
 	bones = FindAllBones()
 	if (bones.count == 0) then
 	(
-		messageBox "Mesh is not loaded!"
+		format "[BulletMod] ERROR: Mesh is not loaded!\n"
 		return undefined
 	)
 
 	if (AnimEntries.count == 0) then
 	(
-		messageBox "AnimSet is not loaded!"
+		format "[BulletMod] ERROR: AnimSet is not loaded!\n"
 		return undefined
 	)
 
@@ -270,7 +302,7 @@ fn ExportFbxMeshes path recurse =
 rollout fbxExportRollout "ActorX Batch Export"
 (
 	-- copyright label
-	label     Lbl1 "Version 1.07"
+	label     Lbl1 "Version 1.07-bullet.1  [BulletMod]"
 	label     Lbl2 "\xA9 2010-2022 Konstantin Nosov (Gildor)"
 	hyperlink Lbl3 "http://www.gildor.org/" \
 					address:"http://www.gildor.org/projects/unactorx" align:#center \
