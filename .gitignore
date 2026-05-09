@@ -1,5 +1,6 @@
 .vscode/*
 .venv/*
+.claude/
 
 # ActorX Importer local config (user-specific)
 ActorXImporter_BulletS.ini
