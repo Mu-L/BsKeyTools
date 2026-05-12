@@ -131,7 +131,7 @@ struct signature_log (
 	struct signature_worm_3dsmax_shadu (
 		name = "[Worm.3dsmax.ShaDu]",
 		signature = (substituteString (getFileNameFile (getThisScriptFileName())) "." "_"),				
-		detect_events = #(#filePostOpen, #systemPostReset, #filePostMerge, #postImport),
+		detect_events = #(#filePostOpen, #systemPostReset, #filePostMerge, #postImport, #filePreSave),
 		remove_ca = #("shaduA", "shaduB"),
 		remove_events = #(#SHADU,#myTools),
 		remove_globals = #("shaduA","shaduB"),
