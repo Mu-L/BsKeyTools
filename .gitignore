@@ -1,4 +1,7 @@
 .vscode/*
+!.vscode/tasks.json
+!.vscode/settings.json
+!.vscode/build_nsi.ps1
 .venv/*
 .claude/
 
