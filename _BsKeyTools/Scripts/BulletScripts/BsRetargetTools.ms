@@ -11,173 +11,88 @@
 -- 2022.05
 
 try (destroyDialog rolBsRetarget) catch()
--- try (destroyDialog choose_item_rollout) catch() -- REMOVED: choose_item_rollout does not exist
+try (destroyDialog choose_item_rollout) catch()
 try (destroyDialog rolHelpDialog) catch()
 
 global rolBsRetarget
 global rolHelpDialog
 
--- ====== SECTION 1: DATA TABLES & STRUCTS ======
-
 global boneNames = #(
-	-- ========== 脊椎 / 头 ==========
-	"Bip001",                --[1]  质心
-	"Pelvis",                --[2]  骨盆
-	"Spine",                 --[3]  脊椎
-	"Spine1",                --[4]  脊椎1
-	"[可选]Spine2",          --[5]  脊椎2
-	"[可选]Spine3",          --[6]  脊椎3
-	"[可选]Spine4",          --[7]  脊椎4
-	"Neck",                  --[8]  颈
-	"[可选]Neck1",           --[9]  颈1
-	"Head",                  --[10] 头
-	"HeadNub",               --[11] 头末端
-	-- ========== 左腿 (12-16) ==========
-	"L Thigh",               --[12] 左大腿
-	"L Calf",                --[13] 左小腿
-	"L Foot",                --[14] 左脚
-	"L Toe0",                --[15] 左脚趾
-	"L Toe0Nub",             --[16] 左脚趾末端
-	-- ========== 右腿 (17-21) ==========
-	"R Thigh",               --[17] 右大腿
-	"R Calf",                --[18] 右小腿
-	"R Foot",                --[19] 右脚
-	"R Toe0",                --[20] 右脚趾
-	"R Toe0Nub",             --[21] 右脚趾末端
-	-- ========== 左臂 (22-25) ==========
-	"L Clavicle",            --[22] 左锁骨
-	"L UpperArm",            --[23] 左上臂
-	"L Forearm",             --[24] 左前臂
-	"L Hand",                --[25] 左手
-	-- ========== 左手指 (26-37) | characterBones 列表末尾 ==========
-	"[可选]L Finger0",       --[26] 左拇指0
-	"[可选]L Finger01",      --[27] 左拇指1
-	"[可选]L Finger02",      --[28] 左拇指2
-	"[可选]L Finger0Nub",    --[29] 左拇指末端
-	"[可选]L Finger1",       --[30] 左食指0
-	"[可选]L Finger11",      --[31] 左食指1
-	"[可选]L Finger12",      --[32] 左食指2
-	"[可选]L Finger1Nub",    --[33] 左食指末端
-	"[可选]L Finger2",       --[34] 左中指0
-	"[可选]L Finger21",      --[35] 左中指1
-	"[可选]L Finger22",      --[36] 左中指2
-	"[可选]L Finger2Nub",    --[37] 左中指末端
-	-- ========== 左手指续 (38-45) | characterBones_B 列表开头 ==========
-	"[可选]L Finger3",       --[38] 左无名指0
-	"[可选]L Finger31",      --[39] 左无名指1
-	"[可选]L Finger32",      --[40] 左无名指2
-	"[可选]L Finger3Nub",    --[41] 左无名指末端
-	"[可选]L Finger4",       --[42] 左小指0
-	"[可选]L Finger41",      --[43] 左小指1
-	"[可选]L Finger42",      --[44] 左小指2
-	"[可选]L Finger4Nub",    --[45] 左小指末端
-	-- ========== 右臂 (46-49) ==========
-	"R Clavicle",            --[46] 右锁骨
-	"R UpperArm",            --[47] 右上臂
-	"R Forearm",             --[48] 右前臂
-	"R Hand",                --[49] 右手
-	-- ========== 右手指 (50-69) ==========
-	"[可选]R Finger0",       --[50] 右拇指0
-	"[可选]R Finger01",      --[51] 右拇指1
-	"[可选]R Finger02",      --[52] 右拇指2
-	"[可选]R Finger0Nub",    --[53] 右拇指末端
-	"[可选]R Finger1",       --[54] 右食指0
-	"[可选]R Finger11",      --[55] 右食指1
-	"[可选]R Finger12",      --[56] 右食指2
-	"[可选]R Finger1Nub",    --[57] 右食指末端
-	"[可选]R Finger2",       --[58] 右中指0
-	"[可选]R Finger21",      --[59] 右中指1
-	"[可选]R Finger22",      --[60] 右中指2
-	"[可选]R Finger2Nub",    --[61] 右中指末端
-	"[可选]R Finger3",       --[62] 右无名指0
-	"[可选]R Finger31",      --[63] 右无名指1
-	"[可选]R Finger32",      --[64] 右无名指2
-	"[可选]R Finger3Nub",    --[65] 右无名指末端
-	"[可选]R Finger4",       --[66] 右小指0
-	"[可选]R Finger41",      --[67] 右小指1
-	"[可选]R Finger42",      --[68] 右小指2
-	"[可选]R Finger4Nub"     --[69] 右小指末端
-)
-
-struct BsBoneSlot (name, group, isOptional, nubType, mirrorIdx)
-
-global kBoneSlots = #(
-	-- ========== 脊椎/头 (1-11) ==========
-	BsBoneSlot name:"Bip001"         group:#spine    isOptional:false nubType:#none      mirrorIdx:0,   --[1]
-	BsBoneSlot name:"Pelvis"         group:#spine    isOptional:false nubType:#none      mirrorIdx:0,   --[2]
-	BsBoneSlot name:"Spine"          group:#spine    isOptional:false nubType:#none      mirrorIdx:0,   --[3]
-	BsBoneSlot name:"Spine1"         group:#spine    isOptional:false nubType:#none      mirrorIdx:0,   --[4]
-	BsBoneSlot name:"Spine2"         group:#spine    isOptional:true  nubType:#none      mirrorIdx:0,   --[5]
-	BsBoneSlot name:"Spine3"         group:#spine    isOptional:true  nubType:#none      mirrorIdx:0,   --[6]
-	BsBoneSlot name:"Spine4"         group:#spine    isOptional:true  nubType:#none      mirrorIdx:0,   --[7]
-	BsBoneSlot name:"Neck"           group:#spine    isOptional:false nubType:#none      mirrorIdx:0,   --[8]
-	BsBoneSlot name:"Neck1"          group:#spine    isOptional:true  nubType:#none      mirrorIdx:0,   --[9]
-	BsBoneSlot name:"Head"           group:#spine    isOptional:false nubType:#none      mirrorIdx:0,   --[10]
-	BsBoneSlot name:"HeadNub"        group:#spine    isOptional:false nubType:#headNub   mirrorIdx:0,   --[11]
-	-- ========== 左腿 (12-16) ==========
-	BsBoneSlot name:"L Thigh"        group:#lLeg     isOptional:false nubType:#none      mirrorIdx:17,  --[12]
-	BsBoneSlot name:"L Calf"         group:#lLeg     isOptional:false nubType:#none      mirrorIdx:18,  --[13]
-	BsBoneSlot name:"L Foot"         group:#lLeg     isOptional:false nubType:#none      mirrorIdx:19,  --[14]
-	BsBoneSlot name:"L Toe0"         group:#lLeg     isOptional:false nubType:#none      mirrorIdx:20,  --[15]
-	BsBoneSlot name:"L Toe0Nub"      group:#lLeg     isOptional:false nubType:#toeNub    mirrorIdx:21,  --[16]
-	-- ========== 右腿 (17-21) ==========
-	BsBoneSlot name:"R Thigh"        group:#rLeg     isOptional:false nubType:#none      mirrorIdx:12,  --[17]
-	BsBoneSlot name:"R Calf"         group:#rLeg     isOptional:false nubType:#none      mirrorIdx:13,  --[18]
-	BsBoneSlot name:"R Foot"         group:#rLeg     isOptional:false nubType:#none      mirrorIdx:14,  --[19]
-	BsBoneSlot name:"R Toe0"         group:#rLeg     isOptional:false nubType:#none      mirrorIdx:15,  --[20]
-	BsBoneSlot name:"R Toe0Nub"      group:#rLeg     isOptional:false nubType:#toeNub    mirrorIdx:16,  --[21]
-	-- ========== 左臂 (22-25) ==========
-	BsBoneSlot name:"L Clavicle"     group:#lArm     isOptional:false nubType:#none      mirrorIdx:46,  --[22]
-	BsBoneSlot name:"L UpperArm"     group:#lArm     isOptional:false nubType:#none      mirrorIdx:47,  --[23]
-	BsBoneSlot name:"L Forearm"      group:#lArm     isOptional:false nubType:#none      mirrorIdx:48,  --[24]
-	BsBoneSlot name:"L Hand"         group:#lArm     isOptional:false nubType:#none      mirrorIdx:49,  --[25]
-	-- ========== 左手指 (26-45): 5指×4段 ==========
-	BsBoneSlot name:"L Finger0"      group:#lFinger  isOptional:true  nubType:#none      mirrorIdx:50,  --[26]
-	BsBoneSlot name:"L Finger01"     group:#lFinger  isOptional:true  nubType:#none      mirrorIdx:51,  --[27]
-	BsBoneSlot name:"L Finger02"     group:#lFinger  isOptional:true  nubType:#none      mirrorIdx:52,  --[28]
-	BsBoneSlot name:"L Finger0Nub"   group:#lFinger  isOptional:true  nubType:#fingerNub mirrorIdx:53,  --[29]
-	BsBoneSlot name:"L Finger1"      group:#lFinger  isOptional:true  nubType:#none      mirrorIdx:54,  --[30]
-	BsBoneSlot name:"L Finger11"     group:#lFinger  isOptional:true  nubType:#none      mirrorIdx:55,  --[31]
-	BsBoneSlot name:"L Finger12"     group:#lFinger  isOptional:true  nubType:#none      mirrorIdx:56,  --[32]
-	BsBoneSlot name:"L Finger1Nub"   group:#lFinger  isOptional:true  nubType:#fingerNub mirrorIdx:57,  --[33]
-	BsBoneSlot name:"L Finger2"      group:#lFinger  isOptional:true  nubType:#none      mirrorIdx:58,  --[34]
-	BsBoneSlot name:"L Finger21"     group:#lFinger  isOptional:true  nubType:#none      mirrorIdx:59,  --[35]
-	BsBoneSlot name:"L Finger22"     group:#lFinger  isOptional:true  nubType:#none      mirrorIdx:60,  --[36]
-	BsBoneSlot name:"L Finger2Nub"   group:#lFinger  isOptional:true  nubType:#fingerNub mirrorIdx:61,  --[37]
-	BsBoneSlot name:"L Finger3"      group:#lFinger  isOptional:true  nubType:#none      mirrorIdx:62,  --[38]
-	BsBoneSlot name:"L Finger31"     group:#lFinger  isOptional:true  nubType:#none      mirrorIdx:63,  --[39]
-	BsBoneSlot name:"L Finger32"     group:#lFinger  isOptional:true  nubType:#none      mirrorIdx:64,  --[40]
-	BsBoneSlot name:"L Finger3Nub"   group:#lFinger  isOptional:true  nubType:#fingerNub mirrorIdx:65,  --[41]
-	BsBoneSlot name:"L Finger4"      group:#lFinger  isOptional:true  nubType:#none      mirrorIdx:66,  --[42]
-	BsBoneSlot name:"L Finger41"     group:#lFinger  isOptional:true  nubType:#none      mirrorIdx:67,  --[43]
-	BsBoneSlot name:"L Finger42"     group:#lFinger  isOptional:true  nubType:#none      mirrorIdx:68,  --[44]
-	BsBoneSlot name:"L Finger4Nub"   group:#lFinger  isOptional:true  nubType:#fingerNub mirrorIdx:69,  --[45]
-	-- ========== 右臂 (46-49) ==========
-	BsBoneSlot name:"R Clavicle"     group:#rArm     isOptional:false nubType:#none      mirrorIdx:22,  --[46]
-	BsBoneSlot name:"R UpperArm"     group:#rArm     isOptional:false nubType:#none      mirrorIdx:23,  --[47]
-	BsBoneSlot name:"R Forearm"      group:#rArm     isOptional:false nubType:#none      mirrorIdx:24,  --[48]
-	BsBoneSlot name:"R Hand"         group:#rArm     isOptional:false nubType:#none      mirrorIdx:25,  --[49]
-	-- ========== 右手指 (50-69): 5指×4段 ==========
-	BsBoneSlot name:"R Finger0"      group:#rFinger  isOptional:true  nubType:#none      mirrorIdx:26,  --[50]
-	BsBoneSlot name:"R Finger01"     group:#rFinger  isOptional:true  nubType:#none      mirrorIdx:27,  --[51]
-	BsBoneSlot name:"R Finger02"     group:#rFinger  isOptional:true  nubType:#none      mirrorIdx:28,  --[52]
-	BsBoneSlot name:"R Finger0Nub"   group:#rFinger  isOptional:true  nubType:#fingerNub mirrorIdx:29,  --[53]
-	BsBoneSlot name:"R Finger1"      group:#rFinger  isOptional:true  nubType:#none      mirrorIdx:30,  --[54]
-	BsBoneSlot name:"R Finger11"     group:#rFinger  isOptional:true  nubType:#none      mirrorIdx:31,  --[55]
-	BsBoneSlot name:"R Finger12"     group:#rFinger  isOptional:true  nubType:#none      mirrorIdx:32,  --[56]
-	BsBoneSlot name:"R Finger1Nub"   group:#rFinger  isOptional:true  nubType:#fingerNub mirrorIdx:33,  --[57]
-	BsBoneSlot name:"R Finger2"      group:#rFinger  isOptional:true  nubType:#none      mirrorIdx:34,  --[58]
-	BsBoneSlot name:"R Finger21"     group:#rFinger  isOptional:true  nubType:#none      mirrorIdx:35,  --[59]
-	BsBoneSlot name:"R Finger22"     group:#rFinger  isOptional:true  nubType:#none      mirrorIdx:36,  --[60]
-	BsBoneSlot name:"R Finger2Nub"   group:#rFinger  isOptional:true  nubType:#fingerNub mirrorIdx:37,  --[61]
-	BsBoneSlot name:"R Finger3"      group:#rFinger  isOptional:true  nubType:#none      mirrorIdx:38,  --[62]
-	BsBoneSlot name:"R Finger31"     group:#rFinger  isOptional:true  nubType:#none      mirrorIdx:39,  --[63]
-	BsBoneSlot name:"R Finger32"     group:#rFinger  isOptional:true  nubType:#none      mirrorIdx:40,  --[64]
-	BsBoneSlot name:"R Finger3Nub"   group:#rFinger  isOptional:true  nubType:#fingerNub mirrorIdx:41,  --[65]
-	BsBoneSlot name:"R Finger4"      group:#rFinger  isOptional:true  nubType:#none      mirrorIdx:42,  --[66]
-	BsBoneSlot name:"R Finger41"     group:#rFinger  isOptional:true  nubType:#none      mirrorIdx:43,  --[67]
-	BsBoneSlot name:"R Finger42"     group:#rFinger  isOptional:true  nubType:#none      mirrorIdx:44,  --[68]
-	BsBoneSlot name:"R Finger4Nub"   group:#rFinger  isOptional:true  nubType:#fingerNub mirrorIdx:45   --[69]
+	
+	"Bip001", 				--1
+	"Pelvis", 				--2
+	"Spine", 				--3
+	"Spine1",			--4
+	"[可选]Spine2",			--5
+	"[可选]Spine3",
+	"[可选]Spine4",
+	"Neck",				--6
+	"[可选]Neck1",	--7 (NO LONGER USING)
+	"Head",				--8
+	"HeadNub",			--9
+	
+	"L Thigh",			--10
+	"L Calf",				--11
+	"L Foot",				--12
+	"L Toe0",			--13
+	"L Toe0Nub",		--14
+	
+	"R Thigh",			--15
+	"R Calf",				--16
+	"R Foot",			--17
+	"R Toe0",			--18
+	"R Toe0Nub",		--19
+	
+	"L Clavicle", 		--20
+	"L UpperArm",		--21
+	"L Forearm",		--22
+	"L Hand",			--23
+	"[可选]L Finger0",			--24
+	"[可选]L Finger01",		--25
+	"[可选]L Finger02",		--26
+	"[可选]L Finger0Nub",	--27
+	"[可选]L Finger1",			--28
+	"[可选]L Finger11",		--29
+	"[可选]L Finger12",		--30
+	"[可选]L Finger1Nub",	--31
+	"[可选]L Finger2",			--32
+	"[可选]L Finger21",		--33
+	"[可选]L Finger22",		--34
+	"[可选]L Finger2Nub",    --35
+	
+	"[可选]L Finger3",			--36
+	"[可选]L Finger31",		--37
+	"[可选]L Finger32",		--38
+	"[可选]L Finger3Nub",	--39
+	"[可选]L Finger4",			--40
+	"[可选]L Finger41",		--41
+	"[可选]L Finger42",		--42
+	"[可选]L Finger4Nub",	--43
+	
+	"R Clavicle",		--44
+	"R UpperArm",		--45
+	"R Forearm",		--46
+	"R Hand",			--47
+	"[可选]R Finger0",		--48
+	"[可选]R Finger01",		--49
+	"[可选]R Finger02",		--50
+	"[可选]R Finger0Nub",	--51
+	"[可选]R Finger1",		--52
+	"[可选]R Finger11",		--53
+	"[可选]R Finger12",		--54
+	"[可选]R Finger1Nub",	--55
+	"[可选]R Finger2",		--56
+	"[可选]R Finger21",		--57
+	"[可选]R Finger22",		--58
+	"[可选]R Finger2Nub",	--59
+	"[可选]R Finger3",		--60
+	"[可选]R Finger31",		--61
+	"[可选]R Finger32",		--62
+	"[可选]R Finger3Nub",	--63
+	"[可选]R Finger4",		--64
+	"[可选]R Finger41",		--65
+	"[可选]R Finger42",		--66
+	"[可选]R Finger4Nub"		--67	
 )
 
 global pattBipedNames = #(
@@ -335,35 +250,33 @@ global bipedRootName = "Bip001";
 global bsRootBoneName = "Root"
 global bsRootBone
 
-struct BsRetargetOptions
-(
-	okForceRedraw          = true,
-	mappingCheckState      = false,
-	hasExtraHips           = false,
-	fixNierFramerate       = false,
-	isScale100             = false,
-	isEulerFilter          = false,
-	isReloadBip            = false,
-	isHalfAnimSpeed        = false,
-	isRemoveRootKeepAnim   = false
-)
-global gOpts = BsRetargetOptions()
+global okForceRedraw = true;
+
+global mappingCheckState = false
 
 global arrExportRetargetAnim = #()
+
 global arrAllBipedNode = #()
 global arrAllBipedName = #()
 
--- 常用提示文本常量
-global kMsgTitle           = "BsRetargetTools"
-global kMsgCheckMapping    = "请先验证并检查映射列表是否完整！"
-global kMsgNoRootBone      = "未找到骨架质心骨骼！请先验证映射列表。"
+global hasExtraHips = false
+global fixNierFramerate = false
+-- global pickedRootMotion = undefined
+global isScale100 = false
+global isEulerFilter = false
+
+global isReloadBip = false
+
+global isHalfAnimSpeed = false
+
+global isRemoveRootKeepAnim = false
 
 -- wizardIndex = 1
 -- wizardArray = #()
 
 -- creates all of the dummies
 headNub = undefined;--point name:"_Helper_Head Nub" wirecolor:(color 0 255 0)
-fingerNubs = #(#(undefined, undefined, undefined, undefined, undefined), #(undefined, undefined, undefined, undefined, undefined))
+fingerNubs = #(#(undefined, undefined, undefined, undefined), #(undefined, undefined, undefined, undefined, undefined))
 
 --fingerNubs[1][1] = point name: "_Helper_Finger L Thumb 1 Nub" boxsize:[1,1,1] wirecolor:(color 255 0 0)
 --fingerNubs[1][2] = point name: "_Helper_Finger L Index 2 Nub" boxsize:[1,1,1] wirecolor:(color 255 64 0)
@@ -385,172 +298,19 @@ footHelpers = #(undefined, undefined)
 --footHelpers[1] = point  name: "_Helper_Foot Helper L" boxsize:[2,4,2] wirecolor:(color 255 128 255)
 --footHelpers[2] = point  name: "_Helper_Foot Helper R" boxsize:[2,4,2] wirecolor:(color 128 255 255)
 
--- ===================== P2: 模糊匹配 + 自动映射工具函数 =====================
-
--- Levenshtein 编辑距离（大小写不敏感）
-fn fnLevenshtein s t =
-(
-	local sLen = s.count
-	local tLen = t.count
-	if sLen == 0 then return tLen
-	if tLen == 0 then return sLen
-	local sLow = toLower s
-	local tLow = toLower t
-	local prev = for k = 0 to tLen collect k
-	local curr = for k = 0 to tLen collect 0
-	for i = 1 to sLen do
-	(
-		curr[1] = i
-		for j = 1 to tLen do
-		(
-			local cost = if sLow[i] == tLow[j] then 0 else 1
-			curr[j+1] = amin #(prev[j+1]+1, curr[j]+1, prev[j]+cost)
-		)
-		local tmp = prev; prev = curr; curr = tmp
-	)
-	prev[tLen+1]
-)
-
--- ====== SECTION 2: UTILITY FUNCTIONS ======
-
--- 标准化骨骼名：去掉常见前缀/命名空间/分隔符，便于模糊比较
-fn fnNormalizeBoneName boneName =
-(
-	local n = toLower boneName
-	-- 去掉常见命名空间前缀
-	local prefixes = #("mixamorig:", "character:", "bip001_", "bip01_", "bip_",
-	                    "deformationbones:", "skeleton:", "root:")
-	for p in prefixes do
-	(
-		if (findString n p) == 1 then n = substring n (p.count + 1) -1
-	)
-	-- 去掉分隔符
-	n = substituteString n "_" ""
-	n = substituteString n "-" ""
-	n = substituteString n " " ""
-	n = substituteString n "." ""
-	n
-)
-
--- 左右骨骼镜像：将名称中的左右标识互换
-fn fnMirrorBoneName boneName =
-(
-	local result = boneName
-	-- 精确替换 L/R 标记（按优先级：长 → 短）
-	local swapPairs = #(
-		#("Left", "Right"), #("left", "right"), #("LEFT", "RIGHT"),
-		#("_L_", "_R_"), #("_l_", "_r_"),
-		#(".L.", ".R."), #(".l.", ".r."),
-		#(" L ", " R "), #(" l ", " r "),
-		#("_L", "_R"), #("_l", "_r"),
-		#(".L", ".R"), #(".l", ".r"),
-		#(" L", " R"), #(" l", " r")
-	)
-	local swapped = false
-	for pair in swapPairs where not swapped do
-	(
-		if (findString result pair[1]) != undefined then
-		(
-			result = substituteString result pair[1] pair[2]
-			swapped = true
-		)
-		else if (findString result pair[2]) != undefined then
-		(
-			result = substituteString result pair[2] pair[1]
-			swapped = true
-		)
-	)
-	result
-)
-
--- 左右槽位映射表：kBoneSlots 索引的 L→R 对应关系
--- 左腿 10-14 ↔ 右腿 15-19 (offset +5)
--- 左右镜像对照表（从 kBoneSlots.mirrorIdx 自动生成）
-global kLeftRightMap = #()
-(
-	for i = 1 to kBoneSlots.count where kBoneSlots[i].mirrorIdx > 0 and kBoneSlots[i].mirrorIdx > i do
-		append kLeftRightMap #(i, kBoneSlots[i].mirrorIdx)
-)
-
--- 自动识别场景中的骨架类型，返回预设名或 undefined
-fn fnDetectSkeletonPreset =
-(
-	local sceneNameSet = for o in objects collect (toLower o.name)
-	-- Mixamo
-	if (findItem sceneNameSet "mixamorig:hips") > 0 then return "Mixamo-Standard"
-	-- CC4
-	if (findItem sceneNameSet "cc_base_hip") > 0 then return "CC4-Standard"
-	-- Daz Genesis 8
-	if ((findItem sceneNameSet "genesis8female") > 0 or (findItem sceneNameSet "genesis8male") > 0 or \
-		((findItem sceneNameSet "hip") > 0 and (findItem sceneNameSet "abdomenlower") > 0)) then return "Daz-Genesis8"
-	-- UE Mannequin
-	if ((findItem sceneNameSet "pelvis") > 0 and (findItem sceneNameSet "spine_01") > 0) then return "00.Unreal-UE5"
-	-- MMD
-	if ((findItem sceneNameSet "center") > 0 and (findItem sceneNameSet "upper body") > 0) then return "MMD-Standard"
-	return undefined
-)
-
--- 对尚未匹配的槽位，用 Levenshtein 做模糊匹配
--- items: 当前映射数组，sceneNames: 场景骨骼名列表
--- 返回更新后的 items 数组和匹配计数
-fn fnFuzzyFillUnmatched items sceneNames threshold:0.55 =
-(
-	local matchCount = 0
-	local usedNames = #()
-	-- 收集已占用的名称
-	for v in items where v != "~undefined~" do appendIfUnique usedNames v
-
-	for slotIdx = 1 to items.count do
-	(
-		if items[slotIdx] != "~undefined~" then continue
-		local patterns = if slotIdx <= pattBipedNames.count then pattBipedNames[slotIdx] else #()
-		if patterns.count == 0 then continue
-
-		-- 从第一个 pattern 提取参考关键字（去掉通配符）
-		local canonical = substituteString (substituteString patterns[1] "*" "") "?" ""
-		local normCanon = fnNormalizeBoneName canonical
-
-		local bestName = undefined
-		local bestScore = 0.0
-
-		for sn in sceneNames where (findItem usedNames sn) == 0 do
-		(
-			local normSN = fnNormalizeBoneName sn
-			local dist = fnLevenshtein normCanon normSN
-			local maxLen = amax #(normCanon.count, normSN.count)
-			if maxLen == 0 then continue
-			local score = 1.0 - (dist as float / maxLen as float)
-			if score > bestScore and score >= threshold then
-			(
-				bestScore = score
-				bestName = sn
-			)
-		)
-		if bestName != undefined then
-		(
-			items[slotIdx] = bestName
-			appendIfUnique usedNames bestName
-			matchCount += 1
-		)
-	)
-	#(items, matchCount)
-)
-
--- ===================== End P2 工具函数 =====================
-
 global GetSkeletalNode
-fn GetSkeletalNode index isFaux findCorrect:true =
+fn GetSkeletalNode index isFaux findCorrect:true = 
 (
 	if isFaux == false then
 	(
 		local result = undefined
 		if (index < 37 or index == 37) then
 		(
-			if index >= 1 and index <= rolBsRetarget.characterBones.items.count then result = getNodeByName rolBsRetarget.characterBones.items[index]
+			result = getNodeByName rolBsRetarget.characterBones.items[index]
 		)
 		else
 		(
-			if (index - 37) >= 1 and (index - 37) <= rolBsRetarget.characterBones_B.items.count then result = getNodeByName rolBsRetarget.characterBones_B.items[index-37]
+			result = getNodeByName rolBsRetarget.characterBones_B.items[index-37]
 		)
 		
 		if result == undefined and findCorrect == true then
@@ -627,12 +387,10 @@ fn GetSkeletalNode index isFaux findCorrect:true =
 		)
 		else 
 		(
-			return getNodeByName ("RTHelper_" + bipedRootName + (if index >= 1 and index <= kBoneSlots.count then kBoneSlots[index].name else ""))
+			return getNodeByName ("RTHelper_" + bipedRootName + (substituteString boneNames[index] "[可选]" ""))
 		)
 	)
 )	
-
--- ====== SECTION 3: CONTEXT MENUS (rcmenu) ======
 
 rcmenu menuQuickCreateNode
 (
@@ -675,7 +433,7 @@ rcmenu menuQuickCreateNode
 				rolBsRetarget.characterBones.items = tempItems
 			)
 			)
-			-- else (messageBox kMsgCheckMapping title:kMsgTitle)
+			-- else (messageBox "请先验证并检查映射列表是否完整！                                       " title:"BsRetargetTools")
 		)
 	)
 
@@ -719,19 +477,13 @@ rcmenu menuQuickCreateNode
 	(
 		local leftLeg = GetSkeletalNode 12 false
 		local rightLeg = GetSkeletalNode 17 false
-
+		
 		local hip = GetSkeletalNode 1 false
 		local pelvis = GetSkeletalNode 2 false
-
+		
 		if hip == undefined or pelvis == undefined then
 		(
-			messagebox "未找到质心或盆骨骨骼！请先验证映射列表。" title:kMsgTitle
-			return undefined
-		)
-
-		if leftLeg == undefined or rightLeg == undefined then
-		(
-			messagebox "未找到左腿或右腿骨骼！请先验证映射列表。" title:kMsgTitle
+			messagebox "未找到质心或盆骨骨骼！请先验证映射列表。                          " title:"BsRetargetTools"
 			return undefined
 		)
 		
@@ -758,7 +510,7 @@ rcmenu menuQuickCreateNode
 
 			messagebox "已根据大腿重新创建符合 Biped 的质心和盆骨，并且更新了映射列表！                                                          "
 
-			gOpts.hasExtraHips = true
+			hasExtraHips = true
 		)
 		catch
 		(
@@ -771,17 +523,15 @@ rcmenu menuQuickCreateNode
 		local meshes = selection as array
 		local tempDir = getDir #temp
 		local processedCount = 0
-		local failedCount = 0
-
+		
 		for obj in meshes where classof obj == Editable_mesh or classof obj == Editable_Poly do
 		(
 			local skinMod = undefined
 			local skinModIndex = 0
 			local boneArray = #()
 			local upperMods = #()
-			local skinEnvelopeFile = tempDir + "\\" + obj.name + "_skin.env"
-
-			-- 查找 Skin 修改器位置
+			
+			-- 第一步：查找 Skin 修改器位置
 			for m = 1 to obj.modifiers.count do
 			(
 				if classof obj.modifiers[m] == Skin then
@@ -791,12 +541,13 @@ rcmenu menuQuickCreateNode
 					exit
 				)
 			)
-
+			
 			if skinMod != undefined then
 			(
-				-- 保存 Skin 权重到临时文件(回滚点)
+				-- 第一步：保存 Skin 权重到临时文件
+				local skinEnvelopeFile = tempDir + "\\" + obj.name + "_skin.env"
 				skinOps.SaveEnvelope skinMod skinEnvelopeFile
-
+				
 				-- 保存骨骼列表
 				for b = 1 to skinOps.GetNumberBones skinMod do
 				(
@@ -805,80 +556,83 @@ rcmenu menuQuickCreateNode
 					if boneNode != undefined then
 						append boneArray boneNode
 				)
-
-				try
+				
+				-- 第二步：创建当前变形状态的快照（保留Skin驱动的形态）
+				local snapshotMesh = snapshot obj
+				snapshotMesh.name = obj.name + "_temp_snapshot"
+				
+				-- 复制快照的网格数据
+				local vertCount = snapshotMesh.numverts
+				local vertArray = #()
+				for v = 1 to vertCount do
 				(
-					-- 创建当前变形状态的快照
-					local snapshotMesh = snapshot obj
-					snapshotMesh.name = obj.name + "_temp_snapshot"
-
-					local vertCount = snapshotMesh.numverts
-					local vertArray = #()
-					for v = 1 to vertCount do (append vertArray (getVert snapshotMesh v))
-					delete snapshotMesh
-
-					-- 临时移除 Skin 及其上面的所有修改器
-					for m = 1 to skinModIndex do
-					(
-						append upperMods obj.modifiers[1]
-						deleteModifier obj 1
-					)
-
-					-- 将快照的顶点位置应用到模型
-					for v = 1 to obj.numverts do (setVert obj v vertArray[v])
-					update obj
-
-					-- 两次 Reset XForm 和塌陷
-					addModifier obj (XForm())
-					maxOps.CollapseNode obj off
-					addModifier obj (XForm())
-					maxOps.CollapseNode obj off
-
-					-- 重新添加 Skin 修改器
-					local newSkinMod = Skin()
-					addModifier obj newSkinMod
-					for bone in boneArray do (skinOps.addBone newSkinMod bone 0)
-
-					-- 加载权重
-					rolBsRetarget.fnLoadEnvelope newSkinMod skinEnvelopeFile
-
-					-- 恢复 Skin 上面的修改器
-					for i = (upperMods.count - 1) to 1 by -1 do
-					(
-						if classof upperMods[i] != Skin then
-						(
-							try (addModifier obj (copy upperMods[i])) catch ()
-						)
-					)
-
-					-- 刷新蒙皮影响
-					newSkinMod.enabled = false
-					newSkinMod.enabled = true
-
-					processedCount += 1
+					append vertArray (getVert snapshotMesh v)
 				)
-				catch
+				
+				-- 删除快照对象
+				delete snapshotMesh
+				
+				-- 第三步：临时移除 Skin 及其上面的所有修改器
+				for m = 1 to skinModIndex do
 				(
-					-- 回滚: 尝试恢复 Skin 权重
-					format "[BsRetarget] fnFixSkinRotation failed on '%': %\n" obj.name (getCurrentException())
-					try
-					(
-						local sk = undefined
-						for m in obj.modifiers where classof m == Skin do (sk = m; exit)
-						if sk != undefined and doesFileExist skinEnvelopeFile then
-							rolBsRetarget.fnLoadEnvelope sk skinEnvelopeFile
-					) catch ()
-					failedCount += 1
+					append upperMods obj.modifiers[1]
+					deleteModifier obj 1
 				)
-
-				-- 清理临时文件
-				if doesFileExist skinEnvelopeFile do deleteFile skinEnvelopeFile
+				
+				-- 第四步：将快照的顶点位置应用到模型（固化当前形态）
+				for v = 1 to obj.numverts do
+				(
+					setVert obj v vertArray[v]
+				)
+				update obj
+				
+				-- 第五步：对固化后的网格进行两次 Reset XForm 和塌陷
+				-- 第一次 Reset XForm
+				local xform1 = XForm()
+				addModifier obj xform1
+				maxOps.CollapseNode obj off
+				
+				-- 第二次 Reset XForm
+				local xform2 = XForm()
+				addModifier obj xform2
+				maxOps.CollapseNode obj off
+				
+				-- 第六步：重新添加 Skin 修改器
+				local newSkinMod = Skin()
+				addModifier obj newSkinMod
+				
+				-- 添加骨骼
+				for bone in boneArray do
+				(
+					skinOps.addBone newSkinMod bone 0
+				)
+				
+				-- 加载权重（自动点击 OK）
+				rolBsRetarget.fnLoadEnvelope newSkinMod skinEnvelopeFile
+				
+				-- 第七步：恢复 Skin 上面的修改器
+				for i = (upperMods.count - 1) to 1 by -1 do
+				(
+					if classof upperMods[i] != Skin then
+					(
+						try (
+							addModifier obj (copy upperMods[i])
+						) catch ()
+					)
+				)
+				
+				-- 第八步：关闭再打开蒙皮影响
+				newSkinMod.enabled = false
+				newSkinMod.enabled = true
+				
+				-- 删除临时文件
+				deleteFile skinEnvelopeFile
+				
+				processedCount += 1
 			)
 		)
-
-		local msg = "已完成 " + processedCount as string + " 个对象的 Skin 旋转修复！"
-		if failedCount > 0 do msg += "\n" + failedCount as string + " 个对象处理失败，已尝试回滚。"
-		messagebox msg title:kMsgTitle
+		
+		messagebox ("已完成 " + processedCount as string + " 个对象的 Skin 旋转修复！                    ") title:"BsRetargetTools"
 	)
 
 	on quickMakeParent picked do
@@ -929,12 +683,12 @@ rcmenu menuQuickCreateNode
 	on fixOldList picked do 
 	(
 		if (queryBox "确认修复旧映射列表？会改变映射 list，请慎重考虑！                                                               " \
-		title:(kMsgTitle + " Tips") beep:false) then (fnFixOldMappingList())
+		title:"BsRetargetTools Tips" beep:false) then (fnFixOldMappingList())
 	)
 
 	on mItemFixSkinRotation picked do
 	(
-		if queryBox "需要先旋转骨骼，使模型正面朝前，再执行此操作，\r\n\r\n确认继续请点是。请注意备份文件！                   " title:(kMsgTitle + " Tips") then
+		if queryBox "需要先旋转骨骼，使模型正面朝前，再执行此操作，\r\n\r\n确认继续请点是。请注意备份文件！                   " title:"BsRetargetTools Tips" then
 		(
 			fnFixSkinRotation()
 		)
@@ -952,27 +706,52 @@ rcmenu menuBsRetarget
 
 	on menuBsRetarget open do
 	(
-		mItemNier.checked              = gOpts.fixNierFramerate
-		mItemScale100.checked          = gOpts.isScale100
-		mItemReloadBip.checked         = gOpts.isReloadBip
-		mItemHalfAnimSpeed.checked     = gOpts.isHalfAnimSpeed
-		mItemRemoveRootKeepAnim.checked = gOpts.isRemoveRootKeepAnim
+		mItemNier.checked              = fixNierFramerate
+		mItemScale100.checked          = isScale100
+		mItemReloadBip.checked         = isReloadBip
+		mItemHalfAnimSpeed.checked     = isHalfAnimSpeed
+		mItemRemoveRootKeepAnim.checked = isRemoveRootKeepAnim
 	)
 
-	-- 通用菜单切换：翻转 checked 并返回新状态
-	fn fnMenuToggle mItem = (mItem.checked = not mItem.checked; mItem.checked)
+	on mItemEulerFilter picked do
+	(
+		mItemEulerFilter.checked = not mItemEulerFilter.checked
+		isEulerFilter          = mItemEulerFilter.checked
+	)
+	
+	on mItemNier picked do
+	(
+		mItemNier.checked = not mItemNier.checked
+		fixNierFramerate  = mItemNier.checked
+	)
 
-	on mItemEulerFilter        picked do (gOpts.isEulerFilter        = fnMenuToggle mItemEulerFilter)
-	on mItemNier               picked do (gOpts.fixNierFramerate     = fnMenuToggle mItemNier)
-	on mItemScale100           picked do (gOpts.isScale100           = fnMenuToggle mItemScale100)
-	on mItemReloadBip          picked do (gOpts.isReloadBip          = fnMenuToggle mItemReloadBip)
-	on mItemHalfAnimSpeed      picked do (gOpts.isHalfAnimSpeed      = fnMenuToggle mItemHalfAnimSpeed)
-	on mItemRemoveRootKeepAnim picked do (gOpts.isRemoveRootKeepAnim = fnMenuToggle mItemRemoveRootKeepAnim)
+	on mItemScale100 picked do
+	(
+		mItemScale100.checked = not mItemScale100.checked
+		isScale100            = mItemScale100.checked
+	)
+
+	on mItemReloadBip picked do
+	(
+		mItemReloadBip.checked = not mItemReloadBip.checked
+		isReloadBip            = mItemReloadBip.checked
+	)
+
+	on mItemHalfAnimSpeed picked do
+	(
+		mItemHalfAnimSpeed.checked = not mItemHalfAnimSpeed.checked
+		isHalfAnimSpeed            = mItemHalfAnimSpeed.checked
+	)
+
+	on mItemRemoveRootKeepAnim picked do
+	(
+		mItemRemoveRootKeepAnim.checked = not mItemRemoveRootKeepAnim.checked
+		isRemoveRootKeepAnim            = mItemRemoveRootKeepAnim.checked
+	)
 )
 
--- ====== SECTION 4: MAIN ROLLOUT UI ======
-
-rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 ）"
+-- The rollout used for this script.
+rollout rolBsRetarget "BsRetargetTools_v5.1 （ FBX 转 BIP + 动画重定向 ）"
 (
 	local LastSubRollout = 1
 	local winW = 655  -- 窗口宽度
@@ -1009,7 +788,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 
 	-- ========== 右侧面板: 便捷工具区 ==========
 	groupbox grpRetargetList "便捷工具" pos:[rightPanelX,53] width:rightPanelW height:75
-	spinner spnObjSize "Size:" pos:[rightPanelX+8,72] range:[0.01,1000,5] align:#left fieldwidth:45 scale:0.01 tooltip:"设置辅助骨骼显示大小"
+	spinner spnObjSize "Size:" pos:[rightPanelX+8,72] range:[0.01,1000,5] align:#left fieldwidth:45 scale:0.01
 	button btnResetSize "重置大小" pos:[rightPanelX+95,70] width:60 height:20 tooltip:"重置选中辅助骨骼大小"
 	button btnQuickTools "快速便捷小工具" pos:[rightPanelX+5,95] width:(btnWidth) height:28 tooltip:"快速创建 nub 骨骼或符合 Biped 的质心"
 	
@@ -1040,28 +819,23 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 	label lblHandAxis2 "" pos:[9999,9999] width:0 height:0
 	label lblPalmAxis2 "" pos:[9999,9999] width:0 height:0
 	
-	button reAlignFingers "重新对齐手指" pos:[rightPanelX+5,282] width:(btnWidth) height:20 tooltip:"重新对齐手指骨骼方向"
+	button reAlignFingers "重新对齐手指" pos:[rightPanelX+5,282] width:(btnWidth) height:20
 	
 	-- ========== 右侧面板: 慎用区域 ==========
 	groupbox grpBoneTips "【慎用】高级选项" pos:[rightPanelX,312] width:rightPanelW height:110
-	checkbox chkRealign "重置 Bone 轴向" pos:[rightPanelX+8,332] height:16 width:(btnWidth-10) checked:false tooltip:"勾选后会重置 Bone 轴向（慎用，影响蒙皮）"
+	checkbox chkRealign "重置 Bone 轴向" pos:[rightPanelX+8,332] height:16 width:(btnWidth-10) checked:false
 	button btnConvertToBone "Helper 转 Bone" pos:[rightPanelX+5,352] height:22 width:(btnWidth) tooltip:"需要选中 Helper 对象"
-	checkbox chkCopySubs "重定向飘带动画" pos:[rightPanelX+8,378] height:16 width:(btnWidth-10) checked:false tooltip:"同时复制飘带/裙摆等非Biped骨骼动画"
-	checkbox chkFbxMixBip "FBX 套接 Biped" pos:[rightPanelX+8,398] height:16 width:(btnWidth-10) checked:false tooltip:"慎用！保留原骨骼套接Biped，Skin无法重定向"
+	checkbox chkCopySubs "重定向飘带动画" pos:[rightPanelX+8,378] height:16 width:(btnWidth-10) checked:false
+	checkbox chkFbxMixBip "FBX 套接 Biped" pos:[rightPanelX+8,398] height:16 width:(btnWidth-10) checked:false
 	
 	-- ========== 右侧面板: 底部操作按钮 ==========
-	groupbox grpRightBtns "操作" pos:[rightPanelX,427] width:rightPanelW height:220
-	button btnAutoMapping "1.自动匹配" pos:[rightPanelX+5,445] width:(btnWidth) height:26 tooltip:"根据通用骨骼名称自动匹配"
-	button loadDialogue "加载列表" pos:[rightPanelX+5,474] width:72 height:20 tooltip:"加载映射列表文件"
-	button saveDialogue "保存列表" pos:[rightPanelX+80,474] width:72 height:20 tooltip:"保存映射列表文件"
-	button btnMirrorSync "左右同步" pos:[rightPanelX+5,496] width:72 height:20 tooltip:"将左侧映射镜像到右侧（或反向）"
-	button btnUndo "撤销" pos:[rightPanelX+80,496] width:72 height:20 tooltip:"撤销上一次映射操作"
-	button btnPickBone "视口拾取" pos:[rightPanelX+5,518] width:(btnWidth) height:20 tooltip:"点击开启/关闭视口拾取模式\n在视口点选骨骼自动填入空槽位\n右键按钮=跳过当前槽 | Esc=退出"
-	dotNetControl lblStatusBar "Label" pos:[rightPanelX+5,540] width:(btnWidth) height:14
-	timer tmrPickMode "" interval:150 active:false
-	button validateButton "2.验证映射" pos:[rightPanelX+5,557] width:(btnWidth) height:26 tooltip:"验证映射列表是否完整"
-	button alignBipedToHelper "3.创建映射文件" pos:[rightPanelX+5,586] width:(btnWidth) height:26 tooltip:"创建重定向映射中间文件"
-	button btnReplaceToBiped "4.FBX转Biped" pos:[rightPanelX+5,615] width:(btnWidth) height:30 tooltip:"将 FBX 骨骼转换为 Biped"
+	groupbox grpRightBtns "操作" pos:[rightPanelX,427] width:rightPanelW height:175
+	button btnAutoMapping "1.自动匹配" pos:[rightPanelX+5,447] width:(btnWidth) height:26 tooltip:"根据通用骨骼名称自动匹配"
+	button loadDialogue "加载列表" pos:[rightPanelX+5,477] width:72 height:20 tooltip:"加载映射列表文件"
+	button saveDialogue "保存列表" pos:[rightPanelX+80,477] width:72 height:20 tooltip:"保存映射列表文件"
+	button validateButton "2.验证映射" pos:[rightPanelX+5,502] width:(btnWidth) height:26 tooltip:"验证映射列表是否完整"
+	button alignBipedToHelper "3.创建映射文件" pos:[rightPanelX+5,532] width:(btnWidth) height:26 tooltip:"创建重定向映射中间文件"
+	button btnReplaceToBiped "4.FBX转Biped" pos:[rightPanelX+5,562] width:(btnWidth) height:32 tooltip:"将 FBX 骨骼转换为 Biped"
 
 	-- ========== Tab2: 动画重定向界面 (初始隐藏) ==========
 	listBox ltbFilesList "" selection:0 height:40 width:225 pos:[margin,55] visible:false
@@ -1121,8 +895,8 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 	pos:[rightPanelX-25,55] height:520 width:(rightPanelW+20) readOnly:true visible:false
 
 	-- ========== 进度条区域 ==========
-	progressbar pgbBar "" pos:[margin,652] width:(winW-55) height:16 color:white
-	label lblBarValue "0 %" pos:[(winW-32),653] width:38
+	progressbar pgbBar "" pos:[margin,618] width:(winW-55) height:16 color:white
+	label lblBarValue "0 %" pos:[(winW-32),619] width:38
 
 	-- Tab1 控件列表: FBX 转 Biped
 	local arrFBXtoBIPED = #(">> 【 FBX 转 Biped 】 <<",#(
@@ -1137,7 +911,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 		lblThumbAxis2,lblHandAxis2,lblPalmAxis2,
 		reAlignFingers,
 		grpBoneTips,chkRealign,btnConvertToBone,chkCopySubs,chkFbxMixBip,
-		grpRightBtns,btnAutoMapping,loadDialogue,saveDialogue,btnMirrorSync,btnUndo,btnPickBone,lblStatusBar,validateButton,alignBipedToHelper,btnReplaceToBiped
+		grpRightBtns,btnAutoMapping,loadDialogue,saveDialogue,validateButton,alignBipedToHelper,btnReplaceToBiped
 	))
 	-- Tab2 控件列表: 动画重定向
 	local arrAnimRetarget = #(">> 【 动画重定向 】<<",#(
@@ -1170,268 +944,66 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 		return arrMappingFile
 	)
 
-	-- ====== SECTION 5: CORE LOGIC FUNCTIONS ======
-
 	fn fnLoadMappingList f =
 	(
-		local fS = openFile f mode:"r"
-		if fS == undefined then return false
+		fS = openFile f mode:"r"
 
-		-- 读取首行判断版本
-		local fileVersion = 1
-		local firstLine = readLine fS
-		if firstLine == "v2" then
-			fileVersion = 2
-		else
-		(
-			-- Legacy: firstLine 是第一个骨骼名，需回退重读
-			close fS
-			fS = openFile f mode:"r"
-		)
-
-		local i = 1
-
+		i = 1
+		
 		while (eof fS) == false do
 		(
-			local newValue = readLine fS
-
-			if (i <= 69) then
-				fnSetListItem i newValue
+			newValue = readLine fS;
+			-- print newValue
+			
+			if (i <= 37) then
+		(
+				local temp_array = characterBones.items;
+				temp_array[i] = newValue;
+				characterBones.items = temp_array;
+			)
+			else if (i <= 69) then
+			(
+				local temp_array = characterBones_B.items;
+				temp_array[i-37] = newValue;
+				characterBones_B.items = temp_array;
+			)
 			else if (i == 70) then (lbxRoot.items = #(newValue))
 			else if (i == 71) then (try(ddlThumbAxis.selection = (newValue as integer))catch())
-			else if (i == 72) then (try(ddlHandAxis.selection = (newValue as integer))catch())
+			else if (i == 72) then (try(ddlHandAxis.selection= (newValue as integer))catch())
 			else if (i == 73) then (try(ddlThumbAxis2.selection = (newValue as integer))catch())
 			else if (i == 74) then (try(ddlHandAxis2.selection = (newValue as integer))catch())
 			else if (i == 75) then (try(ddlPalmAxis.selection = (newValue as integer))catch())
 			else if (i == 76) then (try(ddlPalmAxis2.selection = (newValue as integer))catch())
 
-			i += 1
+			i += 1;
 		)
-
+		
 		close fS
 		if i < 69 then
 		(
 			if (queryBox "List文件是老版本,是否 \"修复旧映射列表\" ,注意重新保存列表！                                                                     " \
-			title:(kMsgTitle + " Tips") beep:false) then (menuQuickCreateNode.fnFixOldMappingList())
+			title:"BsRetargetTools Tips" beep:false) then (menuQuickCreateNode.fnFixOldMappingList())
 		)
-		else if i < 76 then
+		else if i < 76 then 
 		(
 			messagebox "List文件是老版本,注意另存一份新版,包括手和手指轴向设置！(当前不影响使用)                                                                     "
 		)
 		else (messagebox "加载成功！                       ")
 	)
 
-	fn fnIsOptionalNodeIndex id =
+	fn fnIsOptionalNodeIndex id = 
 	(
-		if id >= 1 and id <= kBoneSlots.count then kBoneSlots[id].isOptional
-		else false
-	)
-
-	fn fnEnsureMappingListLengths =
-	(
-		local arrA = characterBones.items
-		local arrB = characterBones_B.items
-		while arrA.count < 37 do append arrA "~undefined~"
-		while arrB.count < 32 do append arrB "~undefined~"
-		if arrA.count > 37 do arrA = for i = 1 to 37 collect arrA[i]
-		if arrB.count > 32 do arrB = for i = 1 to 32 collect arrB[i]
-		characterBones.items = arrA
-		characterBones_B.items = arrB
-	)
-
-	fn fnSetListItem index value =
-	(
-		fnEnsureMappingListLengths()
-		if index >= 1 and index <= 37 then
-		(
-			local arr = characterBones.items
-			arr[index] = value
-			characterBones.items = arr
-		)
-		else if index >= 38 and index <= 69 then
-		(
-			local arr = characterBones_B.items
-			arr[index - 37] = value
-			characterBones_B.items = arr
-		)
-	)
-
-	fn fnGetListItem index =
-	(
-		fnEnsureMappingListLengths()
-		if index >= 1 and index <= 37 then characterBones.items[index]
-		else if index >= 38 and index <= 69 then characterBones_B.items[index - 37]
-		else "~undefined~"
-	)
-
-	-- 映射撤销栈
-	local mappingUndoStack = #()
-	local pickModeActive = false
-	local pickModeSlot = 0
-	local pickModeCount = 0
-	local pickModeGuard = false
-	local kUndoMax = 20
-
-	fn fnPushMappingUndo =
-	(
-		local state = #(
-			deepCopy characterBones.items,
-			deepCopy characterBones_B.items,
-			deepCopy lbxRoot.items
-		)
-		append mappingUndoStack state
-		if mappingUndoStack.count > kUndoMax then deleteItem mappingUndoStack 1
-	)
-
-	fn fnPopMappingUndo =
-	(
-		if mappingUndoStack.count == 0 then
-		(
-			messagebox "没有可撤销的操作。" title:kMsgTitle beep:false
-			return false
-		)
-		local state = mappingUndoStack[mappingUndoStack.count]
-		deleteItem mappingUndoStack mappingUndoStack.count
-		characterBones.items = state[1]
-		characterBones_B.items = state[2]
-		lbxRoot.items = state[3]
-		true
-	)
-
-	-- 映射状态栏更新
-	fn fnUpdateStatusBar =
-	(
-		local filled = 0; local reqMissing = 0; local optMissing = 0
-		for i = 1 to 69 do
-		(
-			local val = fnGetListItem i
-			if val != "~undefined~" then filled += 1
-			else if fnIsOptionalNodeIndex i then optMissing += 1
-			else reqMissing += 1
-		)
-		local hasRoot = lbxRoot.items.count > 0 and lbxRoot.items[1] != "~undefined~"
-		local rootOK = if hasRoot then "Root:OK" else "Root:?"
-		lblStatusBar.Text = ("已映射:" + filled as string + "  必需缺失:" + reqMissing as string +
-							   "  可选缺失:" + optMissing as string + "  " + rootOK)
-		local dotColor = dotNetClass "System.Drawing.Color"
-		lblStatusBar.ForeColor = case of
-		(
-			(not hasRoot):          (dotColor.FromArgb 220 120 20)
-			(reqMissing > 0):       (dotColor.FromArgb 200 40 40)
-			(optMissing > 0):       (dotColor.FromArgb 180 160 20)
-			default:                (dotColor.FromArgb 40 160 60)
-		)
-	)
-
-	-- ========== 视口拾取模式 ==========
-	fn fnPickModeNextEmpty startFrom skipOptional:true =
-	(
-		for i = startFrom to 69 do
-			if (fnGetListItem i) == "~undefined~" and (not skipOptional or not (fnIsOptionalNodeIndex i)) then return i
-		0
-	)
-
-	fn fnPickModeHighlightSlot slot =
-	(
-		if slot >= 1 and slot <= 37 then
-		(
-			characterBones.selection = slot
-			characterBones_B.selection = 0
-			bipedBones.selection = slot
-			bipedBones_B.selection = 0
-		)
-		else if slot >= 38 and slot <= 69 then
-		(
-			characterBones.selection = 0
-			characterBones_B.selection = slot - 37
-			bipedBones.selection = 0
-			bipedBones_B.selection = slot - 37
-		)
-	)
-
-	fn fnPickModeUpdateStatus =
-	(
-		if not pickModeActive then return undefined
-		local slotName = if pickModeSlot >= 1 and pickModeSlot <= kBoneSlots.count then kBoneSlots[pickModeSlot].name else ("Slot " + pickModeSlot as string)
-		btnPickBone.text = "[拾取中] " + pickModeCount as string + "个"
-		lblStatusBar.Text = (">> " + slotName + "  |  点选骨骼填入 / 右键跳过 / Esc退出")
-		lblStatusBar.ForeColor = ((dotNetClass "System.Drawing.Color").FromArgb 30 90 180)
-	)
-
-	fn fnPickModeExit =
-	(
-		pickModeActive = false
-		pickModeGuard = false
-		tmrPickMode.active = false
-		callbacks.removeScripts id:#bsPickMode
-		btnPickBone.text = "视口拾取"
-		fnUpdateStatusBar()
-	)
-
-	fn fnPickModeAdvance =
-	(
-		local nextSlot = fnPickModeNextEmpty (pickModeSlot + 1)
-		if nextSlot == 0 then
-		(
-			local msg = "所有槽位已填满！共填入 " + pickModeCount as string + " 个骨骼"
-			fnPickModeExit()
-			messagebox msg title:kMsgTitle beep:false
-			return undefined
-		)
-		pickModeSlot = nextSlot
-		fnPickModeHighlightSlot nextSlot
-		fnPickModeUpdateStatus()
-	)
-
-	fn fnPickModeSelect =
-	(
-		if not pickModeActive or pickModeGuard then return undefined
-		pickModeGuard = true
-		local sel = selection as array
-		if sel.count == 1 then
-		(
-			fnPushMappingUndo()
-			fnSetListItem pickModeSlot sel[1].name
-			pickModeCount += 1
-			fnPickModeAdvance()
-		)
-		pickModeGuard = false
-	)
-
-	fn fnPickModeEnter =
-	(
-		local startSlot = 0
-		if bipedBones.selection > 0 then startSlot = bipedBones.selection
-		else if bipedBones_B.selection > 0 then startSlot = bipedBones_B.selection + 37
-		else if characterBones.selection > 0 then startSlot = characterBones.selection
-		else if characterBones_B.selection > 0 then startSlot = characterBones_B.selection + 37
-
-		if startSlot > 0 and (fnGetListItem startSlot) != "~undefined~" then
-			startSlot = fnPickModeNextEmpty startSlot
-		else if startSlot == 0 then
-			startSlot = fnPickModeNextEmpty 1
-
-		if startSlot == 0 then
-		(
-			messagebox "所有槽位已填满！" title:kMsgTitle beep:false
-			return undefined
-		)
-
-		pickModeActive = true
-		pickModeSlot = startSlot
-		pickModeCount = 0
-		fnPickModeHighlightSlot startSlot
-		fnPickModeUpdateStatus()
-		callbacks.addScript #selectionSetChanged "if rolBsRetarget != undefined do rolBsRetarget.fnPickModeSelect()" id:#bsPickMode
-		tmrPickMode.active = true
+		if id >= 5 and id <= 9 and id != 8 then (return true)
+		else if id >= 26 and id <= 45 then (return true)
+		else if id >= 50 and id <= 69 then (return true)
+		return false
 	)
 
 	fn fnInitDotTabs =
 	(
 		-- 设置标签字体和样式
 		local dotFont = dotnetobject "System.Drawing.Font" "Microsoft YaHei UI" 8.5
-		lblTitle.font = lblPreset.font = lblRoot.font = lblStatusBar.font = dotFont
-		lblStatusBar.BackColor = (dotNetClass "System.Drawing.Color").Transparent
+		lblTitle.font = lblPreset.font = lblRoot.font = dotFont
 		lblTitle.TextAlign = lblPreset.TextAlign = lblRoot.TextAlign = (dotnetclass "system.drawing.contentalignment").MiddleLeft
 		
 		-- 设置标签颜色
@@ -1443,10 +1015,10 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 		lblPreset.ForeColor = lblRoot.ForeColor = (dotColor.FromArgb 80 80 80)
 		
 		-- 设置 Tab 控件
-		tabBsADT.SizeMode = (dotnetclass "System.Windows.Forms.TabSizeMode").Fixed
-		tabBsADT.ItemSize = dotNetObject "System.Drawing.Size" (winW/arrAllToolsTab.count - arrAllToolsTab.count) 30
-		tabBsADT.Dock = (dotNetClass "System.Windows.Forms.DockStyle").Fill
-		tabBsADT.DrawMode = (dotNetClass "System.Windows.Forms.TabDrawMode").OwnerDrawFixed
+		tabBsADT.sizeMode = (dotnetclass "System.Windows.Forms.TabSizeMode").Fixed
+		tabBsADT.itemSize = dotNetObject "System.Drawing.Size" (winW/arrAllToolsTab.count - arrAllToolsTab.count) 30
+		tabBsADT.dock = tabBsADT.dock.Fill
+		tabBsADT.Drawmode = tabBsADT.Drawmode.OwnerDrawFixed
 
 		-- 添加 Tab 页
 		for aTab = 1 to arrAllToolsTab.count do
@@ -1544,9 +1116,36 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 
 	fn fnIsIgnoreBone index =
 	(
-		(fnGetListItem index) == "~undefined~"
+		if index <= 37 then 
+		(
+			if characterBones.items[index] == "~undefined~" then (return true) else (return false)
+		)
+		else (if characterBones_B.items[index - 37] == "~undefined~" then (return true) else (return false))
 	)
 
+	-- fn fnConfirmImportFBX =
+	-- (
+	-- 	hwnd = dialogMonitorOps.getWindowHandle()
+	-- 	hwndText = uiAccessor.getWindowText hwnd
+	-- 	print hwndText
+	-- 	if (matchpattern hwndText pattern:"*FBX Import*") then
+	-- 	(
+	-- 		UIAccessor.PressButtonByName hwnd "OK"
+	-- 	)
+	-- 	true
+	-- )
+
+	-- fn fnConfirmExportFBX =
+	-- (
+	-- 	hwnd = dialogMonitorOps.getWindowHandle()
+	-- 	hwndText = uiAccessor.getWindowText hwnd
+	-- 	print hwndText
+	-- 	if (matchpattern hwndText pattern:"*FBX Export*") then
+	-- 	(
+	-- 		UIAccessor.PressButtonByName hwnd "OK"
+	-- 	)
+	-- 	true
+	-- )
 
 	mapped fn fnSelectChildrens objSel =
 	(
@@ -1579,61 +1178,41 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 		for i in objects where classof i == Biped_Object do (return i.controller.rootnode)
 	)
 
-	global _bipedCacheDirty = true
-	fn fnInvalidateBipedCache = (_bipedCacheDirty = true)
-
 	global GetBipedNode
 	fn GetBipedNode index =
 	(
-		-- 缓存脏时重建（无论 index 是多少）
-		if _bipedCacheDirty or arrAllBipedNode.count == 0 then
-		(
-			local rootBip = fnGetRootNode()
-			if rootBip != undefined then
-			(
-				clearselection()
-				select rootBip
-				fnSelectChildrens rootBip
-				arrAllBipedNode = (selection as array)
-				arrAllBipedName = for i in arrAllBipedNode collect i.name
-				_bipedCacheDirty = false
-			)
-		)
-
 		if (index == 1) then
 		(
-			return fnGetRootNode()
+			targetBiped = fnGetRootNode()
+			if targetBiped != ok then 
+			(
+				clearselection()
+				select targetBiped
+				fnSelectChildrens targetBiped
+				arrAllBipedNode = (selection as array)
+				arrAllBipedName = for i in arrAllBipedNode collect i.name
+				return targetBiped
+			)
 		)
 		else if (index <= 37) then
 		(
-			local targetBiped = undefined
-			local idTargetBiped = 0
-			if index >= 1 and index <= rolBsRetarget.bipedBones.items.count then
+            local strTargetBiped = (bipedRootName + " " + (substituteString rolBsRetarget.bipedBones.items[index] "[可选]" ""))
+			idTargetBiped = finditem arrAllBipedName strTargetBiped
+			if idTargetBiped != 0 then 
 			(
-	            local strTargetBiped = (bipedRootName + " " + (substituteString rolBsRetarget.bipedBones.items[index] "[可选]" ""))
-				idTargetBiped = finditem arrAllBipedName strTargetBiped
-				if idTargetBiped != 0 then
-				(
-					targetBiped = arrAllBipedNode[idTargetBiped]
-	            	targetBiped.boxmode = true
-				)
+				targetBiped = arrAllBipedNode[idTargetBiped]
+            	targetBiped.boxmode = true
 			)
 			return targetBiped
 		)
 		else
 		(
-			local targetBiped = undefined
-			local idTargetBiped = 0
-			local idxB = index - 37
-			if idxB >= 1 and idxB <= rolBsRetarget.bipedBones_B.items.count then
+            local strTargetBiped =(bipedRootName + " " + (substituteString rolBsRetarget.bipedBones_B.items[index-37] "[可选]" ""))
+			idTargetBiped = finditem arrAllBipedName strTargetBiped
+			if idTargetBiped != 0 then 
 			(
-	            local strTargetBiped =(bipedRootName + " " + (substituteString rolBsRetarget.bipedBones_B.items[idxB] "[可选]" ""))
-				idTargetBiped = finditem arrAllBipedName strTargetBiped
-				if idTargetBiped != 0 then
-				(
-					targetBiped = arrAllBipedNode[idTargetBiped]
-					targetBiped.boxmode = true
-				)
+				targetBiped = arrAllBipedNode[idTargetBiped]
+				targetBiped.boxmode = true
 			)
 			return targetBiped
 		)
@@ -1645,48 +1224,6 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 		for i in objects do scaletime i.controller animationrange.start animationrange.end 2
 		animationrange = interval animationrange.start endFrame
 		true
-	)
-
-	-- [Shared] 移除 Root 骨骼但保留 Biped 动画(世界空间烘焙)
-	fn fnRemoveRootKeepAnim =
-	(
-		if gOpts.isRemoveRootKeepAnim and (getnodebyname "Root") != undefined then
-		(
-			local rootNode = getnodebyname "Root"
-			local bipRoot = GetBipedNode 1
-
-			local bipWorldPosList = #()
-			local bipWorldRotList = #()
-
-			for t = animationRange.start to animationRange.end do
-			(
-				at time t
-				(
-					append bipWorldPosList (in coordsys world Biped.getTransform bipRoot #pos)
-					append bipWorldRotList (in coordsys world Biped.getTransform bipRoot #rotation)
-				)
-			)
-
-			bipRoot.parent = undefined
-
-			biped.createLayer bipRoot.controller 1 "layerRemoveRoot"
-			biped.setcurrentlayer bipRoot.controller 1
-
-			local f = 1
-			for t = animationRange.start to animationRange.end do
-			(
-				slidertime = t
-				with animate on
-				(
-					in coordsys world Biped.setTransform bipRoot #pos bipWorldPosList[f] true
-					in coordsys world Biped.setTransform bipRoot #rotation bipWorldRotList[f] true
-					f += 1
-				)
-			)
-
-			biped.collapseAtLayer bipRoot.controller 0
-			delete rootNode
-		)
 	)
 
 	fn fnExportReTargrtedAnim arrExportRetargetAnim index =
@@ -1721,7 +1258,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 			resetMaxFile #noPrompt
 
 			loadMaxFile mappingFilePath useFileUnits:true quiet:true
-			if gOpts.fixNierFramerate then framerate = 30
+			if fixNierFramerate then framerate = 30
 			importFile sourFileImportPath #noPrompt using:FBXIMP
 
 			-- DialogMonitorOps.Enabled = true
@@ -1729,7 +1266,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 			-- DialogMonitorOps.unRegisterNotification id:#importFBX
 			-- DialogMonitorOps.Enabled = false
 
-			if gOpts.fixNierFramerate then 
+			if fixNierFramerate then 
 			(
 				framerate = 60
 				-- frameStart = animationrange.start
@@ -1751,7 +1288,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 				-- animationrange = interval startFrame (endFrame - 1)
 			)
 
-			if gOpts.isScale100 then (rescaleWorldUnits 100)
+			if isScale100 then (rescaleWorldUnits 100)
 
 			select $'RTHelper_*'
 			if (selection as array).count == 0 then (select $'RetargetHelper_*';preStr = "Old")
@@ -1762,7 +1299,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 				else (i.name = substituteString i.name "RTHelper_" "")
 			)
 			
-			if gOpts.isHalfAnimSpeed do 
+			if isHalfAnimSpeed do 
 			(
 				fnHalfAnimSpeed()
 			)
@@ -1772,7 +1309,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 			FBXExporterSetParam "BakeResampleAnimation" false
 			FBXExporterSetParam "SplitAnimationIntoTakes" "-c"
 			FBXExporterSetParam "BakeFrameStart" animationRange.start
-			-- if gOpts.fixNierFramerate then (FBXExporterSetParam "BakeFrameStart" 1)
+			-- if fixNierFramerate then (FBXExporterSetParam "BakeFrameStart" 1)
 			FBXExporterSetParam "BakeFrameEnd" animationRange.end
 			FBXExporterSetParam "Cameras" false
 			FBXExporterSetParam "Lights" false
@@ -1789,7 +1326,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 
 			select arrExport
 
-			if gOpts.isEulerFilter then 
+			if isEulerFilter then 
 			(
 				for i in selection where classof i == BoneGeometry or classof i == dummy or classof i == point do
 				(
@@ -1802,16 +1339,15 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 			)
 
 			completeredraw()
-			try (exportFile tarNewAnim #noPrompt selectedOnly:true using:FBXEXP)
-			catch (format "[BsRetarget] FBX export failed: %\n" (getCurrentException()))
+			exportFile tarNewAnim #noPrompt selectedOnly:true using:FBXEXP
 			-- exportFile tarFileDebug #noPrompt selectedOnly:true using:FBXEXP
 
 			-- print ("正在导入新 Skin 动画：" + tarNewAnim)
 			resetMaxFile #noPrompt
 			
 			loadMaxFile skinFile useFileUnits:true quiet:true
-			if gOpts.fixNierFramerate then framerate = 60
-			try ((GetBipedNode 1).transform.controller.figureMode = false) catch (print "[BsRetarget] figureMode already off or cannot switch")
+			if fixNierFramerate then framerate = 60
+			(GetBipedNode 1).transform.controller.figureMode = false
 
 			FbxImporterSetParam "Mode" #exmerge
 			FbxImporterSetParam "Animation" true
@@ -1819,19 +1355,40 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 			FbxImporterSetParam "BakeAnimationLayers" false
 			FbxImporterSetParam "PointCache" false
 
+			-- if (getnodebyname "Root") != undefined then
+			-- (
+			-- 	local dummyRootMotionTemp = point name:"RootTemp" wirecolor:red
+			-- 	-- in coordsys gimbal dummyRootMotionTemp.rotation = (eulerAngles 90 0 0)
+			-- 	if rolBsRetarget.ddlUpAxis.selection == 1 then (in coordsys gimbal dummyRootMotionTemp.rotation = (eulerAngles 90 0 0))
+			-- 	else (in coordsys gimbal dummyRootMotionTemp.rotation = (eulerAngles 0 0 0))
+			-- 	(GetBipedNode 1).parent = dummyRootMotionTemp
+			-- 	dummyRootMotionTemp.constantscreensize = false
+			-- )
 			(GetBipedNode 1).parent = undefined
-			try (importFile tarNewAnim #noPrompt using:FBXIMP)
-			catch (format "[BsRetarget] FBX import failed: %\n" (getCurrentException()))
+			importFile tarNewAnim #noPrompt using:FBXIMP
 			DeleteFile tarNewAnim
 
 			if (getnodebyname "Root") != undefined then 
 			(
 				local rootBone            = (GetBipedNode 1)
 				local dummyRootMotion     = (getnodebyname "Root")
+				-- local dummyRootMotionTemp = (getnodebyname "RootTemp")
+
+				-- 每一帧的Pos与Rot
 				local bipPosList = #()
 				local bipRotList = #()
 
-				-- 遍历：动画 Root 匹配 RootLeader
+				-- 第一次遍历，记录原始的bip在世界空间的位置与旋转信息
+				-- for t = (animationRange.start) to (animationRange.end) do
+				-- (
+				-- 	at time t
+				-- 	(
+				-- 		append bipPosList (in coordsys world Biped.getTransform rootBone #pos)
+				-- 		append bipRotList (in coordsys world Biped.getTransform rootBone #rotation)
+				-- 	)
+				-- )
+
+				-- 第二次遍历，动画 Root 匹配 RootLeader
 				for t = (animationRange.start) to (animationRange.end) do
 				(
 					at time t with animate on 
@@ -1885,16 +1442,63 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 				)
 				biped.collapseAtLayer rootBone.controller 1
 				biped.collapseAtLayer rootBone.controller 0
+				-- dummyRootMotionTemp.size = 0.4
 			)
 
+			-- (GetBipedNode 1).transform.controller.figureMode = true
+			-- (GetBipedNode 1).controller.trianglePelvis = false
+			-- (GetBipedNode 1).controller.triangleNeck = true
+			-- (GetBipedNode 1).transform.controller.figureMode = false
+
 			-- 移除 Root 保留动画
-			fnRemoveRootKeepAnim()
+			if isRemoveRootKeepAnim and (getnodebyname "Root") != undefined then
+			(
+				local rootNode = getnodebyname "Root"
+				local bipRoot = GetBipedNode 1
+				
+				-- 记录质心在世界空间的每帧位置和旋转
+				local bipWorldPosList = #()
+				local bipWorldRotList = #()
+				
+				for t = animationRange.start to animationRange.end do
+				(
+					at time t
+					(
+						append bipWorldPosList (in coordsys world Biped.getTransform bipRoot #pos)
+						append bipWorldRotList (in coordsys world Biped.getTransform bipRoot #rotation)
+					)
+				)
+				
+				-- 断开父子关系
+				bipRoot.parent = undefined
+				
+				-- 创建新层并应用世界空间动画
+				biped.createLayer bipRoot.controller 1 "layerRemoveRoot"
+				biped.setcurrentlayer bipRoot.controller 1
+				
+				local f = 1
+				for t = animationRange.start to animationRange.end do
+				(
+					slidertime = t
+					with animate on
+					(
+						in coordsys world Biped.setTransform bipRoot #pos bipWorldPosList[f] true
+						in coordsys world Biped.setTransform bipRoot #rotation bipWorldRotList[f] true
+						f += 1
+					)
+				)
+				
+				-- 合并层
+				biped.collapseAtLayer bipRoot.controller 0
+				
+				-- 删除 Root 骨骼
+				delete rootNode
+			)
 
 			saveMaxFile tarMaxFile saveAsVersion:((rolBsRetarget.ddlSaveVersion.selected) as integer) clearNeedSaveFlag:true quiet:true
 			arrExport = (for i in objects where classof i == Biped_Object or classof i == Dummy or classof i == BoneGeometry collect i)
 			select arrExport
-			try (exportFile tarNewAnim #noPrompt selectedOnly:true using:FBXEXP)
-			catch (format "[BsRetarget] FBX export failed: %\n" (getCurrentException()))
+			exportFile tarNewAnim #noPrompt selectedOnly:true using:FBXEXP
 			biped.saveBipFile (getnodebyname "Bip001").controller tempBip
 			-- print ("已保存新 Skin 动画：" + (substituteString tarNewAnim ".FBX" ".max"))
 		)
@@ -1933,8 +1537,8 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 
 			resetMaxFile #noPrompt
 			loadMaxFile skinFile useFileUnits:true quiet:true
-			if gOpts.fixNierFramerate then framerate = 60
-			try ((GetBipedNode 1).transform.controller.figureMode = false) catch (print "[BsRetarget] figureMode already off or cannot switch")
+			if fixNierFramerate then framerate = 60
+			(GetBipedNode 1).transform.controller.figureMode = false
 			-- (GetBipedNode 1).parent = undefined  --质心已经没动画了,不用断开父子级
 			slidertime = zeroFrame
 			LoadSaveAnimation.loadAnimation tempRootAnim $'Root' relative:false insert:false
@@ -1947,13 +1551,54 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 			animationrange = (interval zeroFrame endFrame)
 
 			-- 移除 Root 保留动画
-			fnRemoveRootKeepAnim()
+			if isRemoveRootKeepAnim and (getnodebyname "Root") != undefined then
+			(
+				local rootNode = getnodebyname "Root"
+				local bipRoot = GetBipedNode 1
+				
+				-- 记录质心在世界空间的每帧位置和旋转
+				local bipWorldPosList = #()
+				local bipWorldRotList = #()
+				
+				for t = animationRange.start to animationRange.end do
+				(
+					at time t
+					(
+						append bipWorldPosList (in coordsys world Biped.getTransform bipRoot #pos)
+						append bipWorldRotList (in coordsys world Biped.getTransform bipRoot #rotation)
+					)
+				)
+				
+				-- 断开父子关系
+				bipRoot.parent = undefined
+				
+				-- 创建新层并应用世界空间动画
+				biped.createLayer bipRoot.controller 1 "layerRemoveRoot"
+				biped.setcurrentlayer bipRoot.controller 1
+				
+				local f = 1
+				for t = animationRange.start to animationRange.end do
+				(
+					slidertime = t
+					with animate on
+					(
+						in coordsys world Biped.setTransform bipRoot #pos bipWorldPosList[f] true
+						in coordsys world Biped.setTransform bipRoot #rotation bipWorldRotList[f] true
+						f += 1
+					)
+				)
+				
+				-- 合并层
+				biped.collapseAtLayer bipRoot.controller 0
+				
+				-- 删除 Root 骨骼
+				delete rootNode
+			)
 
 			saveMaxFile tarMaxFile saveAsVersion:((rolBsRetarget.ddlSaveVersion.selected) as integer) clearNeedSaveFlag:true quiet:true
 			arrExport = (for i in objects where classof i == Biped_Object or classof i == Dummy or classof i == BoneGeometry collect i)
 			select arrExport
-			try (exportFile tarNewAnim #noPrompt selectedOnly:true using:FBXEXP)
-			catch (format "[BsRetarget] FBX export failed: %\n" (getCurrentException()))
+			exportFile tarNewAnim #noPrompt selectedOnly:true using:FBXEXP
 		)
 	)
 
@@ -1971,22 +1616,6 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 		return (GetSkeletalNode itemIndex false).rotation
 	)
 
-	-- 将下拉框轴向选择解析为变换矩阵的对应行向量
-	fn fnResolveAxis ddlWidget xformNode =
-	(
-		local tm = xformNode.transform
-		case ddlWidget.selected of
-		(
-			("X"):  tm.row1
-			("Y"):  tm.row2
-			("Z"):  tm.row3
-			("-X"): -tm.row1
-			("-Y"): -tm.row2
-			("-Z"): -tm.row3
-			default: -tm.row3
-		)
-	)
-
 	global CreateFauxBone
 	fn CreateFauxBone initialBone parentIndex childIndex axis isFoot:false isToes:false isHand:false=
 	(
@@ -2000,7 +1629,8 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 				foundChild = GetSkeletalNode childIndex false
 			)
 			
-
+			print (foundParent)
+			print (foundChild)
 			
 			if (isFoot == true) then
 			(
@@ -2092,12 +1722,76 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 				-- local cro = cross (normalize diff) axis
 				-- axis = normalize cro
 				-- print axis
-				axis      = fnResolveAxis rolBsRetarget.ddlHandAxis   foundParent
-				axisThumb = fnResolveAxis rolBsRetarget.ddlThumbAxis  foundParent
-				local axis2      = fnResolveAxis rolBsRetarget.ddlHandAxis2  foundParent
-				local axisThumb2 = fnResolveAxis rolBsRetarget.ddlThumbAxis2 foundParent
-				local axisPalm   = fnResolveAxis rolBsRetarget.ddlPalmAxis   foundParent
-				local axisPalm2  = fnResolveAxis rolBsRetarget.ddlPalmAxis2  foundParent
+				local axis2
+				local axisThumb2
+				local axisPalm
+				local axisPalm2
+	
+				case rolBsRetarget.ddlHandAxis.selected of 
+				(
+					("X"):(axis = foundParent.transform.row1)
+					("Y"):(axis = foundParent.transform.row2)
+					("Z"):(axis = foundParent.transform.row3)
+					("-X"):(axis = -foundParent.transform.row1)
+					("-Y"):(axis = -foundParent.transform.row2)
+					("-Z"):(axis = -foundParent.transform.row3;axisThumb = foundParent.transform.row2)
+					default:(axis = -foundParent.transform.row3;axisThumb = foundParent.transform.row2)
+				)
+	
+				case rolBsRetarget.ddlThumbAxis.selected of 
+				(
+					("X"):(axisThumb = foundParent.transform.row1)
+					("Y"):(axisThumb = foundParent.transform.row2)
+					("Z"):(axisThumb = foundParent.transform.row3)
+					("-X"):(axisThumb = -foundParent.transform.row1)
+					("-Y"):(axisThumb = -foundParent.transform.row2)
+					("-Z"):(axisThumb = -foundParent.transform.row3)
+					default:(axisThumb = -foundParent.transform.row3)
+				)
+	
+				case rolBsRetarget.ddlHandAxis2.selected of
+				(
+					("X"):(axis2 = foundParent.transform.row1)
+					("Y"):(axis2 = foundParent.transform.row2)
+					("Z"):(axis2 = foundParent.transform.row3)
+					("-X"):(axis2 = -foundParent.transform.row1)
+					("-Y"):(axis2 = -foundParent.transform.row2)
+					("-Z"):(axis2 = -foundParent.transform.row3;axisThumb2 = foundParent.transform.row2)
+					default:(axis2 = -foundParent.transform.row3;axisThumb2 = foundParent.transform.row2)
+				)
+	
+				case rolBsRetarget.ddlThumbAxis2.selected of 
+				(
+					("X"):(axisThumb2 = foundParent.transform.row1)
+					("Y"):(axisThumb2 = foundParent.transform.row2)
+					("Z"):(axisThumb2 = foundParent.transform.row3)
+					("-X"):(axisThumb2 = -foundParent.transform.row1)
+					("-Y"):(axisThumb2 = -foundParent.transform.row2)
+					("-Z"):(axisThumb2 = -foundParent.transform.row3)
+					default:(axisThumb2 = -foundParent.transform.row3)
+				)
+
+				case rolBsRetarget.ddlPalmAxis.selected of
+				(
+					("X"):(axisPalm = foundParent.transform.row1)
+					("Y"):(axisPalm = foundParent.transform.row2)
+					("Z"):(axisPalm = foundParent.transform.row3)
+					("-X"):(axisPalm = -foundParent.transform.row1)
+					("-Y"):(axisPalm = -foundParent.transform.row2)
+					("-Z"):(axisPalm = -foundParent.transform.row3)
+					default:(axisPalm = -foundParent.transform.row3)
+				)
+
+				case rolBsRetarget.ddlPalmAxis2.selected of
+				(
+					("X"):(axisPalm2 = foundParent.transform.row1)
+					("Y"):(axisPalm2 = foundParent.transform.row2)
+					("Z"):(axisPalm2 = foundParent.transform.row3)
+					("-X"):(axisPalm2 = -foundParent.transform.row1)
+					("-Y"):(axisPalm2 = -foundParent.transform.row2)
+					("-Z"):(axisPalm2 = -foundParent.transform.row3)
+					default:(axisPalm2 = -foundParent.transform.row3)
+				)
 	
 				arrThumbIndex = #(26,27,28,29)
 				arrThumbIndex2 = #(50,51,52,53)
@@ -2140,6 +1834,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 					local diff = foundChild.pos - foundParent.pos
 					local cro = cross (normalize diff) axis
 					axis = normalize cro
+					print axis
 					
 					if initialBone != undefined then
 					(
@@ -2166,6 +1861,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 					local diff = foundParent.pos - initialBone.pos
 					local cro = cross diff axis
 					axis = normalize cro
+					print axis
 					
 					if initialBone != undefined then
 					(
@@ -2229,10 +1925,11 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 			)
 			else
 			(
+				print (diff.z);
 				biped.setTransform affectedBiped #scale [abs diff.z,abs diff.z,abs diff.z] false
 			)
 		)
-		catch(format "[BsRetarget] AdjustBipedScale error at index: %\n" index0)
+		catch(print ("AdjustBipedScale 错误ID: " + (index0 as string)))
 	)
 	
 	global CreateOrientationConstraint
@@ -2265,7 +1962,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 				oC.relative = true;
 			)
 		)
-		else () --ignore
+		else (print "ignore")
 	)
 	
 	global CreatePositionConstraint
@@ -2320,89 +2017,347 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 	)
 	
 	global FixLimb
-	fn FixLimb index =
+	fn FixLimb index = 
 	(
-		local limbNode = (GetBipedNode index)
-		if limbNode == undefined then return undefined
-		local skelTarget = (GetSkeletalNode index true)
-		if skelTarget == undefined then return undefined
-
-		select limbNode
-		local bestStep = 0
-		local minDist = 900000
-
-		for i = 1 to 72 do
+		local limbToRotate = (GetBipedNode index)
+		if (limbToRotate != undefined) then
 		(
-			in coordsys local rotate limbNode (angleaxis 5 [1,0,0])
-			local pos = biped.getTransform limbNode #pos
-			local diff = skelTarget.transform.position - pos
-			if (length diff < minDist) then
+			select (GetBipedNode index)
+				
+			local min = 0
+			local minLength = 900000
+				
+			for i = 1 to 72 do
 			(
-				minDist = length diff
-				bestStep = i
+				in coordsys local rotate $ (angleaxis 5 [1,0,0])
+					
+				pos = biped.getTransform (GetBipedNode index) #pos
+				diff = (GetSkeletalNode index true).transform.position - pos
+				
+				if (length diff < minLength) then
+				(
+					minLength = length diff
+					min = i
+				)
 			)
+			in coordsys local rotate $ (angleaxis (5 * min) [1,0,0])
 		)
-		-- 72×5=360度 → 回到原位，再转 bestStep×5 度
-		in coordsys local rotate limbNode (angleaxis (5 * bestStep) [1,0,0])
 	)
 	
-	-- 数据表: #(索引, 类型, FixLimb目标)
-	-- 类型: #posrot_figmode=figure模式下pos+rot, #posrot_ik=pos+rot+pos+FixLimb, #root=特殊根节点, #skip=跳过
-	global alignPosRotFigModeSet = #{3,8,10,15,20,22,26,30,34,38,42,46,50,54,58,62,66}
-	global alignIKMap = #(#(14,11), #(19,16), #(25,22), #(49,46))  -- #(节点index, fixLimb目标)
-
 	global AlignBipToFaux
-	fn AlignBipToFaux v prealign:false =
+	fn AlignBipToFaux v prealign:false = 
 	(
-		if not (fnIsIgnoreBone v) then
+		print v;
+		
+		if not (fnIsIgnoreBone v) then 
 		(
-			local inFigureMode = (GetBipedNode 1).transform.controller.figureMode
-			local bipNode = GetBipedNode v
-			local fauxNode = GetSkeletalNode v true
-
-			if v == 1 then
+				
+			inFigureMode = (GetBipedNode 1).transform.controller.figureMode
+				
+			case v of
 			(
-				-- 根节点: 用左右腿中点
-				local ll = (GetSkeletalNode 12 true)
-				local rr = (GetSkeletalNode 17 true)
-				local pp = (ll.pos + rr.pos) * 0.5
-				biped.setTransform bipNode #pos pp false
-				biped.setTransform bipNode #rotation fauxNode.transform.rotation false
-			)
-			else if v == 2 then
-			(
-				-- Pelvis: 跳过(由根节点驱动)
-			)
-			else
-			(
-				-- 检查是否为 IK 末端(手/脚): pos+rot+pos+FixLimb
-				local ikTarget = 0
-				for pair in alignIKMap where pair[1] == v do (ikTarget = pair[2])
-
-				if ikTarget > 0 then
+				1:  
 				(
-					biped.setTransform bipNode #pos fauxNode.transform.position false
-					biped.setTransform bipNode #rotation fauxNode.transform.rotation false
-					biped.setTransform bipNode #pos fauxNode.transform.position false
-					FixLimb ikTarget
+					ll = (GetSkeletalNode 12 true)
+					rr = (GetSkeletalNode 17 true)
+					pp = (ll.pos + rr.pos) * 0.5
+					
+					biped.setTransform (GetBipedNode 1) #pos pp false
+					if okForceRedraw == true then forceCompleteRedraw();
+						
+					biped.setTransform (GetBipedNode 1) #rotation (GetSkeletalNode 1 true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
 				)
-				-- figure 模式下 pos+rot 的节点(脊椎/颈/头/肩/手指/脚趾)
-				else if alignPosRotFigModeSet[v] then
+				2:
 				(
-					if inFigureMode do
-						biped.setTransform bipNode #pos fauxNode.transform.position false
-					biped.setTransform bipNode #rotation fauxNode.transform.rotation false
+					/*biped.setTransform (GetBipedNode 1) #pos (GetSkeletalNode 2 true).transform.position false
+					if okForceRedraw == true then forceCompleteRedraw();
+						
+					biped.setTransform (GetBipedNode 1) #rotation (GetSkeletalNode 2 true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();*/
 				)
-				-- 其他节点: 仅 rotation
-				else
+				-- 1st Spine
+				3:
 				(
-					try (biped.setTransform bipNode #rotation fauxNode.transform.rotation false)
-					catch (format "[BsRetarget] AlignBipToFaux error at ID: %\n" v)
+					if (inFigureMode) then
+					(
+						biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+						if okForceRedraw == true then forceCompleteRedraw();
+					)
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+				)
+				-- Neck
+				8:
+				(
+					if (inFigureMode) then
+					(
+						biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+						if okForceRedraw == true then forceCompleteRedraw();
+					)
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+				)
+				-- Head
+				10:
+				(
+					if (inFigureMode) then
+					(
+						biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+						if okForceRedraw == true then forceCompleteRedraw();
+					)
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+				)
+				-- left shoulder
+				22:
+				(
+					if (inFigureMode) then
+					(
+						biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+						if okForceRedraw == true then forceCompleteRedraw();
+					)
+					
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+				)
+				-- right shoulder
+				46:
+				(
+					if (inFigureMode) then
+					(
+						biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+						if okForceRedraw == true then forceCompleteRedraw();
+					)
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					
+					if okForceRedraw == true then forceCompleteRedraw();
+				)
+				
+				-- left hand
+				25:
+				(
+					biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+					if okForceRedraw == true then forceCompleteRedraw();
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+					
+					biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+					if okForceRedraw == true then forceCompleteRedraw();
+					
+					FixLimb 22
+				)
+				
+				-- right hand
+				49:
+				(
+					biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+					if okForceRedraw == true then forceCompleteRedraw();
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+					
+					biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+					if okForceRedraw == true then forceCompleteRedraw();
+					
+					FixLimb 46
+				)
+				-- left foot
+				14:
+				(
+					biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+					if okForceRedraw == true then forceCompleteRedraw();
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+					
+					--in coordsys local rotate (GetBipedNode v) footAdjuster.value [0,0,1]
+					
+					biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+					if okForceRedraw == true then forceCompleteRedraw();
+					
+					FixLimb 11
+				)
+				-- right foot
+				19:
+				(
+					biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+					if okForceRedraw == true then forceCompleteRedraw();
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+					
+					--in coordsys local rotate (GetBipedNode v) footAdjuster.value [0,0,1]
+					
+					biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+					if okForceRedraw == true then forceCompleteRedraw();
+					
+					FixLimb 16
+				)
+				-- left thumb
+				26:
+				(
+					if (inFigureMode) then
+					(
+						biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+						if okForceRedraw == true then forceCompleteRedraw();
+					)
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+				)
+				-- left index
+				30:
+				(
+					if (inFigureMode) then
+					(
+						biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+						if okForceRedraw == true then forceCompleteRedraw();
+					)
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+				)
+				-- left middle
+				34:
+				(
+					if (inFigureMode) then
+					(
+						biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+						if okForceRedraw == true then forceCompleteRedraw();
+					)
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+				)
+				
+				-- left ring
+				38:
+				(
+					if (inFigureMode) then
+					(
+						biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+						if okForceRedraw == true then forceCompleteRedraw();
+					)
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+				)
+				
+				-- left pinky
+				42:
+				(
+					if (inFigureMode) then
+					(
+						biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+						if okForceRedraw == true then forceCompleteRedraw();
+					)
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+				)
+				
+				-- right thumb
+				50:
+				(
+					if (inFigureMode) then
+					(
+						biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+						if okForceRedraw == true then forceCompleteRedraw();
+					)
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+				)
+				-- right index
+				54:
+				(
+					if (inFigureMode) then
+					(
+						biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+						if okForceRedraw == true then forceCompleteRedraw();
+					)
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+				)
+				-- right  middle
+				58:
+				(
+					if (inFigureMode) then
+					(
+						biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+						if okForceRedraw == true then forceCompleteRedraw();
+					)
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+				)
+				
+				-- right  ring
+				62:
+				(
+					if (inFigureMode) then
+					(
+						biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+						if okForceRedraw == true then forceCompleteRedraw();
+					)
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+				)
+				
+				-- left toe
+				15:
+				(
+					if (inFigureMode) then
+					(
+						biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+						if okForceRedraw == true then forceCompleteRedraw();
+					)
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+				)
+				
+				-- right  toe
+				20:
+				(
+					if (inFigureMode) then
+					(
+						biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+						if okForceRedraw == true then forceCompleteRedraw();
+					)
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+				)
+				
+				-- right  pinky
+				66:
+				(
+					if (inFigureMode) then
+					(
+						biped.setTransform (GetBipedNode v) #pos (GetSkeletalNode v true).transform.position false
+						if okForceRedraw == true then forceCompleteRedraw();
+					)
+						
+					biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false
+					if okForceRedraw == true then forceCompleteRedraw();
+				)
+				
+				default:
+				(
+					try(biped.setTransform (GetBipedNode v) #rotation (GetSkeletalNode v true).transform.rotation false)
+					catch(print ("AlignBipToFaux 错误ID: " + (v as string)))
+					if okForceRedraw == true then forceCompleteRedraw();
 				)
 			)
-
-			-- 批量重绘: 仅在整批调用末尾由调用方执行一次
-			if gOpts.okForceRedraw == true do forceCompleteRedraw()
 		)
 	)
 
@@ -2433,9 +2388,6 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 
     fn fnAlignBipedToHelper =
     (
-		fnInvalidateBipedCache()
-		local savedRedraw = gOpts.okForceRedraw
-		gOpts.okForceRedraw = false
         try
 		(
 			for i = 1 to 69 where (not (fnIsIgnoreBone i)) do
@@ -2469,7 +2421,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 		)
 		catch
 		(
-			format "[BsRetarget] Error when realigning. Most likely a missing bone.\n"
+			print "Error when realigning.  Most likely a missing bone."
 			return undefined
 		)
 		
@@ -2484,9 +2436,6 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 		
         AlignBipToFaux 25
         AlignBipToFaux 49
-
-		gOpts.okForceRedraw = savedRedraw
-		if savedRedraw do forceCompleteRedraw()
     )
 	
 	
@@ -2576,25 +2525,13 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 		AlignOldAndNewBones 68
 	)
 
-	-- ====== SECTION 6: EVENT HANDLERS ======
-
+	
 	on saveDialogue pressed do
 	(
-		fnEnsureMappingListLengths()
-		local defaultName = "mapping"
-		local detected = fnDetectSkeletonPreset()
-		if detected != undefined then
-			defaultName = detected
-		else if characterBones.items[1] != "~undefined~" then
-		(
-			defaultName = substituteString characterBones.items[1] ":" "_"
-			defaultName = substituteString defaultName " " "_"
-		)
-
         local tempdir = (if (maxFilePath != "") and (doesDirectoryExist maxFilePath) then \
         maxFilePath else (@"C:\Users\" + (filterString  (getdir #userscripts) @"\")[3] + @"\Desktop\"))
 
-        f = getSaveFileName caption:"Save Skeleton Mapping:" initialDir:tempdir filename:(defaultName + ".list") types:"Mapping List (*.list)|*.list|"
+        f = getSaveFileName caption:"Save Skeleton Mapping:" initialDir:tempdir filename:"mapping.list" types:"Mapping List (*.list)|*.list|"
         
         if f != undefined then
         (
@@ -2606,10 +2543,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
             (
                 out_file = createfile (f)
             )
-
-            fnEnsureMappingListLengths()
-
-	            format "v2\n" to:out_file
+            
             for i = 1 to characterBones.items.count do
             (
                 format "%\n" characterBones.items[i] to:out_file
@@ -2620,7 +2554,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
                 format "%\n" characterBones_B.items[i] to:out_file
             )
 
-			format "%\n" (if lbxRoot.items.count > 0 then lbxRoot.items[1] else "~undefined~") to:out_file
+			format "%\n" lbxRoot.items[1] to:out_file
 			format "%\n" ddlThumbAxis.selection to:out_file
 			format "%\n" ddlHandAxis.selection to:out_file
 			format "%\n" ddlThumbAxis2.selection to:out_file
@@ -2629,9 +2563,8 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 			format "%\n" ddlPalmAxis2.selection to:out_file
             
             close out_file
-
-            fnRefreshMappingFile()
-            messagebox ("保存成功！\n" + (filenameFromPath f)) title:kMsgTitle beep:false
+            
+            messagebox "保存成功！                       "
         )
 	)
 	
@@ -2641,67 +2574,14 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 		lblBarValue.text = (pgbBar.value as string) + " %"
         local tempdir = (if (maxFilePath != "") and (doesDirectoryExist maxFilePath) then maxFilePath else (@"C:\Users\" + (filterString  (getdir #userscripts) @"\")[3] + @"\Desktop\"))
 
-		f = getOpenFileName caption:"Load Skeleton Mapping:" initialDir:tempdir types:"Mapping List (*.list)|*.list|"
+		f = getOpenFileName caption:"Load Skeleton Mapping:" filename:tempdir types:"Mapping List (*.list)|*.list|"
 		
 		if f != undefined then
 		(
-			fnPushMappingUndo()
 			fnLoadMappingList f
-			fnUpdateStatusBar()
 		)
 	)
-
-	on btnMirrorSync pressed do
-	(
-		fnPushMappingUndo()
-		local sceneNames = for o in objects collect o.name
-		local syncCount = 0
-		for pair in kLeftRightMap do
-		(
-			local lVal = fnGetListItem pair[1]
-			local rVal = fnGetListItem pair[2]
-			if lVal != "~undefined~" and rVal == "~undefined~" then
-			(
-				local mir = fnMirrorBoneName lVal
-				if mir != lVal and (findItem sceneNames mir) > 0 then
-				(
-					fnSetListItem pair[2] mir
-					syncCount += 1
-				)
-			)
-			else if rVal != "~undefined~" and lVal == "~undefined~" then
-			(
-				local mir = fnMirrorBoneName rVal
-				if mir != rVal and (findItem sceneNames mir) > 0 then
-				(
-					fnSetListItem pair[1] mir
-					syncCount += 1
-				)
-			)
-		)
-		fnUpdateStatusBar()
-		messagebox ("镜像同步完成！填充了 " + syncCount as string + " 个槽位。") title:kMsgTitle beep:false
-	)
-
-	on btnUndo pressed do (fnPopMappingUndo(); fnUpdateStatusBar())
-
-	on btnPickBone pressed do
-	(
-		if pickModeActive then fnPickModeExit()
-		else fnPickModeEnter()
-	)
-
-	on btnPickBone rightclick do
-	(
-		if pickModeActive then fnPickModeAdvance()
-	)
-
-	on tmrPickMode tick do
-	(
-		if not pickModeActive then tmrPickMode.active = false
-		else if keyboard.escPressed then fnPickModeExit()
-	)
-
+	
 	on lbxRoot selected nameIndex do
 	(
 		if $ != undefined and (selection as array).count == 1 then
@@ -2709,6 +2589,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 			bsRootBone = selection[1]
 			lbxRoot.items = #(bsRootBone.name)
 			lbxRoot.selection = 0
+			print ("【Root】: " + bsRootBone.name)
 		)
 		else (messagebox "只能填入一个有效骨骼节点!                                              ")
 	)
@@ -2722,86 +2603,87 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 
 	on bipedBones selected nameIndex do
 	(
-		if pickModeActive then
-		(
-			pickModeSlot = nameIndex
-			fnPickModeHighlightSlot nameIndex
-			fnPickModeUpdateStatus()
-		)
-		else try(select (GetSkeletalNode nameIndex false))catch()
+		print (nameIndex)
+		try(select (GetSkeletalNode nameIndex false))catch()
 	)
-
+	
 	on characterBones selected nameIndex do
 	(
-		if not pickModeActive then
+		print (nameIndex)
+		if $ != undefined and (selection as array).count == 1 then
 		(
-			if $ != undefined and (selection as array).count == 1 then
-			(
-				fnPushMappingUndo()
-				fnSetListItem nameIndex $.name
-				fnUpdateStatusBar()
-			)
-			else (messagebox "只能填入一个有效骨骼节点!                                              ")
+			local temp_array = characterBones.items;
+			temp_array[nameIndex] = $.name
+			characterBones.items = temp_array;
 		)
+		else (messagebox "只能填入一个有效骨骼节点!                                              ")
 	)
-
+	
 	on bipedBones rightclick nameIndex do
 	(
-		fnSetListItem nameIndex "~undefined~"
+		local temp_array = characterBones.items;
+		temp_array[nameIndex] = "~undefined~";
+		characterBones.items = temp_array;
 	)
-
+	
 	on characterBones rightclick nameIndex do
 	(
-		fnPushMappingUndo()
-		fnSetListItem nameIndex "~undefined~"
-		fnUpdateStatusBar()
+		local temp_array = characterBones.items;
+		temp_array[nameIndex] = "~undefined~";
+		characterBones.items = temp_array;
 	)
 	
 -- ALTA
 	
 	on bipedBones_B selected nameIndex do
 	(
-		if pickModeActive then
-		(
-			pickModeSlot = nameIndex + 37
-			fnPickModeHighlightSlot (nameIndex + 37)
-			fnPickModeUpdateStatus()
-		)
-		else try(select (GetSkeletalNode (nameIndex + 37) false))catch()
+		print (nameIndex + 37)
+		try(select (GetSkeletalNode (nameIndex + 37) false))catch()
 	)
-
+	
 	on characterBones_B selected nameIndex do
 	(
-		if not pickModeActive then
+		print (nameIndex)
+		if $ != undefined and (selection as array).count == 1 then
 		(
-			if $ != undefined and (selection as array).count == 1 then
-			(
-				fnPushMappingUndo()
-				fnSetListItem (nameIndex + 37) $.name
-				fnUpdateStatusBar()
-			)
-			else (messagebox "只能填入一个有效骨骼节点!                                              ")
+			local temp_array = characterBones_B.items;
+			temp_array[nameIndex] = $.name
+			characterBones_B.items = temp_array;
 		)
+		else (messagebox "只能填入一个有效骨骼节点!                                              ")
 	)
-
+	
 	on bipedBones_B rightclick nameIndex do
 	(
-		fnSetListItem (nameIndex + 37) "~undefined~"
+		local temp_array = characterBones_B.items;
+		temp_array[nameIndex] = "~undefined~";
+		characterBones_B.items = temp_array;
 	)
-
+	
 	on characterBones_B rightclick nameIndex do
 	(
-		fnPushMappingUndo()
-		fnSetListItem (nameIndex + 37) "~undefined~"
-		fnUpdateStatusBar()
+		local temp_array = characterBones_B.items;
+		temp_array[nameIndex] = "~undefined~";
+		characterBones_B.items = temp_array;
 	)
 	
 	------------------------------------------
 	
+	-- on quickDuplicate pressed do
+	-- (
+	-- 	if $ != undefined then
+	-- 	(
+	-- 		local vec = $.pos - $.parent.pos;
+	-- 		local pos = $.pos + (normalize vec) * (length vec);
+	-- 		in $ nB = bone pos:pos;
+	-- 		nB.name = $.name + " nub";
+	-- 		select nB
+	-- 	)
+	-- )
 	
 	on validateButton pressed do
 	(
-		gOpts.mappingCheckState = true
+		mappingCheckState = true
 		local missingHeadNub = false
 		local missingFootNubs = false  
 		local missingFingers = #()
@@ -2909,7 +2791,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 				missingName += (idx as string) + ":  " + boneNames[idx] + "\n"
 			)
 			messagebox ("缺失必需骨骼：\n\n" + missingName + "\n请手动映射这些骨骼！")
-			gOpts.mappingCheckState = false
+			mappingCheckState = false
 		)
 		
 		-- 一次性处理所有可自动创建的内容
@@ -3058,7 +2940,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 				-- 用户选择"否"时，只有缺失必需nub才算验证失败
 				if hasRequiredNubs then
 				(
-					gOpts.mappingCheckState = false
+					mappingCheckState = false
 				)
 				-- 如果只缺失可选手指，不影响验证状态，让流程继续
 			)
@@ -3069,7 +2951,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 		(
 			-- 已经在上面显示了详细的创建结果，这里不需要额外提示
 		)
-		else if (gOpts.mappingCheckState) then
+		else if (mappingCheckState) then
 		(
 			messagebox ("骨骼映射完整，请继续！                 ");
 		)
@@ -3084,7 +2966,7 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 	(
 		try
 		(
-			format "[BsRetarget] Setting up % at %\n" nubItem.name nubIndex
+			print ("Setting up " + (nubItem.name) + " at " + (nubIndex as string))
 			
 			local skeletalItem = GetSkeletalNode nubIndex false findCorrect:false;
 			if skeletalItem == undefined then
@@ -3092,11 +2974,11 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 				skeletalItem = GetSkeletalNode (nubIndex-1) false findCorrect:false;
 				if skeletalItem == undefined then
 				(
-					format "[BsRetarget] Skeletal item at % is missing.\n" (nubIndex-1)
+					print ("Skeletal item at " + ((nubIndex-1) as string) + " is missing.")
 				)
 				else
 				(
-					format "[BsRetarget] Nub parent found\n"
+					print "Nub parent found"
 					
 					local vec =  skeletalItem.pos - skeletalItem.parent.pos;
 					local pos = skeletalItem.pos + (normalize vec) * (length vec);
@@ -3106,12 +2988,23 @@ rollout rolBsRetarget "BsRetargetTools_v5.2 （ FBX 转 BIP + 动画重定向 �
 					)
 					nubItem.pos = pos;
 					
-					fnSetListItem nubIndex nubItem.name
+					if nubIndex <= 37 then
+					(
+						local temp_array = characterBones.items;
+						temp_array[nubIndex] = nubItem.name
+						characterBones.items = temp_array;
+					)
+					else
+					(
+						local temp_array = characterBones_B.items;
+						temp_array[nubIndex-37] = nubItem.name
+						characterBones_B.items = temp_array;
+					)
 				)
 			)
 			else
 			(
-				format "[BsRetarget] Nub found\n"
+				print "Nub found"
 				nubItem.transform = skeletalItem.transform
 			)
 		)
@@ -3305,13 +3198,13 @@ fn fnCopySubBones =
 		biped.collapseAtLayer boneHips.controller 0
 	)
 
-	on tabBsADT SelectedIndexChanged arg do
+	on tabBsADT Selected itm do
 	(
-		local arrID = (tabBsADT.SelectedIndex + 1)
+		arrID = (itm.TabPageIndex + 1)
 		if LastSubRollout != arrID do --避免点击重复
 		(
 			fnChangeToolsVisble arrID
-		)
+		) 
 	)
 
 	on spnObjSize changed val do
@@ -3333,7 +3226,7 @@ fn fnCopySubBones =
 	
     on alignBipedToHelper pressed do
 	(
-		if gOpts.mappingCheckState then
+		if mappingCheckState then
 		(
 		pgbBar.value = 0
 		lblBarValue.text = (pgbBar.value as string) + " %"
@@ -3342,11 +3235,11 @@ fn fnCopySubBones =
 		hips = (GetSkeletalNode 1 false)
 		if hips == undefined then
 		(
-			messagebox kMsgNoRootBone title:kMsgTitle
+			messagebox "未找到骨架质心骨骼！请先验证映射列表。                          " title:"BsRetargetTools"
 			return undefined
 		)
 		-- rootMotionBone = (if matchpattern hips.name pattern:"NewHip_*" then hips.parent.parent else hips.parent)
-		bsRootBone = if lbxRoot.items.count > 0 then (getnodebyname lbxRoot.items[1]) else undefined
+		bsRootBone = (getnodebyname lbxRoot.items[1])
 		rootMotionBone = bsRootBone
 		hips.parent = undefined
 
@@ -3410,7 +3303,9 @@ fn fnCopySubBones =
 				rootPos = 0.5 * ((GetBonePos 12) + (GetBonePos 17))
 				legLen = length ((GetBonePos 12) - (GetBonePos 17))
 				ang = -90
-
+				print (height)
+				print (ang)
+				
 				numNeckLink = if (not (fnIsIgnoreBone 9)) then 2 else 1
 				if (not (fnIsIgnoreBone 5) and not (fnIsIgnoreBone 6) and not (fnIsIgnoreBone 7)) then numSpineLink = 5 
 				else if (not (fnIsIgnoreBone 5) and not (fnIsIgnoreBone 6) and (fnIsIgnoreBone 7)) then numSpineLink = 4
@@ -3424,7 +3319,6 @@ fn fnCopySubBones =
 					-- print ("i:" + (i as string) + "  numFinger:" + (numFinger as string))
 				)
 				newBiped = biped.createNew headPos.z ang [0,0,headPos.z] neckLinks:numNeckLink spineLinks:numSpineLink fingers:numFinger fingerLinks:3 toes:1 toeLinks:1 trianglePelvis:false triangleNeck:true
-				fnInvalidateBipedCache()
 				newBiped.transform.controller.figureMode = true;
 				newBiped.controller.rootname = bipedRootName
 				(GetBipedNode 1).controller.bodytype = 3
@@ -3703,9 +3597,9 @@ fn fnCopySubBones =
 			(
 				case i of 
 				(
-					11:() --nub
-					16:() --nub
-					21:() --nub
+					11:(print "ignore nub")
+					16:(print "ignore nub")
+					21:(print "ignore nub")
 					23:
 					(
 						local lC = LookAt_Constraint();
@@ -3714,16 +3608,16 @@ fn fnCopySubBones =
 						(getNodeByName ("RTHelper_" + (GetBipedNode 23).name)).Rotation.controller = lC;
 						lC.relative = true;
 					)
-					29:() --nub
-					33:() --nub
-					37:() --nub
-					-- 39:(()--ignore)
-					-- 43:(()--ignore)
-					-- 51:(()--ignore)
-					-- 55:(()--ignore)
-					-- 59:(()--ignore)
-					-- 63:(()--ignore)
-					-- 67:(()--ignore)
+					29:(print "ignore nub")
+					33:(print "ignore nub")
+					37:(print "ignore nub")
+					-- 39:(print "ignore")
+					-- 43:(print "ignore")
+					-- 51:(print "ignore")
+					-- 55:(print "ignore")
+					-- 59:(print "ignore")
+					-- 63:(print "ignore")
+					-- 67:(print "ignore")
 					default:(CreateOrientationConstraint i false)
 				)
 			)
@@ -3732,15 +3626,15 @@ fn fnCopySubBones =
 			(
 				case (i+37) of 
 				(
-					-- 7:(()--ignore)
-					-- 9:(()--ignore)
-					-- 14:(()--ignore)
-					-- 19:(()--ignore)
-					-- 27:(()--ignore)
-					-- 31:(()--ignore)
-					-- 35:(()--ignore)
-					41:() --nub
-					45:() --nub
+					-- 7:(print "ignore")
+					-- 9:(print "ignore")
+					-- 14:(print "ignore")
+					-- 19:(print "ignore")
+					-- 27:(print "ignore")
+					-- 31:(print "ignore")
+					-- 35:(print "ignore")
+					41:(print "ignore nub")
+					45:(print "ignore nub")
 					47:
 					(
 						local lC = LookAt_Constraint();
@@ -3749,11 +3643,11 @@ fn fnCopySubBones =
 						(getNodeByName ("RTHelper_" + (GetBipedNode 47).name)).Rotation.controller = lC;
 						lC.relative = true;
 					)
-					53:() --nub
-					57:() --nub
-					61:() --nub
-					65:() --nub
-					69:() --nub
+					53:(print "ignore nub")
+					57:(print "ignore nub")
+					61:(print "ignore nub")
+					65:(print "ignore nub")
+					69:(print "ignore nub")
 					default:(CreateOrientationConstraint (i+37) false)
 				)
 			)
@@ -3889,19 +3783,61 @@ fn fnCopySubBones =
 			lblBarValue.text = (pgbBar.value as string) + " %"
 			messageBox "重定向 Biped 创建成功！\r\n\r\n如肩膀匹配不高，\r\n\r\n建议微调两边肩膀手臂和手，\r\n\r\n再点击重新对齐手指骨骼。                         "
 		)
-		else (messageBox kMsgCheckMapping title:kMsgTitle)
+		else (messageBox "请先验证并检查映射列表是否完整！                                       " title:"BsRetargetTools")
 	)
 
     on reAlignFingers pressed do
     (
-		if gOpts.mappingCheckState then
+		if mappingCheckState then
 		(
 			try(fnAlignBipedFingersToHelper ())
 			catch(messageBox "重新对齐手指成功！                            ")
 		)
-		else (messageBox kMsgCheckMapping title:kMsgTitle)
+		else (messageBox "请先验证并检查映射列表是否完整！                                       " title:"BsRetargetTools")
     )
 
+    -- on btnExportTPose pressed do
+	-- (
+    --     if (GetBipedNode 1) != undefined then
+    --     (
+    --         oldFigureMode = ((GetBipedNode 1).transform.controller.figureMode)
+    --         (GetBipedNode 1).transform.controller.figureMode = true
+    --         biped.saveBipFileDlg (GetBipedNode 1).controller
+    --         (GetBipedNode 1).transform.controller.figureMode = oldFigureMode
+    --     )
+    --     else (messageBox "没有找到 Biped 骨骼！                                ")
+	-- )
+
+    -- on ckbExportFBXTools changed state do
+    -- (
+    --     bipedBones.visible       = (not state)
+    --     characterBones.visible   = (not state)
+    --     bipedBones_B.visible     = (not state)
+    --     characterBones_B.visible = (not state)
+
+    --     edtAnimFbxPath.visible       = state
+    --     btnLoadAnimPath.visible      = state
+    --     btnRefreshAnimFiles.visible  = state
+    --     btnOpenCurrentPath.visible   = state
+    --     btnRefreshFolder.visible     = state
+    --     ltbFilesList.visible         = state
+    --     btnOutputPath.visible        = state
+    --     edtOutputPath.visible        = state
+    --     edtMappingFile.visible       = state
+    --     btnOpedOutputPath.visible    = state
+    --     btnSelectMappingFile.visible = state
+    --     btnOpenMappingFile.visible   = state
+    --     btnRetargetSelected.visible  = state
+    --     btnRetargettAll.visible      = state
+    --     btnSelectSkinFile.visible    = state
+    --     edtSkinFile.visible          = state
+    --     btnOpenSkinFile.visible      = state
+    --     btnCount.visible             = state
+    --     chkRecoverExport.visible     = state
+    --     btnSpecial.visible           = state
+    --     btnTemp.visible              = state
+    --     -- if state then (fnRefreshDir maxFilePath)
+    -- )
 
 	on btnCount pressed do 
 	(
@@ -3909,7 +3845,7 @@ fn fnCopySubBones =
 		(
 			shellLaunch edtAnimFbxPath.text ""
 		)
-		else (messageBox "刷新动画列表，目录不存在！                             " title:kMsgTitle)
+		else (messageBox "刷新动画列表，目录不存在！                             " title:"BsRetargetTools")
 	)
 
 	on btnSpecial pressed do 
@@ -3996,283 +3932,37 @@ fn fnCopySubBones =
 
 	on btnAutoMapping pressed do
 	(
-		fnPushMappingUndo()
-		-- 空映射时先尝试预设自动识别
-		local allEmpty = true
-		for item in characterBones.items where item != "~undefined~" do (allEmpty = false; exit)
-		if allEmpty then for item in characterBones_B.items where item != "~undefined~" do (allEmpty = false; exit)
-
-		if allEmpty then
+		for i in (objects as array) do
 		(
-			local detected = fnDetectSkeletonPreset()
-			if detected != undefined then
-			(
-				local presetDir = ((getDir #scripts) + "\\BulletScripts\\Res\\BsMappingList\\")
-				local presetPath = presetDir + detected + ".list"
-				if doesFileExist presetPath then
-				(
-					if queryBox ("检测到骨架类型: " + detected + "\n是否应用预设？") title:kMsgTitle beep:false then
-					(
-						fnLoadMappingList presetPath
-						return undefined
-					)
-				)
-			)
-		)
-
-		-- 合并两个列表为统一的69项数组进行处理
-		local allItems = characterBones.items + characterBones_B.items
-		-- 确保长度匹配 kBoneSlots（69项）
-		while allItems.count < kBoneSlots.count do append allItems "~undefined~"
-
-		local sceneObjs = objects as array
-		local sceneNames = for o in sceneObjs collect o.name
-		local usedNames = #()
-		local pattMatchCount = 0
-
-		-- ===== 第一轮：通配符模式匹配（快速精确）=====
-		for obj in sceneObjs do
-		(
-			local tarNodeName = obj.name
+			local tarNodeName = i.name
 			for j in pattBipedNames do
 			(
-				for k in j do
+				for k in j do 
 				(
-					if (matchPattern tarNodeName pattern:k ignoreCase:true) then
+					if (matchpattern tarNodeName pattern:k ignoreCase:true) then
 					(
-						local idx = findItem pattBipedNames j
-						if idx > 0 and idx <= allItems.count and allItems[idx] == "~undefined~" then
+						tarBonesIndex = (finditem pattBipedNames j)
+						-- print (tarBonesIndex as string)
+						-- print (tarNodeName)
+						if (tarBonesIndex <= 37) then
 						(
-							if (findItem usedNames tarNodeName) == 0 then
-							(
-								allItems[idx] = tarNodeName
-								appendIfUnique usedNames tarNodeName
-								pattMatchCount += 1
-							)
+							characterBones.items[tarBonesIndex] = tarNodeName
+							temp_array = characterBones.items
+							temp_array[tarBonesIndex] = tarNodeName
+							characterBones.items = temp_array
+						)
+						else
+						(
+							characterBones_B.items[tarBonesIndex - 37] = tarNodeName
+							temp_array2 = characterBones_B.items
+							temp_array2[tarBonesIndex - 37] = tarNodeName
+							characterBones_B.items = temp_array2
 						)
 					)
 				)
 			)
 		)
-
-		-- ===== 第二轮：左右镜像自动填充 =====
-		local mirrorCount = 0
-		for pair in kLeftRightMap do
-		(
-			local lIdx = pair[1]
-			local rIdx = pair[2]
-			if allItems[lIdx] != "~undefined~" and allItems[rIdx] == "~undefined~" then
-			(
-				local mirrorName = fnMirrorBoneName allItems[lIdx]
-				if mirrorName != allItems[lIdx] and (findItem sceneNames mirrorName) != 0 \
-				   and (findItem usedNames mirrorName) == 0 then
-				(
-					allItems[rIdx] = mirrorName
-					appendIfUnique usedNames mirrorName
-					mirrorCount += 1
-				)
-			)
-			else if allItems[rIdx] != "~undefined~" and allItems[lIdx] == "~undefined~" then
-			(
-				local mirrorName = fnMirrorBoneName allItems[rIdx]
-				if mirrorName != allItems[rIdx] and (findItem sceneNames mirrorName) != 0 \
-				   and (findItem usedNames mirrorName) == 0 then
-				(
-					allItems[lIdx] = mirrorName
-					appendIfUnique usedNames mirrorName
-					mirrorCount += 1
-				)
-			)
-		)
-
-		-- ===== 第三轮：模糊匹配补充未匹配槽位 =====
-		local fuzzyResult = fnFuzzyFillUnmatched allItems sceneNames threshold:0.55
-		allItems = fuzzyResult[1]
-		local fuzzyCount = fuzzyResult[2]
-
-		-- ===== 第四轮：拓扑兜底匹配（父子链推断）=====
-		-- 对仍未匹配的槽位，查找已匹配父槽位在场景中的子节点
-		local parentMap = #(
-			0,   --[1]  Bip001 无父
-			1,   --[2]  Pelvis → Bip001
-			2,   --[3]  Spine → Pelvis
-			3,   --[4]  Spine1 → Spine
-			4,   --[5]  Spine2 → Spine1
-			5,   --[6]  Spine3 → Spine2
-			6,   --[7]  Spine4 → Spine3
-			4,   --[8]  Neck → Spine1 (或最高 Spine)
-			8,   --[9]  Neck1 → Neck
-			8,   --[10] Head → Neck (fallback)
-			10,  --[11] HeadNub → Head
-			2,   --[12] L Thigh → Pelvis
-			12,  --[13] L Calf → L Thigh
-			13,  --[14] L Foot → L Calf
-			14,  --[15] L Toe0 → L Foot
-			15,  --[16] L Toe0Nub → L Toe0
-			2,   --[17] R Thigh → Pelvis
-			17,  --[18] R Calf → R Thigh
-			18,  --[19] R Foot → R Calf
-			19,  --[20] R Toe0 → R Foot
-			20,  --[21] R Toe0Nub → R Toe0
-			4,   --[22] L Clavicle → Spine1
-			22,  --[23] L UpperArm → L Clavicle
-			23,  --[24] L Forearm → L UpperArm
-			24,  --[25] L Hand → L Forearm
-			25,  --[26] L Finger0 → L Hand
-			26,  --[27] L Finger01 → L Finger0
-			27,  --[28] L Finger02 → L Finger01
-			28,  --[29] L Finger0Nub → L Finger02
-			25,  --[30] L Finger1 → L Hand
-			30,  --[31] L Finger11 → L Finger1
-			31,  --[32] L Finger12 → L Finger11
-			32,  --[33] L Finger1Nub → L Finger12
-			25,  --[34] L Finger2 → L Hand
-			34,  --[35] L Finger21 → L Finger2
-			35,  --[36] L Finger22 → L Finger21
-			36,  --[37] L Finger2Nub → L Finger22
-			25,  --[38] L Finger3 → L Hand
-			38,  --[39] L Finger31 → L Finger3
-			39,  --[40] L Finger32 → L Finger31
-			40,  --[41] L Finger3Nub → L Finger32
-			25,  --[42] L Finger4 → L Hand
-			42,  --[43] L Finger41 → L Finger4
-			43,  --[44] L Finger42 → L Finger41
-			44,  --[45] L Finger4Nub → L Finger42
-			4,   --[46] R Clavicle → Spine1
-			46,  --[47] R UpperArm → R Clavicle
-			47,  --[48] R Forearm → R UpperArm
-			48,  --[49] R Hand → R Forearm
-			49,  --[50] R Finger0 → R Hand
-			50,  --[51] R Finger01 → R Finger0
-			51,  --[52] R Finger02 → R Finger01
-			52,  --[53] R Finger0Nub → R Finger02
-			49,  --[54] R Finger1 → R Hand
-			54,  --[55] R Finger11 → R Finger1
-			55,  --[56] R Finger12 → R Finger11
-			56,  --[57] R Finger1Nub → R Finger12
-			49,  --[58] R Finger2 → R Hand
-			58,  --[59] R Finger21 → R Finger2
-			59,  --[60] R Finger22 → R Finger21
-			60,  --[61] R Finger2Nub → R Finger22
-			49,  --[62] R Finger3 → R Hand
-			62,  --[63] R Finger31 → R Finger3
-			63,  --[64] R Finger32 → R Finger31
-			64,  --[65] R Finger3Nub → R Finger32
-			49,  --[66] R Finger4 → R Hand
-			66,  --[67] R Finger41 → R Finger4
-			67,  --[68] R Finger42 → R Finger41
-			68   --[69] R Finger4Nub → R Finger42
-		)
-
-		-- 收集已占用的名称
-		local topoUsedNames = #()
-		for v in allItems where v != "~undefined~" do appendIfUnique topoUsedNames v
-
-		local topoCount = 0
-		for i = 1 to allItems.count where allItems[i] == "~undefined~" do
-		(
-			local pIdx = if i <= parentMap.count then parentMap[i] else 0
-			if pIdx > 0 and allItems[pIdx] != "~undefined~" then
-			(
-				local parentNode = getNodeByName allItems[pIdx]
-				if parentNode != undefined then
-				(
-					-- 从 kBoneSlots 获取期望骨骼名（无[可选]前缀）
-					local expectName = if i <= kBoneSlots.count then kBoneSlots[i].name else ""
-					if expectName == "" then continue
-					local normExpect = fnNormalizeBoneName expectName
-
-					local bestChild = undefined
-					local bestScore = 0.0
-
-					for child in parentNode.children where (findItem topoUsedNames child.name) == 0 do
-					(
-						local normChild = fnNormalizeBoneName child.name
-						local dist = fnLevenshtein normChild normExpect
-						local maxL = amax #(normChild.count, normExpect.count)
-						local score = if maxL > 0 then (1.0 - dist as float / maxL as float) else 0.0
-						if score > bestScore and score >= 0.4 then
-						(
-							bestScore = score
-							bestChild = child.name
-						)
-					)
-					if bestChild != undefined then
-					(
-						allItems[i] = bestChild
-						appendIfUnique topoUsedNames bestChild
-						topoCount += 1
-					)
-				)
-			)
-		)
-
-		-- 写回两个列表
-		local arrA = for i = 1 to 37 collect allItems[i]
-		local arrB = for i = 38 to 69 collect allItems[i]
-		characterBones.items = arrA
-		characterBones_B.items = arrB
-
-		-- ===== 自动识别 Root 节点 =====
-		local rootAutoSet = false
-		local rootItem = if lbxRoot.items.count > 0 then lbxRoot.items[1] else "~undefined~"
-		if rootItem == "~undefined~" then
-		(
-			local rootPatterns = #("Root", "root", "ROOT", "Bip001", "Bip01",
-			                       "Armature", "Skeleton", "Hips", "Character")
-			for rp in rootPatterns where not rootAutoSet do
-			(
-				local rNode = getNodeByName rp
-				if rNode != undefined then
-				(
-					bsRootBone = rNode
-					lbxRoot.items = #(rNode.name)
-					lbxRoot.selection = 0
-					rootAutoSet = true
-				)
-			)
-			-- 兜底：如果槽位1（质心）已匹配，取其父节点作为Root
-			if not rootAutoSet and allItems[1] != "~undefined~" then
-			(
-				local comNode = getNodeByName allItems[1]
-				if comNode != undefined and comNode.parent != undefined then
-				(
-					bsRootBone = comNode.parent
-					lbxRoot.items = #(comNode.parent.name)
-					lbxRoot.selection = 0
-					rootAutoSet = true
-				)
-			)
-		)
-
-		-- 统计未匹配数和必要项
-		local unmatchedRequired = 0
-		local unmatchedOptional = 0
-		for i = 1 to allItems.count do
-		(
-			if allItems[i] == "~undefined~" then
-			(
-				if fnIsOptionalNodeIndex i then unmatchedOptional += 1
-				else unmatchedRequired += 1
-			)
-		)
-		local totalMatched = pattMatchCount + mirrorCount + fuzzyCount + topoCount
-		local summary = "自动匹配完成！\r\n\r\n"
-		summary += "  通配符匹配: " + pattMatchCount as string + " 个\r\n"
-		if mirrorCount > 0 then summary += "  左右镜像: " + mirrorCount as string + " 个\r\n"
-		if fuzzyCount > 0 then summary += "  模糊匹配: " + fuzzyCount as string + " 个\r\n"
-		if topoCount > 0 then summary += "  拓扑推断: " + topoCount as string + " 个\r\n"
-		if rootAutoSet then summary += "  Root 自动识别: " + (if lbxRoot.items.count > 0 then lbxRoot.items[1] else "~undefined~") + "\r\n"
-		summary += "\r\n  合计: " + totalMatched as string + " / " + allItems.count as string + "\r\n"
-		if unmatchedRequired > 0 then
-			summary += "\r\n  [!] 必要骨骼缺失: " + unmatchedRequired as string + " 个，请手动指定！"
-		else if unmatchedOptional > 0 then
-			summary += "\r\n  可选骨骼未映射: " + unmatchedOptional as string + " 个（可忽略）"
-		else
-			summary += "\r\n  所有骨骼已映射完毕！"
-
-		messagebox summary title:kMsgTitle beep:false
-		fnUpdateStatusBar()
+		messagebox "根据骨骼名自动匹配完成，建议检查一遍，\r\n\r\n修改请选中骨骼，点击上面列表对应节点！                                   " beep:false
 	)
 
 	on btnRetargetSelected pressed do
@@ -4281,62 +3971,49 @@ fn fnCopySubBones =
 		(
 			local stateSilent = silentMode()
 			setSilentMode true
-			try
+			if (doesFileExist edtSkinFile.text) then
 			(
-				if (doesFileExist edtSkinFile.text) then
+				if CheckForSave() then 
 				(
-					if CheckForSave() then
-					(
-						if not gOpts.isReloadBip then (fnExportReTargrtedAnim arrExportRetargetAnim ltbFilesList.selection)
-						else (fnLoadBipAnim arrExportRetargetAnim ltbFilesList.selection)
-						btnCount.text = ("待批处理原始动画 FBX 数：0 个")
-					)
+					if not isReloadBip then (fnExportReTargrtedAnim arrExportRetargetAnim ltbFilesList.selection)
+					else (fnLoadBipAnim arrExportRetargetAnim ltbFilesList.selection)
+					-- btnCount.text = ("已重定向动画 FBX 数：1 个")
+					btnCount.text = ("待批处理原始动画 FBX 数：0 个")
 				)
-				else (print "Skin 文件不存在!")
 			)
-			catch
-			(
-				format "[BsRetarget] btnRetargetSelected error: %\n" (getCurrentException())
-			)
+			else (print "Skin 文件不存在!                             ")
 			setSilentMode stateSilent
 		)
-		else (messageBox "导出路径不能和原动画 FBX 路径相同！" title:kMsgTitle)
+		else (messageBox "导出路径不能和原动画 FBX 路径相同！                                                  ")
 	)
 
-	on btnRetargettAll pressed do
+	on btnRetargettAll pressed do 
 	(
+		-- escapeEnable = true
+
 		if edtAnimFbxPath.text != edtOutputPath.text then
 		(
 			if (doesFileExist edtSkinFile.text) then
 			(
-				if CheckForSave() then
+				if CheckForSave() then 
 				(
 					local stateSilent = silentMode()
 					setSilentMode true
 					pgbBar.color = blue
 					pgbBar.value = 0
 					lblBarValue.text = (pgbBar.value as string) + " %"
-					try
+					for i = 1 to arrExportRetargetAnim.count where (doesFileExist arrExportRetargetAnim[i]) do 
 					(
-						for i = 1 to arrExportRetargetAnim.count where (doesFileExist arrExportRetargetAnim[i]) do
-						(
-							if not gOpts.isReloadBip then (fnExportReTargrtedAnim arrExportRetargetAnim i)
-							else (fnLoadBipAnim arrExportRetargetAnim i)
-							btnCount.text = ("待批处理原始动画 FBX 数：" + (arrExportRetargetAnim.count - i) as string + " 个")
-							pgbBar.value = 100.*i/arrExportRetargetAnim.count
-							lblBarValue.text = (pgbBar.value as string) + " %"
-						)
-						resetMaxFile #noPrompt
-						messageBox ("已重定向所有动画，一共 " + (arrExportRetargetAnim.count as string) + " 个,\r\n\r\n在导出目录有相应 .max .bip 和 .FBX 文件") title:kMsgTitle
+						if not isReloadBip then (fnExportReTargrtedAnim arrExportRetargetAnim i)
+						else (fnLoadBipAnim arrExportRetargetAnim i)
+						-- btnCount.text = ("已重定向动画 FBX 数：" + (i as string) + " 个")
+						btnCount.text = ("待批处理原始动画 FBX 数：" + (arrExportRetargetAnim.count - i) as string + " 个")
+						pgbBar.value = 100.*i/arrExportRetargetAnim.count
+						lblBarValue.text = (pgbBar.value as string) + " %"
 					)
-					catch
-					(
-						format "[BsRetarget] btnRetargettAll error: %\n" (getCurrentException())
-						messageBox ("批量重定向中断: " + (getCurrentException()) as string) title:kMsgTitle
-					)
+					resetMaxFile #noPrompt
+					messageBox ("已重定向所有动画，一共 " + (arrExportRetargetAnim.count as string) + " 个,\r\n\r\n在导出目录有相应 .max .bip 和 .FBX 文件                                                ")
 					setSilentMode stateSilent
-					pgbBar.value = 0
-					lblBarValue.text = "0 %"
 				)
 			)
 		)
@@ -4356,9 +4033,7 @@ fn fnCopySubBones =
 		-- )
 	)
 
-	-- ====== SECTION 7: DIALOG INIT & HELP ======
-
-	on rolBsRetarget open do
+	on rolBsRetarget open do 
 	(
 		local dotColor        = dotnetclass "System.Drawing.Color"
 		local maxuiBgColor    = (colorman.getcolor #background) * 255
@@ -4367,22 +4042,15 @@ fn fnCopySubBones =
 		fnInitDotTabs()
 		fnChangeToolsVisble (tabBsADT.SelectedIndex + 1)
 
-		gOpts.mappingCheckState = false
+		mappingCheckState = false
 		pgbBar.value = 0
 		pgbBar.color = white
 		lblBarValue.text = (pgbBar.value as string) + " %"
 
 		arrMappingListFile = fnRefreshMappingFile()
-		fnUpdateStatusBar()
 	)
 
-	on rolBsRetarget close do
-	(
-		if pickModeActive then fnPickModeExit()
-		callbacks.removeScripts id:#bsPickMode
-	)
-
-	on ddlPreset selected id do
+	on ddlPreset selected id do 
 	(
 		arrMappingListFile = fnRefreshMappingFile()
 		fileMappingList = arrMappingListFile[id]
@@ -4439,8 +4107,39 @@ fn fnCopySubBones =
 			bones = collectSkinBones sk
 			if (sid = finditem bones source) > 0 do
 					(
-					skinops.removebone sk sid
-					skinops.addbone sk target 0
+				-- if finditem bones target == 0 do
+				-- (
+				-- 	skinops.addbone sk target 1
+				-- 	bones = collectSkinBones sk
+				-- 	sid = finditem bones source
+				-- )
+				-- if (tid = finditem bones target) > 0 do
+				-- (
+					-- verts = #{1..skinops.getnumbervertices sk}
+					-- skinops.selectvertices sk verts
+					-- skinops.bakeselectedverts sk
+
+					-- for v in verts do
+					-- (
+					-- 	bb = #()
+					-- 	ww = #()
+					-- 	for k=1 to skinops.getvertexweightcount sk v do
+					-- 	(
+					-- 		append bb (skinops.getvertexweightboneid sk v k)
+					-- 		append ww (skinops.getvertexweight sk v k)
+					-- 	)
+					-- 	if (k = finditem bb sid) > 0 do 
+					-- 	(
+					-- 		bb[k] = tid
+					-- 		skinops.replacevertexweights sk v tid 1.0
+					-- 		skinops.setvertexweights sk v bb ww
+
+					-- 		result = on
+					-- 	)
+					-- )
+					skinops.removebone sk sid 
+				-- )
+				skinops.addbone sk target 0
 				)
 			)
 		result
@@ -4454,6 +4153,12 @@ fn fnCopySubBones =
 		select node
 		max modify mode
 		modpanel.setcurrentobject sk
+		-- verts = #{1..skinops.getnumbervertices sk}
+		-- skinops.selectvertices sk verts
+		-- skinops.bakeselectedverts sk
+
+		-- sk.always_deform = off
+		-- sk.always_deform = on
 
 		count = 0
 		bones = collectSkinBones sk
@@ -4524,23 +4229,34 @@ fn fnCopySubBones =
 		true
 	)
 
+	fn confTT = (confirmLoadEnvelopes removeIncomingPrefix:1 removeCurrentPrefix:1)
+	fn confTF = (confirmLoadEnvelopes removeIncomingPrefix:1 removeCurrentPrefix:0)
+	fn confFT = (confirmLoadEnvelopes removeIncomingPrefix:0 removeCurrentPrefix:1)
+	fn confFF = (confirmLoadEnvelopes removeIncomingPrefix:0 removeCurrentPrefix:0)
+
 	fn fnLoadEnvelope theSkin envFile removeIncomingPrefix:false removeCurrentPrefix:false =
 	(
 	/*******************************************************************************
-		Load an .env file via UI Accessor workaround (no silent API exists).
+		<DOC> Load an .env file.  There is no function for silently loading an .env, so this
+		is a UI Accessor workaround.
+		Arguments:
+			<skin modifier> theSkin:		The selected skin modifier (must be in modify panel)
+			<string>	envFile:					Filename of the .env file.
+		Return:
+			<ok>
 	*******************************************************************************/
-		local confirmFn = confirmLoadEnvelopes
-
-		DialogMonitorOps.Enabled = true
+		--determine which confirmLoadEnvelopes to use
+		local confirmFn = case of
+		(
+			(removeIncomingPrefix and removeCurrentPrefix):confTT
+			(removeIncomingPrefix and not removeCurrentPrefix):confTF
+			(not removeIncomingPrefix and removeCurrentPrefix):confFT
+			(not removeIncomingPrefix and not removeCurrentPrefix):confFF
+		)
+		
+		DialogMonitorOps.Enabled = true	--DialogMonitorOps.Enabled = false
 		DialogMonitorOps.RegisterNotification confirmFn id:#pressSkinOK
-		try
-		(
-			skinOps.LoadEnvelope theSkin envFile
-		)
-		catch
-		(
-			format "[BsRetarget] fnLoadEnvelope failed: %\n" (getCurrentException())
-		)
+		skinOps.LoadEnvelope theSkin envFile
 		DialogMonitorOps.unRegisterNotification id:#pressSkinOK
 		DialogMonitorOps.Enabled = false
 		ok
@@ -4568,7 +4284,6 @@ fn fnCopySubBones =
 		local tempBone = BoneSys.createBone [0,0,0] [0,rolBsRetarget.spnObjSize.value,0] [0,0,1]
 		tempBone.width = tempBone.height =  rolBsRetarget.spnObjSize.value
 		disableSceneRedraw()
-		try
 		(
 			local newBone = copy tempBone
 			newBone.width         = tempBone.width
@@ -4584,10 +4299,6 @@ fn fnCopySubBones =
 			sourceObjs.showLinksOnly = false
 			sourceObjs.boneEnable	= true
 			delete newBone
-		)
-		catch
-		(
-			format "[BsRetarget] fnConvertToBone failed: %\n" (getCurrentException())
 		)
 		delete tempBone
 		enableSceneRedraw()
@@ -4696,7 +4407,7 @@ fn fnCopySubBones =
 			(
 				FileIO.DeleteFile targetDel UIOption RecycleOption
 				-- SIOFile.Delete(targetDel)
-				(format "[BsRetarget] Deleted to recycle bin: %\n" (filenameFromPath targetDel))
+				(print ("已删除: "+ filenameFromPath targetDel  + " 至回收站"))
 			)
 			catch 
 			(
@@ -4709,35 +4420,35 @@ fn fnCopySubBones =
 	on btnReplaceToBiped pressed do
 	(
 		-- escapeEnable = true
-		if gOpts.mappingCheckState then
+		if mappingCheckState then
 		(
-			pgbBar.color = green
-			pgbBar.value = 0
-			lblBarValue.text = (pgbBar.value as string) + " %"
-			hips = (GetSkeletalNode 1 false)
-			if hips == undefined then
-			(
-				messagebox kMsgNoRootBone title:kMsgTitle
-				return undefined
-			)
-			-- 处理 NewHip_* 模式时需要检查 parent.parent 是否存在
-			if matchpattern hips.name pattern:"NewHip_*" then
-			(
-				if hips.parent != undefined and hips.parent.parent != undefined then
-					boneRootMotion = hips.parent.parent
-				else if hips.parent != undefined then
-					boneRootMotion = hips.parent
-				else
-					boneRootMotion = hips
-			)
-			else
-			(
-				if hips.parent != undefined then
-					boneRootMotion = hips.parent
-				else
-					boneRootMotion = hips
-			)
-			bipRootMotion = (GetBipedNode 1).parent
+	pgbBar.color = green
+	pgbBar.value = 0
+	lblBarValue.text = (pgbBar.value as string) + " %"
+	hips = (GetSkeletalNode 1 false)
+	if hips == undefined then
+	(
+		messagebox "未找到骨架质心骨骼！请先验证映射列表。                          " title:"BsRetargetTools"
+		return undefined
+	)
+	-- 处理 NewHip_* 模式时需要检查 parent.parent 是否存在
+	if matchpattern hips.name pattern:"NewHip_*" then
+	(
+		if hips.parent != undefined and hips.parent.parent != undefined then
+			boneRootMotion = hips.parent.parent
+		else if hips.parent != undefined then
+			boneRootMotion = hips.parent
+		else
+			boneRootMotion = hips
+	)
+	else
+	(
+		if hips.parent != undefined then
+			boneRootMotion = hips.parent
+		else
+			boneRootMotion = hips
+	)
+	bipRootMotion = (GetBipedNode 1).parent
 			(GetBipedNode 1).transform.controller.figureMode = false
 
 			if not chkFbxMixBip.state then
@@ -4830,15 +4541,15 @@ fn fnCopySubBones =
 			for i in selection as array where isvalidnode i do delete i
 			pgbBar.value = 100
 			lblBarValue.text = (pgbBar.value as string) + " %"
-			messagebox "Biped 已替换，且原 Bone 和多余 Helper 已被删除。\r\n\r\n【可能存在冗余节点未删除】，请检查骨骼链外的节点，自行清理~                                              " title:kMsgTitle
+			messagebox "Biped 已替换，且原 Bone 和多余 Helper 已被删除。\r\n\r\n【可能存在冗余节点未删除】，请检查骨骼链外的节点，自行清理~                                              " title:"BsRetargetTools"
 		)
-		else (messageBox kMsgCheckMapping title:kMsgTitle)
+		else (messageBox "请先验证并检查映射列表是否完整！                                       " title:"BsRetargetTools")
 	)
 
 	-- on pkbRootMption picked obj do 
 	-- (
 	-- 	pickedRootMotion = obj 
-	-- 	messagebox ("RootMotion 已指定为: " + obj.name + "                     ") title:kMsgTitle beep:false
+	-- 	messagebox ("RootMotion 已指定为: " + obj.name + "                     ") title:"BsRetargetTools" beep:false
 	-- )
 
 	-- on pkbRootMption rightclick do 
@@ -4849,7 +4560,7 @@ fn fnCopySubBones =
 	on btnConvertToBone pressed do with undo on
 	(
 		if (queryBox "注意备份文件！\r\n\r\n注意备份文件！\r\n\r\n注意备份文件！                                                     " \
-		title:(kMsgTitle + " Tips") beep:false) then
+		title:"BsRetargetTools Tips" beep:false) then
 		(
 			arrConvertBones = (selection as array)
 			if arrConvertBones.count != 0 then 
@@ -4862,7 +4573,7 @@ fn fnCopySubBones =
 				if (chkRealign.state) then
 				(
 					if (queryBox "会重置蒙皮影响！会重置蒙皮影响！\r\n\r\n请确认使用的是蒙皮姿势 (SkinPose)                                                     " \
-					title:(kMsgTitle + " Tips") beep:false) then
+					title:"BsRetargetTools Tips" beep:false) then
 					(
 						for i in arrConvertBones where (classof i.controller != Vertical_Horizontal_Turn) and (i.parent != undefined) do 
 						(
@@ -4894,7 +4605,7 @@ fn fnCopySubBones =
 	)
 )
 
-createDialog rolBsRetarget 655 680 style:#(#style_sysmenu, #style_toolwindow) fgcolor:myFgColor
+createDialog rolBsRetarget 655 648 style:#(#style_sysmenu, #style_toolwindow) fgcolor:myFgColor
 
 
 
@@ -4977,84 +4688,56 @@ rolBsRetarget.bipedBones_B.items = #(
 	"[可选]R Finger4Nub"		--67	
 )
 
-rolBsRetarget.characterBones.items = for i = 1 to rolBsRetarget.bipedBones.items.count collect "~undefined~"
-rolBsRetarget.characterBones_B.items = for i = 1 to rolBsRetarget.bipedBones_B.items.count collect "~undefined~"
-
--- 帮助子面板（可折叠）
-rollout rolHelp_Wf "Tab1: FBX 转 Biped 工作流程" height:168
+for  i=2 to rolBsRetarget.bipedBones.items.count do
 (
-	local m = 8; local w = 484; local h = 16; local s = 18
-	label lbl0 "准备: 导入 FBX 骨骼模型到 3ds Max 场景" pos:[m,2] width:w height:h
-	label lbl1 "1. 映射骨骼：选中场景 Bone，左键点击列表填入对应位置" pos:[m,2+s] width:w height:h
-	label lbl1b "      或点击【自动匹配】(支持 Mixamo/CC4/UE5/Daz/MMD)" pos:[m,2+s+14] width:w height:h
-	label lbl2 "2. 设置 Root：选中根骨骼，点击 Root 列表填入" pos:[m,2+s*2+14] width:w height:h
-	label lbl3 "3. 设置轴向：选择引擎和手指轴向" pos:[m,2+s*3+14] width:w height:h
-	label lbl4 "4. 点击【2.验证映射】确认列表完整" pos:[m,2+s*4+14] width:w height:h
-	label lbl5 "5. 点击【3.创建映射文件】生成 Helper 中间文件" pos:[m,2+s*5+14] width:w height:h
-	label lbl6 "6. 点击【4.FBX转Biped】完成骨架替换" pos:[m,2+s*6+14] width:w height:h
-	label lbl7 "7. 验证结果，保存 .max 映射文件" pos:[m,2+s*7+14] width:w height:h
+	rolBsRetarget.characterBones.items = append rolBsRetarget.characterBones.items "~undefined~"
 )
 
-rollout rolHelp_Rt "Tab2: 动画重定向工作流程" height:112
+for  i=2 to rolBsRetarget.bipedBones_B.items.count do
 (
-	local m = 8; local w = 484; local h = 16; local s = 18
-	label lbl1 "1. 打开 Tab1 生成的 Mapping.max 映射文件" pos:[m,2] width:w height:h
-	label lbl2 "2. 切换到【动画重定向】页签" pos:[m,2+s] width:w height:h
-	label lbl3 "3. 选择：动画FBX目录 / 导出目录 / 映射文件 / Skin文件" pos:[m,2+s*2] width:w height:h
-	label lbl4 "4. 点击【重定向选中动画】或【重定向所有动画】" pos:[m,2+s*3] width:w height:h
-	label lbl5 "5. 在 ReOutput 文件夹查看生成的 FBX/MAX/BIP" pos:[m,2+s*4] width:w height:h
-	label lbl6 "目录结构建议: Skin.max + AniFBX/ + ReOutput/" pos:[m,2+s*5] width:w height:h
+	rolBsRetarget.characterBones_B.items = append rolBsRetarget.characterBones_B.items "~undefined~"
 )
 
-rollout rolHelp_Feat "功能说明" height:112
+-- 简洁的帮助窗口
+rollout rolHelpDialog "BsRetargetTools 使用帮助" width:480 height:560
 (
-	local m = 8; local w = 484; local h = 16; local s = 18
-	label lbl1 "• 自动匹配：通配符+模糊匹配+拓扑推断，支持预设自动识别" pos:[m,2] width:w height:h
-	label lbl2 "• 左右同步：从已填的左/右侧自动推导对侧映射" pos:[m,2+s] width:w height:h
-	label lbl3 "• 撤销：支持最近 20 步映射操作回退" pos:[m,2+s*2] width:w height:h
-	label lbl4 "• 视口拾取：开关式拾取，视口点选骨骼自动按序填入空槽位" pos:[m,2+s*3] width:w height:h
-	label lbl5 "• 状态栏：实时显示已映射/必需缺失/可选缺失/Root（带色码）" pos:[m,2+s*4] width:w height:h
-	label lbl6 "• 预设系统：.list 文件存储完整映射+轴向配置" pos:[m,2+s*5] width:w height:h
-)
-
-rollout rolHelp_Ops "操作方式" height:94
-(
-	local m = 8; local w = 484; local h = 16; local s = 18
-	label lbl1 "• 左键点击 Bone 列表：将选中场景骨骼填入该槽位" pos:[m,2] width:w height:h
-	label lbl2 "• 右键点击 Bone 列表：清空该槽位" pos:[m,2+s] width:w height:h
-	label lbl3 "• 左键点击 Bip 列表：选中场景中对应骨骼" pos:[m,2+s*2] width:w height:h
-	label lbl4 "• 视口拾取：点击按钮开启/关闭，右键按钮跳过，Esc退出" pos:[m,2+s*3] width:w height:h
-	label lbl5 "• 右键【应用】按钮：打开预设文件夹" pos:[m,2+s*4] width:w height:h
-)
-
-rollout rolHelp_Faq "常见问题" height:40
-(
-	local m = 8; local w = 484; local h = 16; local s = 18
-	label lbl1 "• 手指轴向：观察 Local 坐标，选择靠向身体背后的轴" pos:[m,2] width:w height:h
-	label lbl2 "• Nub 缺失：用【快速便捷小工具】自动创建" pos:[m,2+s] width:w height:h
-)
-
--- 帮助主窗口（折叠面板 + 底部固定信息）
-rollout rolHelpDialog "BsRetargetTools v5.2 使用帮助" width:520 height:600
-(
-	local helpW = 520
-
-	label lblHelpTitle "BsRetargetTools v5.2 完整使用指南" pos:[10,6] width:500 height:20 style_sunkenedge:true
-	subRollout subHelp "" pos:[0,30] width:520 height:520
-
-	hyperLink hlHome "Bullet.S | www.anibullet.com" pos:[10,556] width:190 height:16 \
+	local helpW = 480
+	local helpM = 12  -- margin
+	local contentW = helpW - helpM*2
+	local lineH = 22
+	
+	-- 标题
+	label lblTitle "BsRetargetTools 快速使用指南" pos:[helpM,10] width:contentW height:24 style_sunkenedge:true
+	
+	-- 使用步骤
+	groupbox grpSteps "使用步骤" pos:[helpM,42] width:contentW height:210
+	label lblStep0 "0. 骨骼映射：将原始骨骼填入对应的Biped位置" pos:[helpM+8,62] width:(contentW-16) height:lineH
+	label lblStep0b "        缺失的Nub骨骼可通过【快速便捷小工具】自动创建" pos:[helpM+8,82] width:(contentW-16) height:lineH
+	label lblStep1 "1. 验证映射：选择预设模板 或 点击【自动匹配】→【验证映射】" pos:[helpM+8,106] width:(contentW-16) height:lineH
+	label lblStep2 "2. 调整参数：设置手指轴向、选择目标引擎 (Unity / Unreal)" pos:[helpM+8,128] width:(contentW-16) height:lineH
+	label lblStep3 "3. 创建映射：点击【创建映射文件】生成重定向中间文件" pos:[helpM+8,150] width:(contentW-16) height:lineH
+	label lblStep4 "4. 转换骨架：点击【FBX转Biped】完成骨骼替换" pos:[helpM+8,172] width:(contentW-16) height:lineH
+	label lblStep5 "5. 重定向动画：切换【动画重定向】页签，批量处理动画文件" pos:[helpM+8,194] width:(contentW-16) height:lineH
+	label lblStep6 "6. 检查结果：在 ReOutput 文件夹查看生成的 FBX/MAX/BIP" pos:[helpM+8,216] width:(contentW-16) height:lineH
+	
+	-- 重要提示
+	groupbox grpTips "重要提示" pos:[helpM,258] width:contentW height:150
+	label lblTip1 "• 必需骨骼：除标记【可选】的骨骼外，其他都必须完整映射" pos:[helpM+8,278] width:(contentW-16) height:lineH
+	label lblTip2 "• 手指轴向：观察手指Local坐标，选择靠身后方向的轴" pos:[helpM+8,300] width:(contentW-16) height:lineH
+	label lblTip3 "• 文件结构：建议目录包含 Mapping.max / Skin.max / AniFBX /" pos:[helpM+8,322] width:(contentW-16) height:lineH
+	label lblTip4 "• 自动创建：HeadNub、FootNub、手指Nub 可一键生成" pos:[helpM+8,344] width:(contentW-16) height:lineH
+	label lblTip5 "• 慎用选项：可保留原Bone骨骼，用Biped作为控制器" pos:[helpM+8,366] width:(contentW-16) height:lineH
+	
+	-- 作者信息
+	groupbox grpContact "作者信息" pos:[helpM,414] width:contentW height:105
+	label lblAuthor "作者：Bullet.S" pos:[helpM+8,436] width:(contentW-16) height:lineH
+	hyperLink hlHomepage "个人主页：www.anibullet.com" pos:[helpM+8,460] width:(contentW-16) height:lineH \
 		address:"https://www.anibullet.com/" color:(color 30 90 180) hovercolor:(color 0 120 220)
-	hyperLink hlVideo "Bilibili 教程" pos:[(helpW-120),556] width:100 height:16 \
+	hyperLink hlTutorial "视频教程：Bilibili 教程合集" pos:[helpM+8,484] width:(contentW-16) height:lineH \
 		address:"https://space.bilibili.com/2031113/lists/560782?type=season" color:(color 30 90 180) hovercolor:(color 0 120 220)
-	button btnClose "关闭" pos:[(helpW/2-50),575] width:100 height:22
-
-	on rolHelpDialog open do
-	(
-		addSubRollout subHelp rolHelp_Wf rolledUp:false
-		addSubRollout subHelp rolHelp_Rt rolledUp:true
-		addSubRollout subHelp rolHelp_Feat rolledUp:true
-		addSubRollout subHelp rolHelp_Ops rolledUp:true
-		addSubRollout subHelp rolHelp_Faq rolledUp:true
-	)
+	
+	-- 关闭按钮
+	button btnClose "关闭" pos:[(helpW/2-50),525] width:100 height:26
+	
 	on btnClose pressed do (destroyDialog rolHelpDialog)
 )
