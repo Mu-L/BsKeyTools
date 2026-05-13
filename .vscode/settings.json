@@ -1,0 +1,14 @@
+{
+    // Code Runner: 按文件后缀匹配，不依赖 NSIS 语法扩展是否安装
+    "code-runner.executorMapByFileExtension": {
+        ".nsi": "powershell -ExecutionPolicy Bypass -File \"$workspaceRoot\\.vscode\\build_nsi.ps1\" -NsiFile \"$fullFileName\"",
+        ".nsh": "powershell -ExecutionPolicy Bypass -File \"$workspaceRoot\\.vscode\\build_nsi.ps1\" -NsiFile \"$fullFileName\""
+    },
+    "code-runner.runInTerminal": true,
+    "code-runner.saveFileBeforeRun": true,
+    "code-runner.clearPreviousOutput": true,
+
+    // MXSPyCOM 可执行文件路径（各机器可在 User Settings 里覆盖此项）
+    // 覆盖方法：Ctrl+Shift+P -> "Open User Settings (JSON)" -> 添加同名键
+    "bskeytools.mxspycomPath": "C:\\MXSPyCOM\\MXSPyCOM.exe"
+}

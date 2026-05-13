@@ -1,0 +1,95 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "NSIS: Build Current File",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-ExecutionPolicy", "Bypass",
+                "-File", "${workspaceFolder}\\.vscode\\build_nsi.ps1",
+                "-NsiFile", "${file}"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": {
+                "owner": "nsis",
+                "fileLocation": ["relative", "${fileDirname}"],
+                "pattern": {
+                    "regexp": "^(.*?)\\((\\d+)\\)\\s*:\\s*(error|warning)\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "severity": 3,
+                    "message": 4
+                }
+            }
+        },
+        {
+            "label": "NSIS: Build BsKeyTools",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-ExecutionPolicy", "Bypass",
+                "-File", "${workspaceFolder}\\.vscode\\build_nsi.ps1",
+                "-NsiFile", "${workspaceFolder}\\_BsKeyTools\\Setup_BsKeyTools.nsi"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "NSIS: Build BsCleanVirus",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-ExecutionPolicy", "Bypass",
+                "-File", "${workspaceFolder}\\.vscode\\build_nsi.ps1",
+                "-NsiFile", "${workspaceFolder}\\_BsKeyTools\\Setup_BsCleanVirus.nsi"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "MXSPyCOM: Execute MaxScript",
+            "type": "shell",
+            "command": "${config:bskeytools.mxspycomPath}",
+            "args": [
+                "-s",
+                {
+                    "value": "${file}",
+                    "quoting": "strong"
+                }
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

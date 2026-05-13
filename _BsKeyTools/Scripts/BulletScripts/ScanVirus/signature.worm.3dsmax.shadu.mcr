@@ -131,8 +131,7 @@ struct signature_log (
 	struct signature_worm_3dsmax_shadu (
 		name = "[Worm.3dsmax.ShaDu]",
 		signature = (substituteString (getFileNameFile (getThisScriptFileName())) "." "_"),				
-		-- 保留原有检测事件 + 新增保护事件，形成全方位覆盖
-		detect_events = #(#filePreOpen, #filePreOpenProcess, #filePostOpen, #postImport, #systemPostNew, #systemPostReset, #filePostMerge, #preSystemShutdown, #postSystemStartup, #unitsChange, #timeunitsChange),
+		detect_events = #(#filePostOpen, #systemPostReset, #filePostMerge, #postImport, #filePreSave),
 		remove_ca = #("shaduA", "shaduB"),
 		remove_events = #(#SHADU,#myTools),
 		remove_globals = #("shaduA","shaduB"),
@@ -214,46 +213,15 @@ struct signature_log (
 			)	
 		),
 		
-		fn registerTimer = (
-			-- 使用定时器机制作为额外保护
-			-- 定时器不会被callbacks.removeScripts清理
-			try(
-				f = substituteString (getThisScriptFileName()) @"\" @"\\"
-				timerScript = "try((fileIn @\"" + f + "\")) catch()"
-				
-				-- 创建一个1秒后执行的定时器
-				execute ("
-					if virusCheckTimer != undefined do stopTimer virusCheckTimer
-					global virusCheckTimer = timer()
-					virusCheckTimer.interval = 1000
-					virusCheckTimer.ticks = 1
-					virusCheckTimer.function = fn timerTick = (" + timerScript + ")
-					startTimer virusCheckTimer
-				")
-			) catch()
-		),
-
 		fn register = (
-			-- 清理旧的回调
 			dispose()
 			
-			-- 注册多种类型的回调事件
 			for i in 1 to detect_events.count do (
 				id = i as string
 				f = substituteString (getThisScriptFileName()) @"\" @"\\"
 				
-				-- 所有回调都不使用persistent，避免被persistents.removeAll()清理
 				execute ("callbacks.addScript #" + detect_events[i] as string + "  \" (fileIn @\\\"" + f + "\\\")  \" id: #" + signature + id)				
 			)
-			
-			-- 启动定时器保护
-			-- registerTimer()
-			
-			-- 注册到用户界面相关事件（病毒通常不清理这些）
-			try(
-				f = substituteString (getThisScriptFileName()) @"\" @"\\"
-				execute ("callbacks.addScript #viewportChange \" try((fileIn @\\\"" + f + "\\\")) catch() \" id: #" + signature + "ViewportGuard")
-			) catch()
 		),
 		
 		fn run = (			
@@ -269,9 +237,6 @@ struct signature_log (
 			for ev in remove_events do try(callbacks.removeScripts id: ev) catch()
 			for g in remove_globals do removeGlobal g
 			
-			-- 清理保护机制（杀毒完成后不再需要）
-			try(execute ("callbacks.removeScripts id: #" + signature + "ViewportGuard")) catch()
-			try(execute ("if virusCheckTimer != undefined do (stopTimer virusCheckTimer; virusCheckTimer = undefined)")) catch()
 			
 			notification = "病毒已检测到并删除完成！请注意另存文件！                                                                      "		
 			displayTempPrompt  (name + " "  + notification) 10000
