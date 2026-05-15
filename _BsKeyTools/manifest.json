@@ -1,5 +1,5 @@
 {
-  "version": "2.0.0",
+  "version": "1.4.0",
   "requireReinstall": false,
   "releaseNote": "新增增量自动更新，无需重下安装包即可获取脚本更新",
   "baseUrl": "https://gitee.com/acebullet/BsKeyTools/raw/main/_BsKeyTools/Scripts/",
@@ -28,15 +28,15 @@
     { "path": "BulletScripts/BsTogglePanel.ms",          "since": "1.3.7", "size": 11973  },
     { "path": "BulletScripts/BsTrackBarTools.ms",        "since": "1.3.7", "size": 45596  },
     { "path": "BulletScripts/BsVportTools.ms",           "since": "1.3.7", "size": 18066  },
-    { "path": "BulletScripts/BulletKeyTools.ms",         "since": "2.0.0", "size": 0      },
-    { "path": "BulletScripts/fnCheckUpdate.ms",          "since": "2.0.0", "size": 0      },
+    { "path": "BulletScripts/BulletKeyTools.ms",         "since": "1.4.0", "size": 0      },
+    { "path": "BulletScripts/fnCheckUpdate.ms",          "since": "1.4.0", "size": 0      },
     { "path": "BulletScripts/fnFileAndDirIO.ms",         "since": "1.3.7", "size": 1681   },
     { "path": "BulletScripts/fnGetColorTheme.ms",        "since": "1.3.7", "size": 2765   },
     { "path": "BulletScripts/fnSaveLoadConfig.ms",       "since": "1.3.7", "size": 12303  },
     { "path": "BulletScripts/fnSelectKeys.ms",           "since": "1.3.7", "size": 8292   },
     { "path": "BulletScripts/fnSetFps.ms",               "since": "1.3.7", "size": 1539   },
     { "path": "BulletScripts/fnSetPlaybackSpeed.ms",     "since": "1.3.7", "size": 802    },
-    { "path": "BulletScripts/fnUpdater.ms",              "since": "2.0.0", "size": 0      },
+    { "path": "BulletScripts/fnUpdater.ms",              "since": "1.4.0", "size": 0      },
     { "path": "BulletScripts/stLangManager.ms",          "since": "1.3.7", "size": 1490   },
     { "path": "BulletScripts/BsAnimLib.py",              "since": "1.3.7", "size": 0      },
     { "path": "BulletScripts/BsOpenToolsPy_PySide2.py",  "since": "1.3.7", "size": 0      },
@@ -46,7 +46,7 @@
     { "path": "BulletScripts/Lang/ENG.lng",              "since": "1.3.7", "size": 0      }
   ],
   "installer": {
-    "url": "https://gitee.com/acebullet/BsKeyTools/releases/download/v2.0.0/BsKeyTools_v2.0.0.exe",
+    "url": "https://gitee.com/acebullet/BsKeyTools/releases/download/v1.4.0/BsKeyTools_v1.4.0.exe",
     "fallbackUrl": "https://anibullet.github.io/guide/"
   }
 }

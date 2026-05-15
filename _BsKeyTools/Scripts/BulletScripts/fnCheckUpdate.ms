@@ -2,7 +2,7 @@
 * @Description: BsKeyTools 版本检查模块（v2.0 重写）
 * @Author: Bullet.S
 * @Date: 2026-05-16
-* @Version: 2.0.0
+* @Version: 1.4.0
 *
 * 对外接口:
 *   fnCheckUpdate currentVer manifestUrl      -- 手动触发检查（始终显示当前状态）

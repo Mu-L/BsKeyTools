@@ -2,7 +2,7 @@
 * @Description: BsKeyTools 增量更新下载模块
 * @Author: Bullet.S
 * @Date: 2026-05-16
-* @Version: 2.0.0
+* @Version: 1.4.0
 *
 * 对外接口（由 fnCheckUpdate.ms 调用）:
 *   fnUpdaterDownloadFiles manifest currentVer  -- 增量下载 since > currentVer 的脚本文件
