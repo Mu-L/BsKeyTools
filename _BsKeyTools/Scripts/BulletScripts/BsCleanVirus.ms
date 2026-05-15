@@ -870,7 +870,7 @@ rollout rolBatchCleanVirus "批量查杀病毒" (
 	)
 )
 
-rollout rolBsCleanVirus  "BsCleanVirus_v2.0"
+rollout rolBsCleanVirus  "BsCleanVirus_v2.2"
 (
     local startupBsCleanVirusTools = (getDir #Scripts) + "\\BulletScripts\\StartupMS\\BsCleanVirusStartup.ms"
 	local startupLocalPath = (getDir #StartupScripts)+ "\\BsCleanVirusStartup.ms"
