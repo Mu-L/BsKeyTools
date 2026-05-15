@@ -46,7 +46,7 @@
     { "path": "BulletScripts/Lang/ENG.lng",              "since": "1.3.7", "size": 0      }
   ],
   "installer": {
-    "url": "https://github.com/AniBullet/BsKeyTools/releases/download/v1.4.0/BsKeyTools_v1.4.0.exe",
-    "fallbackUrl": "https://anibullet.github.io/guide/"
+    "url": "https://gitee.com/acebullet/BsKeyTools/releases/download/v1.4.0/BsKeyTools_v1.4.0.exe",
+    "fallbackUrl": "https://github.com/AniBullet/BsKeyTools/releases/download/v1.4.0/BsKeyTools_v1.4.0.exe"
   }
 }

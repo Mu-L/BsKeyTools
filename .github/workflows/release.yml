@@ -9,62 +9,55 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  # ── Job 1: Windows 构建安装包 ──────────────────────────────────────
+  build:
     runs-on: windows-latest
+    outputs:
+      version: ${{ steps.ver.outputs.VERSION }}
+      tag:     ${{ steps.ver.outputs.TAG }}
 
     steps:
-      # ① 完整拉取（确保 git diff 和 push 回 main 能正常工作）
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: main  # 基于 main 分支内容操作，而非 detached tag
+          ref: main
 
-      # ② 从 tag 名中提取版本号（去掉 v 前缀，如 v1.4.0 → 1.4.0）
       - name: Extract version from tag
         id: ver
         shell: pwsh
         run: |
-          $tag = "${{ github.ref_name }}"
+          $tag     = "${{ github.ref_name }}"
           $version = $tag.TrimStart('v')
           echo "VERSION=$version" >> $env:GITHUB_OUTPUT
-          echo "TAG=$tag" >> $env:GITHUB_OUTPUT
+          echo "TAG=$tag"         >> $env:GITHUB_OUTPUT
           Write-Host "Building version: $version"
 
-      # ③ 更新 manifest.json（重新计算 LF 文件大小、更新 since）
       - name: Update manifest.json
         shell: pwsh
         run: python scripts/update_manifest.py
 
-      # ④ 安装 NSIS（chocolatey 预装在 windows-latest）
       - name: Install NSIS
         shell: pwsh
         run: choco install nsis --no-progress -y
 
-      # ⑤ 构建安装包
       - name: Build installer
         shell: pwsh
         working-directory: _BsKeyTools
         run: makensis Setup_BsKeyTools.nsi
 
-      # ⑥ 重命名 exe 为带版本号的文件名
       - name: Rename installer
         shell: pwsh
         run: |
-          $version = "${{ steps.ver.outputs.VERSION }}"
-          $src = "_BsKeyTools\_BsKeyTools.exe"
-          $dst = "_BsKeyTools\BsKeyTools_v$version.exe"
-          Move-Item $src $dst
-          Write-Host "Installer: $dst"
+          $v = "${{ steps.ver.outputs.VERSION }}"
+          Move-Item "_BsKeyTools\_BsKeyTools.exe" "_BsKeyTools\BsKeyTools_v$v.exe"
 
-      # ⑦ 将更新后的 manifest.json / version.dat 提交回 main
-      #    [skip ci] 防止触发 sync-gitee.yml 的无限循环
-      - name: Commit manifest changes
+      - name: Commit manifest changes back to main
         shell: pwsh
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add _BsKeyTools/manifest.json _BsKeyTools/version.dat
-          $diff = git diff --staged --quiet; $changed = -not $?
+          $changed = (git diff --staged --quiet; -not $?)
           if ($changed) {
             git commit -m "chore: auto-update manifest.json for ${{ steps.ver.outputs.TAG }} [skip ci]"
             git push origin HEAD:main
@@ -72,16 +65,65 @@ jobs:
             Write-Host "manifest 无变动，跳过 commit"
           }
 
-      # ⑧ 创建 GitHub Release 并上传安装包
+      # 将 exe 传给下一个 job
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer
+          path: "_BsKeyTools/BsKeyTools_v${{ steps.ver.outputs.VERSION }}.exe"
+          retention-days: 1
+
+  # ── Job 2: 发布到 GitHub + Gitee，镜像代码 ─────────────────────────
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Download installer artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: installer
+          path: dist/
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.ver.outputs.TAG }}
-          name: "BsKeyTools v${{ steps.ver.outputs.VERSION }}"
-          files: "_BsKeyTools/BsKeyTools_v${{ steps.ver.outputs.VERSION }}.exe"
+          tag_name: ${{ needs.build.outputs.tag }}
+          name: "BsKeyTools v${{ needs.build.outputs.version }}"
+          files: "dist/BsKeyTools_v${{ needs.build.outputs.version }}.exe"
           generate_release_notes: false
 
-      # ⑨ 镜像到 Gitee（含最新 manifest commit）
+      - name: Create Gitee Release and upload installer
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+        run: |
+          VERSION="${{ needs.build.outputs.version }}"
+          TAG="${{ needs.build.outputs.tag }}"
+          EXE="dist/BsKeyTools_v${VERSION}.exe"
+
+          # 读取 releaseNote（从 manifest.json 提取）
+          NOTE=$(python3 -c "import json; d=json.load(open('_BsKeyTools/manifest.json')); print(d.get('releaseNote',''))" 2>/dev/null || echo "")
+
+          # 创建 Gitee Release
+          RESP=$(curl -s -X POST "https://gitee.com/api/v5/repos/acebullet/BsKeyTools/releases" \
+            -H "Content-Type: application/json" \
+            -d "{\"access_token\":\"${GITEE_TOKEN}\",\"tag_name\":\"${TAG}\",\"name\":\"BsKeyTools v${VERSION}\",\"body\":\"${NOTE}\",\"target_commitish\":\"main\"}")
+
+          RELEASE_ID=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+          echo "Gitee Release ID: $RELEASE_ID"
+
+          # 上传 exe 到 Gitee Release
+          curl -s -X POST "https://gitee.com/api/v5/repos/acebullet/BsKeyTools/releases/${RELEASE_ID}/attach_files" \
+            -F "access_token=${GITEE_TOKEN}" \
+            -F "file=@${EXE}"
+
+          echo "✅ Gitee Release v${VERSION} 发布完成"
+
       - name: Mirror to Gitee
         uses: wearerequired/git-mirror-action@master
         env:
