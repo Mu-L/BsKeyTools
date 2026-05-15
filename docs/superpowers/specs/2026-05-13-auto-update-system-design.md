@@ -215,20 +215,55 @@ jobs:
 
 ---
 
-## 发版工作流（完整）
+## 分支策略与用户安全
 
 ```
-1. dev 分支改代码
-2. 修改 manifest.json：
-   - 更新 version
-   - 改过的文件更新 since
-   - 设置 requireReinstall
-   - 写 releaseNote
-3. 同步更新 BulletKeyTools.ms 中 curVerBsKeyTools
-4. 同步更新 Setup_BsKeyTools.nsi 中 PRODUCT_VERSION_NUM（如需重打安装包）
+main                     ← 生产分支，用户锚点，非发版绝对不改
+  │
+  └─ feature/xxx         ← 功能开发分支，随意改，不影响任何用户
+```
+
+**用户触发更新的唯一开关是 `version.dat`**：
+- v1.3.7 用户的旧 `fnCheckUpdate.ms` 只读 `version.dat`
+- 只要 main 上 `version.dat` 还是 `"1.3.7"`，所有在线用户零感知
+- CI workflow 只在 `push main` 时运行，feature 分支 push 不触发
+
+**v2.0.0 特殊情况**：
+- v2.0.0 在 feature 分支上开发，代码改动不影响用户
+- 只有 merge 到 main 且 CI 运行后，version.dat 才会变成 "2.0.0"
+- 届时需要 Gitee Release 上已有 `BsKeyTools_v2.0.0.exe` 安装包
+
+---
+
+## 发版工作流（完整）
+
+### 日常小版本发版（2.0.0 之后，增量更新生效）
+
+```
+1. feature 分支改代码
+2. 在 BulletKeyTools.ms 中更新 curVerBsKeyTools（如 "2.0.1"）
+3. 在 manifest.json 中写好 releaseNote（发版说明）
+   - version / since / requireReinstall 由 CI 自动更新，无需手动改
+4. PR merge 到 main
+5. GitHub Actions 自动：
+   - 运行 update_manifest.py（更新 version、size、since、version.dat）
+   - commit 变动 [skip ci]
+   - 镜像到 Gitee
+6. 用户下次打开 Max 自动收到增量更新提示
+```
+
+### v2.0.0 首次发版（一次性全量安装包）
+
+```
+1. feature/auto-update-v2 所有功能测试完毕
+2. 打包 BsKeyTools_v2.0.0.exe 安装包
+3. 上传到 Gitee Release（tag: v2.0.0）
+4. 确认下载引导页 https://anibullet.github.io/guide/ 有 v2.0.0 链接
 5. PR merge 到 main
-6. GitHub Actions 自动同步到 Gitee
-7. 用户下次打开 Max 自动检测到更新
+6. CI 运行，version.dat 变成 "2.0.0"，镜像到 Gitee
+7. v1.3.7 用户下次开 Max → 弹窗「发现新版本 2.0.0」
+   → 点「是」→ 打开下载引导页 → 手动下载安装 v2.0.0
+8. 装完后，以后所有更新走增量，不再需要装包
 ```
 
 ---
