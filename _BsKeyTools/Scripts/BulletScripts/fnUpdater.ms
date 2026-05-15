@@ -15,7 +15,7 @@ fn fnVersionGt v1 v2 =
 (
     local p1 = filterString v1 "."
     local p2 = filterString v2 "."
-    local len = (min p1.count p2.count)
+    local len = if p1.count < p2.count then p1.count else p2.count
     local i = 1
     while i <= len do
     (
@@ -23,7 +23,7 @@ fn fnVersionGt v1 v2 =
         local n2 = (p2[i] as integer)
         if n1 > n2 then return true
         if n1 < n2 then return false
-        i += 1
+        i = i + 1
     )
     -- 相等时：段数更多视为更大（如 "2.0.0.1" > "2.0.0"），否则相等
     p1.count > p2.count
