@@ -1,9 +1,10 @@
 name: Sync to Gitee
 
-# 触发条件：push 到 main 分支
+# 触发条件：push 到 main 分支（tag push 不触发，由 release.yml 处理）
 on:
   push:
     branches: [ main ]
+    tags-ignore: ['**']  # 明确排除 tag push
 
 # 需要写权限以便 auto-commit 更新后的 manifest
 permissions:

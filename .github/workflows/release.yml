@@ -1,0 +1,91 @@
+name: Build and Release
+
+# 触发条件：推送 v* 格式的 tag（如 v1.4.0）
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      # ① 完整拉取（确保 git diff 和 push 回 main 能正常工作）
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main  # 基于 main 分支内容操作，而非 detached tag
+
+      # ② 从 tag 名中提取版本号（去掉 v 前缀，如 v1.4.0 → 1.4.0）
+      - name: Extract version from tag
+        id: ver
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart('v')
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+          echo "TAG=$tag" >> $env:GITHUB_OUTPUT
+          Write-Host "Building version: $version"
+
+      # ③ 更新 manifest.json（重新计算 LF 文件大小、更新 since）
+      - name: Update manifest.json
+        shell: pwsh
+        run: python scripts/update_manifest.py
+
+      # ④ 安装 NSIS（chocolatey 预装在 windows-latest）
+      - name: Install NSIS
+        shell: pwsh
+        run: choco install nsis --no-progress -y
+
+      # ⑤ 构建安装包
+      - name: Build installer
+        shell: pwsh
+        working-directory: _BsKeyTools
+        run: makensis Setup_BsKeyTools.nsi
+
+      # ⑥ 重命名 exe 为带版本号的文件名
+      - name: Rename installer
+        shell: pwsh
+        run: |
+          $version = "${{ steps.ver.outputs.VERSION }}"
+          $src = "_BsKeyTools\_BsKeyTools.exe"
+          $dst = "_BsKeyTools\BsKeyTools_v$version.exe"
+          Move-Item $src $dst
+          Write-Host "Installer: $dst"
+
+      # ⑦ 将更新后的 manifest.json / version.dat 提交回 main
+      #    [skip ci] 防止触发 sync-gitee.yml 的无限循环
+      - name: Commit manifest changes
+        shell: pwsh
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add _BsKeyTools/manifest.json _BsKeyTools/version.dat
+          $diff = git diff --staged --quiet; $changed = -not $?
+          if ($changed) {
+            git commit -m "chore: auto-update manifest.json for ${{ steps.ver.outputs.TAG }} [skip ci]"
+            git push origin HEAD:main
+          } else {
+            Write-Host "manifest 无变动，跳过 commit"
+          }
+
+      # ⑧ 创建 GitHub Release 并上传安装包
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.TAG }}
+          name: "BsKeyTools v${{ steps.ver.outputs.VERSION }}"
+          files: "_BsKeyTools/BsKeyTools_v${{ steps.ver.outputs.VERSION }}.exe"
+          generate_release_notes: false
+
+      # ⑨ 镜像到 Gitee（含最新 manifest commit）
+      - name: Mirror to Gitee
+        uses: wearerequired/git-mirror-action@master
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_SSH_PRIVATE_KEY }}
+        with:
+          source-repo: "git@github.com:AniBullet/BsKeyTools.git"
+          destination-repo: "git@gitee.com:acebullet/BsKeyTools.git"

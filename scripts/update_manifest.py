@@ -224,7 +224,7 @@ def main():
         ),
         "files": new_files,
         "installer": existing.get("installer", {
-            "url": f"https://gitee.com/acebullet/BsKeyTools/releases/download/v{version}/BsKeyTools_v{version}.exe",
+            "url": f"https://github.com/AniBullet/BsKeyTools/releases/download/v{version}/BsKeyTools_v{version}.exe",
             "fallbackUrl": "https://anibullet.github.io/guide/"
         }),
     }
