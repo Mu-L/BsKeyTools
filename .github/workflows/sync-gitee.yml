@@ -1,0 +1,47 @@
+name: Sync to Gitee
+
+# 触发条件：push 到 main 分支
+on:
+  push:
+    branches: [ main ]
+
+# 需要写权限以便 auto-commit 更新后的 manifest
+permissions:
+  contents: write
+
+jobs:
+  update-and-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ① 完整拉取（fetch-depth: 0 保证 git diff HEAD^ HEAD 能正确工作）
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ② 运行 manifest 自动更新脚本
+      - name: Update manifest.json
+        run: python3 scripts/update_manifest.py
+
+      # ③ 若 manifest.json / version.dat / .nsi 有变动则自动 commit
+      #    [skip ci] 防止此 commit 再次触发本 workflow，避免无限循环
+      - name: Commit manifest changes
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add _BsKeyTools/manifest.json _BsKeyTools/version.dat _BsKeyTools/Setup_BsKeyTools.nsi 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "manifest 无变动，跳过 commit"
+          else
+            git commit -m "chore: auto-update manifest.json [skip ci]"
+            git push
+          fi
+
+      # ④ 镜像到 Gitee（含刚才的 manifest commit）
+      - name: Mirror to Gitee
+        uses: wearerequired/git-mirror-action@master
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_SSH_PRIVATE_KEY }}
+        with:
+          source-repo: "git@github.com:AniBullet/BsKeyTools.git"
+          destination-repo: "git@gitee.com:acebullet/BsKeyTools.git"

@@ -1,0 +1,34 @@
+# BsKeyTools .gitattributes
+# Enforce LF line endings for all script files stored in git.
+# This ensures file sizes computed by CI (Ubuntu/LF) match what
+# Gitee raw serves, preventing false size-mismatch update failures.
+
+# Default: normalize to LF on checkout
+* text=auto eol=lf
+
+# MAXScript and related script files — always LF
+*.ms   text eol=lf
+*.mse  text eol=lf
+*.mcr  text eol=lf
+
+# Python
+*.py   text eol=lf
+
+# Language / config files
+*.lng  text eol=lf
+*.ini  text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.md   text eol=lf
+*.txt  text eol=lf
+
+# Binary files — never touch line endings
+*.exe  binary
+*.dll  binary
+*.dlm  binary
+*.zip  binary
+*.png  binary
+*.gif  binary
+*.jpg  binary
+*.ico  binary
