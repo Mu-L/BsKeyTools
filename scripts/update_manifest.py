@@ -71,6 +71,19 @@ MANAGED_FILES = [
     "BulletScripts/BsScriptHub.py",
     "BulletScripts/Lang/CHS.lng",
     "BulletScripts/Lang/ENG.lng",
+    # StartupMS 加载器（安装到 Scripts\BulletScripts\StartupMS\）
+    "BulletScripts/StartupMS/BsCleanVirusStartup.ms",
+    "BulletScripts/StartupMS/BsCustomScriptsStartup.ms",
+    "BulletScripts/StartupMS/BsTrackBarToolsStartup.ms",
+    "BulletScripts/StartupMS/BulletKeyTools.ms",
+    "BulletScripts/StartupMS/EXTimelineStartup.ms",
+    # Startup 启动脚本（安装到 Scripts\Startup\，即 getDir #StartupScripts）
+    "Startup/00.ms",
+    "Startup/BsCleanVirusStartup.ms",
+    "Startup/BsKeyToolsMacro.ms",
+    "Startup/BsKeyToolsMenuBar.ms",
+    "Startup/BsScriptMenuStartup.ms",
+    "Startup/BulletKeyTools.ms",
 ]
 
 
