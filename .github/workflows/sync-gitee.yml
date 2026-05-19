@@ -21,6 +21,9 @@ jobs:
           fetch-depth: 0
 
       # ② 运行 manifest 自动更新脚本
+      - name: Run manifest tests
+        run: python3 -m unittest tests.test_update_manifest
+
       - name: Update manifest.json
         run: python3 scripts/update_manifest.py
 

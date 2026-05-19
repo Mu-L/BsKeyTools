@@ -20,6 +20,7 @@ struct BsManifest
     requireReinstall,  -- bool: true 时走重装流程
     releaseNote,       -- string: 更新说明，直接显示在弹窗中
     baseUrl,           -- string: 文件下载基础 URL（Gitee raw）
+    fallbackBaseUrl,   -- string: 备用文件下载基础 URL（GitHub raw）
     files,             -- array of BsManifestFile
     installerUrl,      -- string: 安装包直链
     fallbackUrl        -- string: 下载失败时打开的网页
@@ -29,7 +30,8 @@ struct BsManifestFile
 (
     path,    -- string: 相对路径，使用 /，如 "BulletScripts/BsBipedTools.ms"
     since,   -- string: 该文件最后修改的版本，如 "2.0.0"
-    size     -- integer: 字节数，0 表示跳过校验
+    size,    -- integer: 字节数，0 表示跳过校验
+    sha256   -- string: SHA-256，空值表示跳过哈希校验
 )
 
 -- ── JSON 轻量解析工具 ─────────────────────────────────────────────────
@@ -85,8 +87,9 @@ fn fnParseManifestFiles json =
         local path  = fnJsonGetStr obj "path"
         local since = fnJsonGetStr obj "since"
         local size  = fnJsonGetInt obj "size"
+        local sha256 = fnJsonGetStr obj "sha256"
         if path != undefined and since != undefined do
-            append result (BsManifestFile path:path since:since size:size)
+            append result (BsManifestFile path:path since:since size:size sha256:sha256)
     )
     result
 )
@@ -100,6 +103,7 @@ fn fnParseManifest json =
     local requireReinstall = fnJsonGetBool json "requireReinstall"
     local releaseNote      = fnJsonGetStr  json "releaseNote"
     local baseUrl          = fnJsonGetStr  json "baseUrl"
+    local fallbackBaseUrl  = fnJsonGetStr  json "fallbackBaseUrl"
 
     -- 解析 installer: { "url": "...", "fallbackUrl": "..." }
     local instRx = dotNetObject "System.Text.RegularExpressions.Regex" \
@@ -119,6 +123,7 @@ fn fnParseManifest json =
         requireReinstall:requireReinstall \
         releaseNote:(if releaseNote != undefined then releaseNote else "") \
         baseUrl:(if baseUrl != undefined then baseUrl else "") \
+        fallbackBaseUrl:(if fallbackBaseUrl != undefined then fallbackBaseUrl else "") \
         files:(fnParseManifestFiles json) \
         installerUrl:installerUrl \
         fallbackUrl:fallbackUrl

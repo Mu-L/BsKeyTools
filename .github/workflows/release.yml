@@ -34,7 +34,9 @@ jobs:
 
       - name: Update manifest.json
         shell: pwsh
-        run: python scripts/update_manifest.py
+        run: |
+          python -m unittest tests.test_update_manifest
+          python scripts/update_manifest.py
 
       - name: Install NSIS
         shell: pwsh
@@ -56,7 +58,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add _BsKeyTools/manifest.json _BsKeyTools/version.dat
+          git add _BsKeyTools/manifest.json _BsKeyTools/version.dat _BsKeyTools/Setup_BsKeyTools.nsi
           $changed = (git diff --staged --quiet; -not $?)
           if ($changed) {
             git commit -m "chore: auto-update manifest.json for ${{ steps.ver.outputs.TAG }} [skip ci]"
@@ -108,11 +110,27 @@ jobs:
 
           # 读取 releaseNote（从 manifest.json 提取）
           NOTE=$(python3 -c "import json; d=json.load(open('_BsKeyTools/manifest.json')); print(d.get('releaseNote',''))" 2>/dev/null || echo "")
+          export VERSION TAG NOTE
 
           # 创建 Gitee Release
+          python3 - <<PY
+          import json
+          import os
+
+          payload = {
+              "access_token": os.environ["GITEE_TOKEN"],
+              "tag_name": os.environ["TAG"],
+              "name": f"BsKeyTools v{os.environ['VERSION']}",
+              "body": os.environ["NOTE"],
+              "target_commitish": "main",
+          }
+          with open("gitee_release_payload.json", "w", encoding="utf-8") as f:
+              json.dump(payload, f, ensure_ascii=False)
+          PY
+
           RESP=$(curl -s -X POST "https://gitee.com/api/v5/repos/acebullet/BsKeyTools/releases" \
             -H "Content-Type: application/json" \
-            -d "{\"access_token\":\"${GITEE_TOKEN}\",\"tag_name\":\"${TAG}\",\"name\":\"BsKeyTools v${VERSION}\",\"body\":\"${NOTE}\",\"target_commitish\":\"main\"}")
+            --data-binary @gitee_release_payload.json)
 
           RELEASE_ID=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
           echo "Gitee Release ID: $RELEASE_ID"

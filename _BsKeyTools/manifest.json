@@ -3,58 +3,314 @@
   "requireReinstall": false,
   "releaseNote": "新增增量自动更新，无需重下安装包即可获取脚本更新",
   "baseUrl": "https://gitee.com/acebullet/BsKeyTools/raw/main/_BsKeyTools/Scripts/",
+  "fallbackBaseUrl": "https://raw.githubusercontent.com/AniBullet/BsKeyTools/main/_BsKeyTools/Scripts/",
   "files": [
-    { "path": "BulletScripts/BsAnimDemoTools.ms",        "since": "1.3.7", "size": 56800  },
-    { "path": "BulletScripts/BsBatchRescaleWU.ms",       "since": "1.3.7", "size": 12065  },
-    { "path": "BulletScripts/BsBipedTools.ms",           "since": "1.3.7", "size": 213828 },
-    { "path": "BulletScripts/BsBoxMan.ms",               "since": "1.3.7", "size": 49469  },
-    { "path": "BulletScripts/BsCleanVirus.ms",           "since": "1.3.7", "size": 29878  },
-    { "path": "BulletScripts/BsFnKeys.ms",               "since": "1.3.7", "size": 8752   },
-    { "path": "BulletScripts/BsKeyStepMode.ms",          "since": "1.3.7", "size": 3116   },
-    { "path": "BulletScripts/BsLayerManager.ms",         "since": "1.3.7", "size": 62675  },
-    { "path": "BulletScripts/BsOpenTools.ms",            "since": "1.3.7", "size": 40985  },
-    { "path": "BulletScripts/BsOpenToolsPy.ms",          "since": "1.3.7", "size": 4710   },
-    { "path": "BulletScripts/BsQuickSave.ms",            "since": "1.3.7", "size": 1028   },
-    { "path": "BulletScripts/BsRefTools.ms",             "since": "1.3.7", "size": 30286  },
-    { "path": "BulletScripts/BsResetConfig.ms",          "since": "1.3.7", "size": 2133   },
-    { "path": "BulletScripts/BsRetargetTools.ms",        "since": "1.3.7", "size": 182962 },
-    { "path": "BulletScripts/BsRootMotionTools.ms",      "since": "1.3.7", "size": 65565  },
-    { "path": "BulletScripts/BsScriptHub.ms",            "since": "1.3.7", "size": 3051   },
-    { "path": "BulletScripts/BsScriptMenu.ms",           "since": "1.3.7", "size": 21658  },
-    { "path": "BulletScripts/BsScriptMenuMacro.ms",      "since": "1.3.7", "size": 525    },
-    { "path": "BulletScripts/BsScriptsSet.ms",           "since": "1.3.7", "size": 22127  },
-    { "path": "BulletScripts/BsSelSetTools.ms",          "since": "1.3.7", "size": 17722  },
-    { "path": "BulletScripts/BsSwitchBtnString.ms",      "since": "1.3.7", "size": 1422   },
-    { "path": "BulletScripts/BsTogglePanel.ms",          "since": "1.3.7", "size": 11973  },
-    { "path": "BulletScripts/BsTrackBarTools.ms",        "since": "1.3.7", "size": 45596  },
-    { "path": "BulletScripts/BsVportTools.ms",           "since": "1.3.7", "size": 18066  },
-    { "path": "BulletScripts/BulletKeyTools.ms",         "since": "1.4.0", "size": 0      },
-    { "path": "BulletScripts/fnCheckUpdate.ms",          "since": "1.4.0", "size": 0      },
-    { "path": "BulletScripts/fnFileAndDirIO.ms",         "since": "1.3.7", "size": 1681   },
-    { "path": "BulletScripts/fnGetColorTheme.ms",        "since": "1.3.7", "size": 2765   },
-    { "path": "BulletScripts/fnSaveLoadConfig.ms",       "since": "1.3.7", "size": 12303  },
-    { "path": "BulletScripts/fnSelectKeys.ms",           "since": "1.3.7", "size": 8292   },
-    { "path": "BulletScripts/fnSetFps.ms",               "since": "1.3.7", "size": 1539   },
-    { "path": "BulletScripts/fnSetPlaybackSpeed.ms",     "since": "1.3.7", "size": 802    },
-    { "path": "BulletScripts/fnUpdater.ms",              "since": "1.4.0", "size": 0      },
-    { "path": "BulletScripts/stLangManager.ms",                   "since": "1.3.7", "size": 1490   },
-    { "path": "BulletScripts/BsAnimLib.py",                       "since": "1.3.7", "size": 0      },
-    { "path": "BulletScripts/BsOpenToolsPy_PySide2.py",           "since": "1.3.7", "size": 0      },
-    { "path": "BulletScripts/BsOpenToolsPy_PySide6.py",           "since": "1.3.7", "size": 0      },
-    { "path": "BulletScripts/BsScriptHub.py",                     "since": "1.3.7", "size": 0      },
-    { "path": "BulletScripts/Lang/CHS.lng",                       "since": "1.3.7", "size": 0      },
-    { "path": "BulletScripts/Lang/ENG.lng",                       "since": "1.3.7", "size": 0      },
-    { "path": "BulletScripts/StartupMS/BsCleanVirusStartup.ms",   "since": "1.3.7", "size": 396    },
-    { "path": "BulletScripts/StartupMS/BsCustomScriptsStartup.ms","since": "1.3.7", "size": 352    },
-    { "path": "BulletScripts/StartupMS/BsTrackBarToolsStartup.ms","since": "1.3.7", "size": 355    },
-    { "path": "BulletScripts/StartupMS/BulletKeyTools.ms",        "since": "1.3.7", "size": 389    },
-    { "path": "BulletScripts/StartupMS/EXTimelineStartup.ms",     "since": "1.3.7", "size": 407    },
-    { "path": "Startup/00.ms",                                    "since": "1.3.7", "size": 95     },
-    { "path": "Startup/BsCleanVirusStartup.ms",                   "since": "1.3.7", "size": 396    },
-    { "path": "Startup/BsKeyToolsMacro.ms",                       "since": "1.3.7", "size": 12654  },
-    { "path": "Startup/BsKeyToolsMenuBar.ms",                     "since": "1.3.7", "size": 20124  },
-    { "path": "Startup/BsScriptMenuStartup.ms",                   "since": "1.3.7", "size": 719    },
-    { "path": "Startup/BulletKeyTools.ms",                        "since": "1.3.7", "size": 437    }
+    {
+      "path": "BulletScripts/BsAnimDemoTools.ms",
+      "since": "1.3.7",
+      "size": 55258,
+      "sha256": "acf4db9843e3ee9f152abb0abc33308757f000a83cf7a07676468e9fa67f5c80"
+    },
+    {
+      "path": "BulletScripts/BsBatchRescaleWU.ms",
+      "since": "1.3.7",
+      "size": 11687,
+      "sha256": "7478403ffc4abd94dcc5167c15a36a30d0b7d61e0be5bac92e1ac37930492c4e"
+    },
+    {
+      "path": "BulletScripts/BsBipedTools.ms",
+      "since": "1.3.7",
+      "size": 207786,
+      "sha256": "1ce262ceb0ec8ed6c306bbf4d63ff6fb19ed9743e554f0927ee51d45eaf82726"
+    },
+    {
+      "path": "BulletScripts/BsBoxMan.ms",
+      "since": "1.3.7",
+      "size": 48151,
+      "sha256": "3cdd8cee004cd9618a12de74f1ab53e13da53018d33707c306881900d41670e0"
+    },
+    {
+      "path": "BulletScripts/BsCleanVirus.ms",
+      "since": "1.3.7",
+      "size": 28892,
+      "sha256": "dda6bcd8cdccc65aa26b073c7134ee5f9e0b5fa7f047215588d9d508f915e08a"
+    },
+    {
+      "path": "BulletScripts/BsFnKeys.ms",
+      "since": "1.3.7",
+      "size": 8414,
+      "sha256": "9de89db981a4647191b63682d0273582c2676d5791ff8f3af8af0d80ab2ab848"
+    },
+    {
+      "path": "BulletScripts/BsKeyStepMode.ms",
+      "since": "1.3.7",
+      "size": 3032,
+      "sha256": "4bc1cee14585e31598df7eea7e14833fddafbb1fcde7763ad1e16fb501de4410"
+    },
+    {
+      "path": "BulletScripts/BsLayerManager.ms",
+      "since": "1.3.7",
+      "size": 61282,
+      "sha256": "5430cd9cae1b7ced5d897a8a12e8625a498e204c4472a4a94b3ef5c13de1a667"
+    },
+    {
+      "path": "BulletScripts/BsOpenTools.ms",
+      "since": "1.3.7",
+      "size": 39696,
+      "sha256": "9f1ee58716037ab4cf7f25c6c351b3f12dd9b7202130cc1be045eee50a0e4616"
+    },
+    {
+      "path": "BulletScripts/BsOpenToolsPy.ms",
+      "since": "1.3.7",
+      "size": 4552,
+      "sha256": "6766a07516ac82c0657326c99f54cc961a35a4f44c5bc77522da9f2b092a64b6"
+    },
+    {
+      "path": "BulletScripts/BsQuickSave.ms",
+      "since": "1.3.7",
+      "size": 1001,
+      "sha256": "8ca9f797eaff8c10a35f73334138a324d49be613aadb88190237962fb92cb4c0"
+    },
+    {
+      "path": "BulletScripts/BsRefTools.ms",
+      "since": "1.3.7",
+      "size": 29391,
+      "sha256": "0b7b1825b2d00a538d7c3d6dad95966e40abd32dd721547b19174dfd0cf503f0"
+    },
+    {
+      "path": "BulletScripts/BsResetConfig.ms",
+      "since": "1.3.7",
+      "size": 2102,
+      "sha256": "a697afaa74d991ff94b007f0a1c72865a7ddf25984f87213f1e04e60e2a4e142"
+    },
+    {
+      "path": "BulletScripts/BsRetargetTools.ms",
+      "since": "1.3.7",
+      "size": 178784,
+      "sha256": "9124925559e4d8962c9acd994d3c8c2cf1b3465d20a7f6d47e330d5f5d81cc43"
+    },
+    {
+      "path": "BulletScripts/BsRootMotionTools.ms",
+      "since": "1.3.7",
+      "size": 64076,
+      "sha256": "22aa54e8d6ff39189ecc483ffa7521c936a116b0785d0a3a172ea02f927f157e"
+    },
+    {
+      "path": "BulletScripts/BsScriptHub.ms",
+      "since": "1.3.7",
+      "size": 2941,
+      "sha256": "dc390406a9429040f67a9398c5db26a38a78f70c7074a5b9b175d9894daecfdf"
+    },
+    {
+      "path": "BulletScripts/BsScriptMenu.ms",
+      "since": "1.3.7",
+      "size": 21059,
+      "sha256": "aa00de6104fe7f52cd361faf04eec7fbbb57cc7ab4f3b9e2e3a79efe5ccdc14d"
+    },
+    {
+      "path": "BulletScripts/BsScriptMenuMacro.ms",
+      "since": "1.3.7",
+      "size": 518,
+      "sha256": "983170d3be00d11f44b8c1135b3f04d9e443784085c528f407d4626cf4d941a8"
+    },
+    {
+      "path": "BulletScripts/BsScriptsSet.ms",
+      "since": "1.3.7",
+      "size": 21517,
+      "sha256": "5b08994feb72487f2365bd563cd0a6a975f5c05114f8965319e64912d3f5ee3e"
+    },
+    {
+      "path": "BulletScripts/BsSelSetTools.ms",
+      "since": "1.3.7",
+      "size": 17150,
+      "sha256": "70d17ad1d2144ce9c8f5ca37e508b2f797c35af4a5afec1420bea7f5ecd1d561"
+    },
+    {
+      "path": "BulletScripts/BsSwitchBtnString.ms",
+      "since": "1.3.7",
+      "size": 1389,
+      "sha256": "bd2e3e917f58ddd45c8d8eea54c7296fd3f6aa199e99202fb0e4757dec388641"
+    },
+    {
+      "path": "BulletScripts/BsTogglePanel.ms",
+      "since": "1.3.7",
+      "size": 11678,
+      "sha256": "a49efbe54b45e45b4b730f8d5e6dfe75145fe7944d5e5508502707ac0956ac58"
+    },
+    {
+      "path": "BulletScripts/BsTrackBarTools.ms",
+      "since": "1.3.7",
+      "size": 44159,
+      "sha256": "80dcff9128a13369c8a44ae7f0496f9c91a67609ef3c6dd4bdaa39cc8b327de1"
+    },
+    {
+      "path": "BulletScripts/BsVportTools.ms",
+      "since": "1.3.7",
+      "size": 17551,
+      "sha256": "8b01c39eeb8f37db71e11338ebc3863a6788621e2ffe9018eddf8fedee4478f6"
+    },
+    {
+      "path": "BulletScripts/BulletKeyTools.ms",
+      "since": "1.4.0",
+      "size": 210795,
+      "sha256": "300a8a87070629ea8fc573a560a5d4c108400d44ab193f6f66c1ba49ad594f3f"
+    },
+    {
+      "path": "BulletScripts/fnCheckUpdate.ms",
+      "since": "1.4.0",
+      "size": 9861,
+      "sha256": "2e75c2b1abd106c4be804ca160517f795fdf86d4e0f333c0d74ea4ad2b59015b"
+    },
+    {
+      "path": "BulletScripts/fnFileAndDirIO.ms",
+      "since": "1.3.7",
+      "size": 1635,
+      "sha256": "1b654d85075b469f018441b24b6e4e796f2c0ebde44aff9e35ce75b5b40a2572"
+    },
+    {
+      "path": "BulletScripts/fnGetColorTheme.ms",
+      "since": "1.3.7",
+      "size": 2661,
+      "sha256": "6b7766b796103d82a05404d0fbbd547ccc004dc3b881e25f8fc06f1a1eea0428"
+    },
+    {
+      "path": "BulletScripts/fnSaveLoadConfig.ms",
+      "since": "1.3.7",
+      "size": 12075,
+      "sha256": "6ef01bbf1d720b2bef434b590824a494b5667ace058f5cc6085bc5cf704de0f7"
+    },
+    {
+      "path": "BulletScripts/fnSelectKeys.ms",
+      "since": "1.3.7",
+      "size": 8061,
+      "sha256": "9775364ec8e27ae157f0ace67fceba731b69acb881603b30632cf3bf21320aa6"
+    },
+    {
+      "path": "BulletScripts/fnSetFps.ms",
+      "since": "1.3.7",
+      "size": 1488,
+      "sha256": "ffef213c8a5aff40fcdf87414ca0e2cd6ab0450108b83cb8054d110bfff646d0"
+    },
+    {
+      "path": "BulletScripts/fnSetPlaybackSpeed.ms",
+      "since": "1.3.7",
+      "size": 774,
+      "sha256": "d9b1ef5f63fed99e9d4211d83a4476e7bfa480c7ce9c143a2a6c51e23ee82a00"
+    },
+    {
+      "path": "BulletScripts/fnUpdater.ms",
+      "since": "1.4.0",
+      "size": 12389,
+      "sha256": "581fdebc0856974314e538fbd0fbfc7705b65955d0f20dcc8b6a7298589824dc"
+    },
+    {
+      "path": "BulletScripts/stLangManager.ms",
+      "since": "1.3.7",
+      "size": 1448,
+      "sha256": "d4f55ea2b269aac972713c604ac2ae129932b5a861b2413f13b21e204f307374"
+    },
+    {
+      "path": "BulletScripts/BsAnimLib.py",
+      "since": "1.3.7",
+      "size": 46455,
+      "sha256": "ab23557f87d714264a7ceaff07bf0a66ffdc7a2b3be9fcb782f99b510efd8888"
+    },
+    {
+      "path": "BulletScripts/BsOpenToolsPy_PySide2.py",
+      "since": "1.3.7",
+      "size": 55541,
+      "sha256": "42265d434a22629515578f7b1be77336e7c819b1a60f1e56f4248d410b1dec82"
+    },
+    {
+      "path": "BulletScripts/BsOpenToolsPy_PySide6.py",
+      "since": "1.3.7",
+      "size": 55541,
+      "sha256": "b0ff8d7c9ae310d52547ab3a7cab89b4f627eb953e7b2195d0ae5c677627500f"
+    },
+    {
+      "path": "BulletScripts/BsScriptHub.py",
+      "since": "1.3.7",
+      "size": 122059,
+      "sha256": "053ffa505071b516954b3b5c2c06f7f37d4d20221351438ac51b7008e690e5d6"
+    },
+    {
+      "path": "BulletScripts/Lang/CHS.lng",
+      "since": "1.3.7",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "BulletScripts/Lang/ENG.lng",
+      "since": "1.3.7",
+      "size": 15,
+      "sha256": "00125eb0211f8c0687c2a7a650e16ce3f1ee7b607ad83841e092cb6430f9a7a8"
+    },
+    {
+      "path": "BulletScripts/StartupMS/BsCleanVirusStartup.ms",
+      "since": "1.3.7",
+      "size": 396,
+      "sha256": "7aaef3e3311eb36d05b324d4ce01d6063f261256c2f73a73597349fa9b19301c"
+    },
+    {
+      "path": "BulletScripts/StartupMS/BsCustomScriptsStartup.ms",
+      "since": "1.3.7",
+      "size": 352,
+      "sha256": "4aa18acc9214931acdf06279eed17ec70e6db4d1cc33d57b244fd8fb9c21c93e"
+    },
+    {
+      "path": "BulletScripts/StartupMS/BsTrackBarToolsStartup.ms",
+      "since": "1.3.7",
+      "size": 355,
+      "sha256": "0c9cc9bb2ef05e6ca4ffc171b164cb91e4f19306fdf1d931445d0d22977fa446"
+    },
+    {
+      "path": "BulletScripts/StartupMS/BulletKeyTools.ms",
+      "since": "1.3.7",
+      "size": 389,
+      "sha256": "ea567417fd2202682d7cad5c6578e66e98888a7da4994524097368246eaadea4"
+    },
+    {
+      "path": "BulletScripts/StartupMS/EXTimelineStartup.ms",
+      "since": "1.3.7",
+      "size": 407,
+      "sha256": "b1af5434162ac9327e7525815857f96f89ea8bba77a8cb7ef1779057c0c131b1"
+    },
+    {
+      "path": "Startup/00.ms",
+      "since": "1.3.7",
+      "size": 95,
+      "sha256": "c69b941e70b9206fcc729af9e1d9dee8b023daba1e32b887a592a1fc7a205807"
+    },
+    {
+      "path": "Startup/BsCleanVirusStartup.ms",
+      "since": "1.3.7",
+      "size": 396,
+      "sha256": "7aaef3e3311eb36d05b324d4ce01d6063f261256c2f73a73597349fa9b19301c"
+    },
+    {
+      "path": "Startup/BsKeyToolsMacro.ms",
+      "since": "1.3.7",
+      "size": 12654,
+      "sha256": "2f4797f43d0e0df1120bf98c008a38f95e1a1782ac99e9b677a024faf454f3ab"
+    },
+    {
+      "path": "Startup/BsKeyToolsMenuBar.ms",
+      "since": "1.3.7",
+      "size": 20124,
+      "sha256": "965b8b1f42bef00fe6a9fcc0489e1117f3e1e67bdec68bf6b30f4838f2f1f60a"
+    },
+    {
+      "path": "Startup/BsScriptMenuStartup.ms",
+      "since": "1.3.7",
+      "size": 719,
+      "sha256": "3367301a19a106b7964c7ad88ff036a8609aa4371aa1b10e31af1e3d10b4535f"
+    },
+    {
+      "path": "Startup/BulletKeyTools.ms",
+      "since": "1.3.7",
+      "size": 437,
+      "sha256": "b0dda26e725ebdd13e544e8b887078d7cbe9e20a3b6e09331b97fd604ae3344b"
+    }
   ],
   "installer": {
     "url": "https://gitee.com/acebullet/BsKeyTools/releases/download/v1.4.0/BsKeyTools_v1.4.0.exe",

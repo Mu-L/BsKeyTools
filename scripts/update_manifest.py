@@ -16,6 +16,7 @@ update_manifest.py — BsKeyTools manifest.json 自动更新脚本
 """
 
 import json
+import hashlib
 import os
 import re
 import subprocess
@@ -28,6 +29,8 @@ VERSION_DAT    = os.path.join(REPO_ROOT, "_BsKeyTools", "version.dat")
 MAIN_MS        = os.path.join(REPO_ROOT, "_BsKeyTools", "Scripts", "BulletScripts", "BulletKeyTools.ms")
 NSIS_SCRIPT    = os.path.join(REPO_ROOT, "_BsKeyTools", "Setup_BsKeyTools.nsi")
 SCRIPTS_BASE   = os.path.join(REPO_ROOT, "_BsKeyTools", "Scripts")
+DEFAULT_BASE_URL = "https://gitee.com/acebullet/BsKeyTools/raw/main/_BsKeyTools/Scripts/"
+DEFAULT_FALLBACK_BASE_URL = "https://raw.githubusercontent.com/AniBullet/BsKeyTools/main/_BsKeyTools/Scripts/"
 
 # 受管文件列表（相对于 _BsKeyTools/Scripts/，使用正斜杠）
 MANAGED_FILES = [
@@ -97,21 +100,51 @@ def read_version_from_ms(ms_path: str) -> str:
     return m.group(1)
 
 
+def validate_release_tag_matches_version(version: str) -> None:
+    """在 GitHub tag workflow 中，确保 tag 与脚本内版本一致。"""
+    ref_name = os.environ.get("GITHUB_REF_NAME", "")
+    if not ref_name.startswith("v"):
+        return
+
+    tag_version = ref_name[1:]
+    if tag_version != version:
+        raise RuntimeError(
+            f"release tag 版本不一致: tag={tag_version}, BulletKeyTools.ms={version}"
+        )
+
+
 def get_changed_files_in_scripts() -> set:
     """
     通过 git diff HEAD^ HEAD 获取本次 commit 中变动的文件路径集合。
     返回的路径格式为相对于 repo root 的 POSIX 路径（正斜杠）。
     """
+    changed = set()
     try:
         result = subprocess.run(
             ["git", "diff", "--name-only", "HEAD^", "HEAD"],
             capture_output=True, text=True, check=True, cwd=REPO_ROOT
         )
-        return set(result.stdout.strip().splitlines())
+        changed.update(result.stdout.strip().splitlines())
     except subprocess.CalledProcessError:
         # 首次 commit 或无历史时 fallback：视所有文件为变动
         print("[update_manifest] 警告：git diff 失败（可能是首次 commit），视所有受管文件为变动")
         return None
+
+    if os.environ.get("UPDATE_MANIFEST_INCLUDE_WORKTREE") == "1":
+        for args in (
+            ["git", "diff", "--name-only", "HEAD"],
+            ["git", "diff", "--name-only", "--cached"],
+        ):
+            result = subprocess.run(
+                args,
+                capture_output=True,
+                text=True,
+                check=True,
+                cwd=REPO_ROOT,
+            )
+            changed.update(result.stdout.strip().splitlines())
+
+    return changed
 
 
 def file_lf_size(file_path: str) -> int:
@@ -121,15 +154,28 @@ def file_lf_size(file_path: str) -> int:
     但为保险起见，统一做 LF 归一化计算。
     """
     if not os.path.isfile(file_path):
-        return 0
+        raise FileNotFoundError(f"受管文件不存在: {file_path}")
     try:
         with open(file_path, "rb") as f:
             raw = f.read()
         # 将 CRLF → LF 后计算大小
         normalized = raw.replace(b"\r\n", b"\n")
         return len(normalized)
-    except Exception:
-        return 0
+    except OSError as exc:
+        raise RuntimeError(f"无法读取受管文件: {file_path}") from exc
+
+
+def file_lf_sha256(file_path: str) -> str:
+    """计算文件以 LF 行尾存储时的 SHA-256。"""
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError(f"受管文件不存在: {file_path}")
+    try:
+        with open(file_path, "rb") as f:
+            raw = f.read()
+        normalized = raw.replace(b"\r\n", b"\n")
+        return hashlib.sha256(normalized).hexdigest()
+    except OSError as exc:
+        raise RuntimeError(f"无法读取受管文件: {file_path}") from exc
 
 
 def load_existing_manifest(manifest_path: str) -> dict:
@@ -148,11 +194,61 @@ def build_existing_since_map(existing: dict) -> dict:
     return result
 
 
+def validate_release_note_for_maxscript(release_note: str) -> None:
+    """当前 MaxScript 轻量 JSON 解析器不支持 JSON 字符串转义。"""
+    blocked = ['"', "\\", "\r", "\n"]
+    if any(ch in release_note for ch in blocked):
+        raise RuntimeError('releaseNote 含 MaxScript 解析器不支持的字符: " \\ 或换行')
+
+
 def detect_requires_reinstall(changed_files: set) -> bool:
     """若变动文件包含 .dlm 文件则需要重装"""
     if changed_files is None:
         return False
     return any(f.endswith(".dlm") for f in changed_files)
+
+
+def default_installer(version: str) -> dict:
+    return {
+        "url": f"https://gitee.com/acebullet/BsKeyTools/releases/download/v{version}/BsKeyTools_v{version}.exe",
+        "fallbackUrl": f"https://github.com/AniBullet/BsKeyTools/releases/download/v{version}/BsKeyTools_v{version}.exe",
+    }
+
+
+def build_manifest(
+    version: str,
+    changed_scripts: set,
+    existing: dict,
+    requires_reinstall: bool,
+) -> dict:
+    since_map = build_existing_since_map(existing)
+    release_note = existing.get("releaseNote", "")
+    validate_release_note_for_maxscript(release_note)
+
+    new_files = []
+    for rel_path in MANAGED_FILES:
+        abs_path = os.path.join(SCRIPTS_BASE, rel_path.replace("/", os.sep))
+        size = file_lf_size(abs_path)
+        sha256 = file_lf_sha256(abs_path)
+
+        if rel_path in changed_scripts:
+            since = version
+        else:
+            since = since_map.get(rel_path, version)
+
+        new_files.append(
+            {"path": rel_path, "since": since, "size": size, "sha256": sha256}
+        )
+
+    return {
+        "version": version,
+        "requireReinstall": requires_reinstall,
+        "releaseNote": release_note,
+        "baseUrl": existing.get("baseUrl", DEFAULT_BASE_URL),
+        "fallbackBaseUrl": existing.get("fallbackBaseUrl", DEFAULT_FALLBACK_BASE_URL),
+        "files": new_files,
+        "installer": default_installer(version),
+    }
 
 
 def update_version_dat(version: str) -> None:
@@ -179,11 +275,32 @@ def update_nsis_version(version: str) -> None:
         print(f"[update_manifest] Setup_BsKeyTools.nsi PRODUCT_VERSION_NUM → {version}")
 
 
+def validate_manifest_sizes(manifest: dict) -> None:
+    """确认 manifest 中的 size / sha256 与本地文件的 LF 内容一致。"""
+    errors = []
+    for item in manifest.get("files", []):
+        rel_path = item.get("path")
+        expected_size = item.get("size")
+        expected_sha256 = item.get("sha256")
+        abs_path = os.path.join(SCRIPTS_BASE, rel_path.replace("/", os.sep))
+        actual_size = file_lf_size(abs_path)
+        actual_sha256 = file_lf_sha256(abs_path)
+        if expected_size != actual_size:
+            errors.append(f"{rel_path}: manifest={expected_size}, actual={actual_size}")
+        if expected_sha256 != actual_sha256:
+            errors.append(f"{rel_path}: sha256 mismatch")
+
+    if errors:
+        details = "\n  ".join(errors)
+        raise RuntimeError(f"manifest 校验失败:\n  {details}")
+
+
 def main():
     print("[update_manifest] 开始更新 manifest.json ...")
 
     # 1. 读取当前版本号
     version = read_version_from_ms(MAIN_MS)
+    validate_release_tag_matches_version(version)
     print(f"[update_manifest] 当前版本: {version}")
 
     # 2. 获取变动文件集合（相对于 repo root 的路径）
@@ -204,49 +321,26 @@ def main():
 
     # 3. 读取现有 manifest（保留 since 和 releaseNote）
     existing = load_existing_manifest(MANIFEST_PATH)
-    since_map = build_existing_since_map(existing)
-    release_note = existing.get("releaseNote", "")
 
     # 4. 检测是否需要重装
     requires_reinstall = detect_requires_reinstall(changed_repo_paths)
     if requires_reinstall:
         print("[update_manifest] 检测到 .dlm 文件变动，requireReinstall = true")
 
-    # 5. 构建新的 files 列表
-    new_files = []
-    for rel_path in MANAGED_FILES:
-        abs_path = os.path.join(SCRIPTS_BASE, rel_path.replace("/", os.sep))
-        size = file_lf_size(abs_path)
-
-        # 该文件是否在本次 commit 中变动？
-        if rel_path in changed_scripts:
-            since = version  # 变动 → since = 当前版本
-        else:
-            since = since_map.get(rel_path, version)  # 未变动 → 保留旧 since
-
-        new_files.append({"path": rel_path, "since": since, "size": size})
-
-    # 6. 组装新 manifest
-    new_manifest = {
-        "version": version,
-        "requireReinstall": requires_reinstall,
-        "releaseNote": release_note,
-        "baseUrl": existing.get(
-            "baseUrl",
-            "https://gitee.com/acebullet/BsKeyTools/raw/main/_BsKeyTools/Scripts/"
-        ),
-        "files": new_files,
-        "installer": existing.get("installer", {
-            "url": f"https://gitee.com/acebullet/BsKeyTools/releases/download/v{version}/BsKeyTools_v{version}.exe",
-            "fallbackUrl": f"https://github.com/AniBullet/BsKeyTools/releases/download/v{version}/BsKeyTools_v{version}.exe"
-        }),
-    }
+    # 5. 组装新 manifest
+    new_manifest = build_manifest(version, changed_scripts, existing, requires_reinstall)
 
     # 7. 写回 manifest.json（LF 行尾，UTF-8，缩进 2）
     with open(MANIFEST_PATH, "w", encoding="utf-8", newline="\n") as f:
         json.dump(new_manifest, f, ensure_ascii=False, indent=2)
         f.write("\n")  # 文件末尾换行
-    print(f"[update_manifest] manifest.json 已更新: version={version}, files={len(new_files)}")
+    print(
+        f"[update_manifest] manifest.json 已更新: "
+        f"version={version}, files={len(new_manifest['files'])}"
+    )
+
+    validate_manifest_sizes(new_manifest)
+    print("[update_manifest] manifest size 校验通过")
 
     # 8. 更新 version.dat（兼容旧客户端）
     update_version_dat(version)
@@ -254,7 +348,7 @@ def main():
     # 9. 更新 NSIS 版本号
     update_nsis_version(version)
 
-    print("[update_manifest] 完成 ✓")
+    print("[update_manifest] 完成 OK")
 
 
 if __name__ == "__main__":

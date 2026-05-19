@@ -39,6 +39,19 @@ fn fnUpdaterGetTempDir =
     tempDir
 )
 
+fn fnUpdaterEnsureParentDir path =
+(
+    local dstDir = getFileNamePath path
+    if not (doesDirectoryExist dstDir) do
+        (dotNetClass "System.IO.Directory").CreateDirectory dstDir
+)
+
+fn fnUpdaterTempName relPath =
+(
+    local name = substituteString relPath "/" "__"
+    substituteString name "\\" "__"
+)
+
 -- ── 单文件下载 ────────────────────────────────────────────────────────
 -- 下载 url 到临时目录，文件名为 filename + ".tmp"
 -- 成功返回临时文件完整路径，失败返回 undefined
@@ -48,6 +61,7 @@ fn fnUpdaterDownloadToTemp url filename =
     local tmpPath = tempDir + filename + ".tmp"
     try
     (
+        try(deleteFile tmpPath)catch()
         local wc = dotNetObject "System.Net.WebClient"
         wc.Encoding = (dotNetClass "System.Text.Encoding").UTF8
         local uri = dotNetObject "System.Uri" url  -- System.Uri 自动处理特殊字符编码
@@ -63,21 +77,67 @@ fn fnUpdaterDownloadToTemp url filename =
 )
 
 -- ── 文件校验 ──────────────────────────────────────────────────────────
--- 校验临时文件大小是否与 manifest 记录一致
--- expectedSize = 0 时跳过校验（直接返回 true）
-fn fnUpdaterVerifyFile path expectedSize =
+fn fnUpdaterSha256File path =
 (
-    if not (doesFileExist path) then return false
-    if expectedSize == 0 then return true  -- size=0 表示信任，不校验
     try
     (
-        local fi = dotNetObject "System.IO.FileInfo" path
-        (fi.Length as integer) == expectedSize
+        local bytes = (dotNetClass "System.IO.File").ReadAllBytes path
+        local sha = (dotNetClass "System.Security.Cryptography.SHA256").Create()
+        local hash = sha.ComputeHash bytes
+        sha.Dispose()
+        local hex = (dotNetClass "System.BitConverter").ToString hash
+        toLower (substituteString hex "-" "")
+    )
+    catch
+    (
+        undefined
+    )
+)
+
+-- 校验临时文件大小是否与 manifest 记录一致
+-- expectedSize = 0 时跳过校验（直接返回 true）
+fn fnUpdaterVerifyFile path expectedSize expectedSha256 =
+(
+    if not (doesFileExist path) then return false
+    try
+    (
+        if expectedSize != 0 do
+        (
+            local fi = dotNetObject "System.IO.FileInfo" path
+            if (fi.Length as integer) != expectedSize then return false
+        )
+        if expectedSha256 != undefined and expectedSha256 != "" do
+        (
+            local actualSha256 = fnUpdaterSha256File path
+            if actualSha256 == undefined then return false
+            if actualSha256 != (toLower expectedSha256) then return false
+        )
+        true
     )
     catch
     (
         false
     )
+)
+
+fn fnUpdaterDownloadAndVerify manifest fileInfo filename =
+(
+    local tmpPath = fnUpdaterDownloadToTemp (manifest.baseUrl + fileInfo.path) filename
+    if tmpPath != undefined and fnUpdaterVerifyFile tmpPath fileInfo.size fileInfo.sha256 then
+        return tmpPath
+
+    if tmpPath != undefined do try(deleteFile tmpPath)catch()
+
+    if manifest.fallbackBaseUrl != undefined and manifest.fallbackBaseUrl != "" do
+    (
+        format "[BsUpdater] 主下载源校验失败，尝试备用源: %\n" fileInfo.path
+        tmpPath = fnUpdaterDownloadToTemp (manifest.fallbackBaseUrl + fileInfo.path) filename
+        if tmpPath != undefined and fnUpdaterVerifyFile tmpPath fileInfo.size fileInfo.sha256 then
+            return tmpPath
+        if tmpPath != undefined do try(deleteFile tmpPath)catch()
+    )
+
+    undefined
 )
 
 -- ── 安全覆盖 ──────────────────────────────────────────────────────────
@@ -98,6 +158,64 @@ fn fnUpdaterSafeCopy src dst =
         format "[BsUpdater] 覆盖失败: % -> %\n  %\n" src dst (getCurrentException())
         false
     )
+)
+
+fn fnUpdaterRollback staged =
+(
+    for rec in staged do
+    (
+        local dstPath = rec[3]
+        local backupPath = rec[4]
+        local existed = rec[5]
+        try
+        (
+            if existed then
+            (
+                if doesFileExist backupPath do
+                    (dotNetClass "System.IO.File").Copy backupPath dstPath true
+            )
+            else
+            (
+                if doesFileExist dstPath do deleteFile dstPath
+            )
+        )
+        catch
+        (
+            format "[BsUpdater] 回滚失败: % | %\n" dstPath (getCurrentException())
+        )
+    )
+)
+
+fn fnUpdaterCommitStaged staged backupRoot =
+(
+    local applied = #()
+    for rec in staged do
+    (
+        local srcPath = rec[2]
+        local dstPath = rec[3]
+        local backupPath = rec[4]
+        local existed = rec[5]
+        try
+        (
+            fnUpdaterEnsureParentDir dstPath
+            if existed do
+            (
+                fnUpdaterEnsureParentDir backupPath
+                (dotNetClass "System.IO.File").Copy dstPath backupPath true
+            )
+
+            append applied rec
+            (dotNetClass "System.IO.File").Copy srcPath dstPath true
+        )
+        catch
+        (
+            format "[BsUpdater] 覆盖失败，开始回滚: %\n  %\n" dstPath (getCurrentException())
+            fnUpdaterRollback applied
+            return false
+        )
+    )
+    format "[BsUpdater] 已创建备份: %\n" backupRoot
+    true
 )
 
 -- ── 清除 Python 缓存 ──────────────────────────────────────────────────
@@ -133,59 +251,59 @@ fn fnUpdaterClearPycache scriptsDir =
 fn fnUpdaterDownloadFiles manifest currentVer =
 (
     local scriptsDir = getDir #scripts
-    local successCount = 0
-    local failCount = 0
+    local targetCount = 0
     local hasPyUpdate = false
+    local staged = #()
+    local now = (dotNetClass "System.DateTime").Now
+    local backupRoot = (fnUpdaterGetTempDir()) + "backup_" + (now.ToString "yyyyMMdd_HHmmss") + "\\"
 
     for f in manifest.files do
     (
         if fnVersionGt f.since currentVer do
         (
-            -- 构建远端 URL
-            local url = manifest.baseUrl + f.path
-
-            -- 取最后一段作为临时文件名（避免目录分隔符问题）
-            local segments = filterString f.path "/"
-            local filename = segments[segments.count]
+            targetCount += 1
+            -- 用完整相对路径生成临时文件名，避免同名文件互相覆盖
+            local filename = fnUpdaterTempName f.path
 
             -- 构建本地目标路径
             local dstPath = scriptsDir + "\\" + (substituteString f.path "/" "\\")
+            local backupPath = backupRoot + (substituteString f.path "/" "\\")
 
             format "[BsUpdater] 下载: %\n" f.path
 
-            -- 下载 → 校验 → 覆盖
-            local tmpPath = fnUpdaterDownloadToTemp url filename
+            -- 第一阶段：只下载和校验，不覆盖本地文件
+            local tmpPath = fnUpdaterDownloadAndVerify manifest f filename
             if tmpPath != undefined then
             (
-                if fnUpdaterVerifyFile tmpPath f.size then
-                (
-                    if fnUpdaterSafeCopy tmpPath dstPath then
-                    (
-                        successCount += 1
-                        -- 标记是否有 Python 文件更新
-                        if (matchPattern filename pattern:"*.py") do
-                            hasPyUpdate = true
-                    )
-                    else
-                        failCount += 1
-                )
-                else
-                (
-                    format "[BsUpdater] 大小校验失败（可能下载不完整或 Gitee 限流）: %\n" f.path
-                    failCount += 1
-                )
-                try(deleteFile tmpPath)catch()  -- 清理临时文件
+                append staged #(f.path, tmpPath, dstPath, backupPath, (doesFileExist dstPath))
+                if (matchPattern f.path pattern:"*.py") do
+                    hasPyUpdate = true
             )
             else
-                failCount += 1
+            (
+                format "[BsUpdater] 下载或校验失败，取消本次更新: %\n" f.path
+                for rec in staged do try(deleteFile rec[2])catch()
+                return #(0, targetCount)
+            )
         )
     )
+
+    if targetCount == 0 then return #(0, 0)
+
+    -- 第二阶段：全部校验通过后再备份并覆盖；失败则回滚
+    if not (fnUpdaterCommitStaged staged backupRoot) then
+    (
+        for rec in staged do try(deleteFile rec[2])catch()
+        return #(0, targetCount)
+    )
+
+    for rec in staged do try(deleteFile rec[2])catch()
 
     -- 有 .py 文件更新时清除 pycache
     if hasPyUpdate do fnUpdaterClearPycache scriptsDir
 
-    format "[BsUpdater] 完成: 成功 %，失败 %\n" successCount failCount
-    #(successCount, failCount)
+    format "[BsUpdater] 完成: 成功 %，失败 0\n" targetCount
+    #(targetCount, 0)
 )
 
 -- ── 下载安装包（对外接口）────────────────────────────────────────────
