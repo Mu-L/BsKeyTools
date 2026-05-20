@@ -42,6 +42,13 @@ function Find-MXSPyCOM {
         }
     }
 
+    # 5. 各盘根目录下名含 MXSPyCOM 的文件夹（如 D:\MXSPyCOM\MXSPyCOM.exe）
+    $drives = (Get-PSDrive -PSProvider FileSystem -ErrorAction SilentlyContinue).Root
+    foreach ($drive in $drives) {
+        $candidate = Join-Path $drive 'MXSPyCOM\MXSPyCOM.exe'
+        if (Test-Path $candidate) { return $candidate }
+    }
+
     return $null
 }
 
