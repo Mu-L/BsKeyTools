@@ -100,34 +100,6 @@
             "problemMatcher": []
         },
         {
-            "label": "Execute BsRetargetTools in 3ds Max",
-            "type": "shell",
-            "command": "powershell",
-            "args": [
-                "-NoProfile",
-                "-ExecutionPolicy", "Bypass",
-                "-File",
-                "${workspaceFolder}\\.vscode\\run_maxscript.ps1",
-                "-ScriptFile",
-                "${workspaceFolder}\\_BsKeyTools\\Scripts\\BulletScripts\\BsRetargetTools.ms"
-            ],
-            "group": "test",
-            "options": {
-                "env": {
-                    "BSKEYTOOLS_MXSPYCOM_PATH": "${config:bskeytools.mxspycomPath}"
-                }
-            },
-            "presentation": {
-                "echo": false,
-                "reveal": "silent",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "close": true
-            },
-            "problemMatcher": []
-        },
-        {
             "label": "MXSPyCOM: Execute MaxScript",
             "dependsOn": "Execute Script in 3ds Max",
             "problemMatcher": []
