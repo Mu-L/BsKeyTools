@@ -6,6 +6,7 @@
  * @LastEditTime: 2026-02-09 18:30:48
  * @Email: animator.bullet@foxmail.com
  */
+global curVerBsCleanVirus = "2.2"
 global rolBsCleanVirus
 global rolBsVirusScanLog
 global rolBatchCleanVirus
@@ -870,7 +871,7 @@ rollout rolBatchCleanVirus "批量查杀病毒" (
 	)
 )
 
-rollout rolBsCleanVirus  "BsCleanVirus_v2.2"
+rollout rolBsCleanVirus  ("BsCleanVirus_v" + curVerBsCleanVirus)
 (
     local startupBsCleanVirusTools = (getDir #Scripts) + "\\BulletScripts\\StartupMS\\BsCleanVirusStartup.ms"
 	local startupLocalPath = (getDir #StartupScripts)+ "\\BsCleanVirusStartup.ms"

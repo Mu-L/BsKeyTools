@@ -1,74 +1,164 @@
--- verURL = "https://gitee.com/acebullet/BsReferenceTools/raw/main/_BsRefTools/EXE/version.dat"
--- dlURL = "https://gitee.com/acebullet/BsReferenceTools/raw/main/_BsRefTools/EXE/_BsRefTools%EF%BC%88%E8%A3%85%E5%AE%8C%E9%87%8D%E5%90%AFMAX,%E8%AF%AF%E6%9D%80%E8%AF%B7%E4%BF%A1%E4%BB%BB%EF%BC%89.exe"
--- dlFile = (getdir #temp) + "\\_BsRefTools（装完重启MAX,误杀请信任）.exe"
+/*
+* @Description: BsKeyTools 版本检查模块
+* @Author: Bullet.S
+* @Date: 2026-05-16
+* @Version: 1.4.0
+*
+* 对外接口:
+*   fnCheckUpdate versionDatUrl      -- 手动触发检查（始终显示结果）
+*   fnAutoCheckVersion versionDatUrl -- 启动时自动检查（仅发现新版本时弹窗）
+*
+* version.dat 格式（两行）：
+*   第一行：BsKeyTools 版本，如 "1.4.0"
+*   第二行：BsCleanVirus 版本，如 "2.2"
+*/
 
-global spm = (dotNetclass "System.Net.ServicePointManager")
+-- ── TLS 设置（国内 Gitee 需要 TLS 1.2）────────────────────────────────
+global spm = (dotNetClass "System.Net.ServicePointManager")
 spm.SecurityProtocol = spm.SecurityProtocol.Tls12
 
-fn fnCheckUpdate currentVer verURL dlURL dlFile isForceUpdate:false classic:false = 
+-- ── version.dat 拉取 ──────────────────────────────────────────────────
+-- 返回 #(bsktVer, bscvVer)，网络失败返回 undefined
+fn fnFetchVersionDat versionDatUrl =
 (
-    local dotWebClient = (dotNetObject "System.Net.WebClient") 
-    local dlSaveURL = (dotNetObject "system.uri" dlURL)
-    local result = undefined
-
-    if internet.CheckConnection url:"https://gitee.com" force:true == true then -- 检查网络是否能连接
+    try
     (
-        local LaterVersion_installed = true
-        local onlineVersion = dotWebClient.downloadString verURL
-
-        if (isForceUpdate == false) then
-        (
-            if (currentVer != onlineVersion) and (not (matchpattern onlineVersion pattern:"*Beta*")) 
-            then (LaterVersion_installed = false)
-            else (LaterVersion_installed = true)
-        )
-        else (LaterVersion_installed = false)
-
-        if LaterVersion_installed do (messageBox  ("您已安装最新版本：" + onlineVersion + "\r\n\r\n若本地版本不对应请稍后重试~        ") title:"最新版本" beep:false;result = OK)
-
-        if not LaterVersion_installed AND (queryBox ("远程最新版本为: " + onlineVersion + "\r\n本地当前版本为: " + currentVer + \
-            "\r\n\r\n是否立即下载更新并安装脚本?\r\n注意:可在设置中开关自动检测更新!\r\n\r\n(建议只更新正式版,beta仅供测试不保证稳定)\r\n\r\n(第三位数字为小修复版本，可视情况更新)                                             ") title:"是否更新脚本") do 
-        (
-            -- local Root = symbolicPaths.getPathValue "$Max"  --max根目录
-
-            if (doesFileExist dlFile) then 
-            (
-                try(fnDelFileDir dlFile)catch
-                (
-                    if (queryBox ("可能因为权限无法清除旧版本下载, 若安装失败，\r\n\r\n请点确定跳转目录删除下面文件再更新，否则忽略:\t\t\t\t\t\t\t\t\t\r\n\r\n"+dlFile) \
-                    title:"删除旧下载失败" beep:false) do
-                    (
-                        ShellLaunch (getdir #temp) ""
-                    )
-                )
-            )
-            if classic then 
-            (
-                try(dotWebClient.downloadFile dlSaveURL dlFile;dotWebClient.dispose())
-                catch( print ((getCurrentException()) + "  " + dlFile);messagebox "下载失败，建议去 GitHub 下载最新版！                                            "title:"BsKeyTools")
-                ShellLaunch dlFile ""
-            )
-            else
-            (
-                try(messagebox "请手动下载弹出网页的 BsKeyTools 安装包自行安装！                                                      " title:"BsKeyTools";ShellLaunch dlURL "")
-                catch(messagebox "下载失败，建议去 GitHub 下载最新版！                                            "title:"BsKeyTools")
-            )
-            result = OK
-        )
+        local wc = dotNetObject "System.Net.WebClient"
+        wc.Encoding = (dotNetClass "System.Text.Encoding").UTF8
+        local content = wc.DownloadString versionDatUrl
+        wc.Dispose()
+        local lines = filterString content "\r\n"
+        local bsktVer = if lines.count >= 1 then (trimRight (trimLeft lines[1])) else undefined
+        local bscvVer = if lines.count >= 2 then (trimRight (trimLeft lines[2])) else undefined
+        #(bsktVer, bscvVer)
     )
-    else
+    catch
     (
-        --检查网络是否能连接
-        if internet.CheckConnection url:"https://gitee.com" force:true == true then 
-        (print "下载服务器当前不可用,请稍后再试                        ";result = undefined)
-        else (print "BsKeyTools ：检查更新，无网络连接或链接 Gitee 未响应...                                ";result = undefined)
+        format "[BsKeyTools] 拉取 version.dat 失败: %\n" (getCurrentException())
+        undefined
     )
-    result
 )
 
-fn fnAutoCheckVersion currentVer verURL dlURL dlFile =
+-- ── 跳过版本辅助 ──────────────────────────────────────────────────────
+fn fnGetSkipVersion key =
 (
-    local onlineVersion = (dotNetObject "System.Net.WebClient").downloadString verURL
-    if (currentVer != onlineVersion) then 
-    (fnCheckUpdate currentVer verURL dlURL dlFile isForceUpdate:true)
+    GetINISetting BulletConfig "BulletKeyToolsSet" key
+)
+
+fn fnSetSkipVersion key ver =
+(
+    SetINISetting BulletConfig "BulletKeyToolsSet" key ver
+)
+
+-- ── 单工具更新弹窗 ────────────────────────────────────────────────────
+-- 弹出"发现新版本"对话框，Yes=下载安装包，No=稍后提醒，Cancel=跳过此版本
+-- 返回 true 表示用户选择了"稍后提醒"或"跳过"（下次仍需检查）
+fn fnPromptUpdate toolName localVer onlineVer installerUrl fallbackUrl skipKey =
+(
+    local bodyText = "发现新版本 " + onlineVer + \
+        "\r\n当前版本：" + localVer + \
+        "\r\n\r\n[是] 立即下载安装包   [否] 稍后提醒   [取消] 跳过此版本"
+
+    local MsgBox  = dotNetClass "System.Windows.Forms.MessageBox"
+    local MsgBtns = dotNetClass "System.Windows.Forms.MessageBoxButtons"
+    local MsgIcon = dotNetClass "System.Windows.Forms.MessageBoxIcon"
+    local DlgRes  = dotNetClass "System.Windows.Forms.DialogResult"
+
+    local dr = MsgBox.Show bodyText \
+        (toolName + " 发现新版本 " + onlineVer) \
+        MsgBtns.YesNoCancel \
+        MsgIcon.Information
+
+    if dr == DlgRes.Yes then
+        fnUpdaterDownloadInstaller installerUrl fallbackUrl
+    else if dr == DlgRes.Cancel do
+    (
+        fnSetSkipVersion skipKey onlineVer
+        format "[BsKeyTools] 已跳过 % 版本 %\n" toolName onlineVer
+    )
+)
+
+-- ── 对外接口 ──────────────────────────────────────────────────────────
+
+-- 手动检查更新（菜单项触发）：始终显示两个工具的结果
+fn fnCheckUpdate versionDatUrl =
+(
+    local versions = fnFetchVersionDat versionDatUrl
+    if versions == undefined then
+    (
+        messageBox "获取版本信息失败，请检查网络连接或稍后重试。                    " \
+            title:"BsKeyTools 检查更新" beep:false
+        return undefined
+    )
+
+    local onlineBskt = versions[1]
+    local onlineBscv = versions[2]
+    local hasUpdate  = false
+
+    -- BsKeyTools
+    if onlineBskt != undefined and onlineBskt != curVerBsKeyTools then
+    (
+        hasUpdate = true
+        local url  = "https://gitee.com/acebullet/BsKeyTools/releases/download/v" + onlineBskt + "/BsKeyTools_v" + onlineBskt + ".exe"
+        local back = "https://anibullet.github.io/"
+        fnPromptUpdate "BsKeyTools" curVerBsKeyTools onlineBskt url back "SkipVersionBskt"
+    )
+
+    -- BsCleanVirus（仅当已安装且 BsKeyTools 版本已知时检查；onlineBskt 用作 release tag）
+    if onlineBscv != undefined and onlineBskt != undefined then
+    (
+        local localBscv = try(curVerBsCleanVirus) catch(undefined)
+        if localBscv != undefined and localBscv != onlineBscv then
+        (
+            hasUpdate = true
+            local url  = "https://gitee.com/acebullet/BsKeyTools/releases/download/v" + onlineBskt + "/BsCleanVirus_v" + onlineBscv + ".exe"
+            local back = "https://anibullet.github.io/"
+            fnPromptUpdate "BsCleanVirus" localBscv onlineBscv url back "SkipVersionBscv"
+        )
+    )
+
+    if not hasUpdate do
+        messageBox ("所有工具均为最新版本：BsKeyTools " + curVerBsKeyTools + "                    ") \
+            title:"BsKeyTools 检查更新" beep:false
+    OK
+)
+
+-- 启动时自动检查：只在发现新版本且未被跳过时弹窗
+fn fnAutoCheckVersion versionDatUrl =
+(
+    local versions = fnFetchVersionDat versionDatUrl
+    if versions == undefined then return undefined
+
+    local onlineBskt = versions[1]
+    local onlineBscv = versions[2]
+
+    -- BsKeyTools
+    if onlineBskt != undefined and onlineBskt != curVerBsKeyTools then
+    (
+        if (fnGetSkipVersion "SkipVersionBskt") != onlineBskt then
+        (
+            local url  = "https://gitee.com/acebullet/BsKeyTools/releases/download/v" + onlineBskt + "/BsKeyTools_v" + onlineBskt + ".exe"
+            local back = "https://anibullet.github.io/"
+            fnPromptUpdate "BsKeyTools" curVerBsKeyTools onlineBskt url back "SkipVersionBskt"
+        )
+        else
+            format "[BsKeyTools] 跳过 BsKeyTools 版本 %\n" onlineBskt
+    )
+
+    -- BsCleanVirus（onlineBskt 用作 release tag，两者均须已知）
+    if onlineBscv != undefined and onlineBskt != undefined then
+    (
+        local localBscv = try(curVerBsCleanVirus) catch(undefined)
+        if localBscv != undefined and localBscv != onlineBscv then
+        (
+            if (fnGetSkipVersion "SkipVersionBscv") != onlineBscv then
+            (
+                local url  = "https://gitee.com/acebullet/BsKeyTools/releases/download/v" + onlineBskt + "/BsCleanVirus_v" + onlineBscv + ".exe"
+                local back = "https://anibullet.github.io/"
+                fnPromptUpdate "BsCleanVirus" localBscv onlineBscv url back "SkipVersionBscv"
+            )
+            else
+                format "[BsKeyTools] 跳过 BsCleanVirus 版本 %\n" onlineBscv
+        )
+    )
 )

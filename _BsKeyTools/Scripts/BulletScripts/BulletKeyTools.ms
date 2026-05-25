@@ -26,13 +26,8 @@ try (callbacks.removeScripts #filePostSave id:#BsRefreshRecentFilesSave) catch (
 try (callbacks.removeScripts #systemPostNew id:#BsRefreshRecentFilesNew) catch ()
 try (callbacks.removeScripts #systemPostReset id:#BsRefreshRecentFilesReset) catch ()
 
-global curVerBsKeyTools  = "1.3.7"
-global verUrlBsKeyTools  = "https://gitee.com/acebullet/BsKeyTools/raw/main/_BsKeyTools/version.dat"
--- global oldUrlBskeyTools  = "https://gitee.com/acebullet/BsKeyTools/raw/main/_BsKeyTools/_BsKeyTools%EF%BC%88%E8%A3%85%E5%AE%8C%E9%87%8D%E5%90%AFMAX,%E8%AF%AF%E6%9D%80%E8%AF%B7%E4%BF%A1%E4%BB%BB%EF%BC%89.exe"
--- global oldFileBsKeyTools = (getdir #temp) + "\\_BsKeyTools_Classic.exe"
--- global dlUrlBsKeyTools   = "https://gitee.com/acebullet/BsKeyTools/raw/main/_BsKeyTools/_BsKeyTools.exe"
-global dlUrlBsKeyTools   = "https://anibullet.github.io/guide/"
-global dlFileBsKeyTools  = (getdir #temp) + "\\_BsKeyTools.exe"
+global curVerBsKeyTools      = "1.4.0"
+global verUrlBsKeyTools      = "https://gitee.com/acebullet/BsKeyTools/raw/main/_BsKeyTools/version.dat"
 
 Global BulletConfig       = execute ("@\"" + (getDir #maxData) + "\\BulletConfig.ini\"")  --配置文件路径
 Global startupBsKeyTools  = (getDir #Scripts) + "\\BulletScripts\\StartupMS\\BulletKeyTools.ms"
@@ -61,6 +56,8 @@ global arrNewCostTime 	= iniCostTime
 try(FileIn ((getDir #scripts) + "\\BulletScripts\\fnSaveLoadConfig.ms"))
 catch(try(massagebox (getCurrentException()));catch();messagebox "加载配置失败，\r\n\r\n建议查看设置中的帮助或重新安装，还有问题烦请联系我...                            " beep:false title:"BsKeyTools")
 stLoadConfigAll.fnLoadConfigBsKeyToolsAll()
+try(FileIn ((getDir #scripts) + "\\BulletScripts\\fnUpdater.ms"))
+catch(try(massagebox (getCurrentException()));catch();messagebox "打开 fnUpdater.ms 失败，可能脚本错误或安装不完全，\r\n\r\n建议查看设置中的帮助或重新安装，还有问题烦请联系我...                            " beep:false title:"BsKeyTools")
 try(FileIn ((getDir #scripts) + "\\BulletScripts\\fnCheckUpdate.ms"))
 catch(try(massagebox (getCurrentException()));catch();messagebox "打开 fnCheckUpdate.ms 失败，可能脚本错误或安装不完全，\r\n\r\n建议查看设置中的帮助或重新安装，还有问题烦请联系我...                            " beep:false title:"BsKeyTools")
 try(FileIn ((getDir #scripts) + "\\BulletScripts\\fnGetColorTheme.ms"))
@@ -1830,11 +1827,11 @@ rcmenu menuConfig
 		SetINISetting BulletConfig "BulletKeyToolsSet"  "ToolBarBtn" (iniAddToolbars as string)
 	)
 
-	on mItemCheckUpdate picked do 
-	(fnCheckUpdate curVerBsKeyTools verUrlBsKeyTools dlUrlBsKeyTools dlFileBsKeyTools isForceUpdate:false)
+	on mItemCheckUpdate picked do
+	(fnCheckUpdate verUrlBsKeyTools)
 
-	on mItemForceUpdate picked do 
-	(fnCheckUpdate curVerBsKeyTools verUrlBsKeyTools dlUrlBsKeyTools dlFileBsKeyTools isForceUpdate:true)
+	on mItemForceUpdate picked do
+	(fnCheckUpdate verUrlBsKeyTools)
 
 	-- on mItemUndoVersion picked do 
 	-- (
@@ -3769,8 +3766,8 @@ rollout rolBsKeyTools "" width:355 height:250
 		fnSwitchToolBtnChecked idBtn
 		if not rolBsKeyTools.dialogBar then fnRefreshMagicBtn ()
 		if iniIsIcon do fnSwitchIconStyle()
-		if (iniBsAutoCheckUpdate == true) then 
-		(fnAutoCheckVersion curVerBsKeyTools verUrlBsKeyTools dlUrlBsKeyTools dlFileBsKeyTools)
+		if (iniBsAutoCheckUpdate == true) then
+		(fnAutoCheckVersion verUrlBsKeyTools)
 		if iniCollopseType == 1 or iniCollopseType == 2 then
 		(
 			tempTogglePanelPos = (getDialogPos rolBsKeyTools)
