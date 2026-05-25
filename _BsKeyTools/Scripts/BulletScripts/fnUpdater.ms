@@ -9,34 +9,47 @@
 */
 
 -- 尝试下载 installerUrl 到临时目录并启动安装程序
--- 下载失败或文件太小（疑为 HTML 错误页）则打开 fallbackUrl
+-- 使用 DownloadFileAsync + processPostedMessages 轮询，保持 Max UI 响应
+-- 下载失败或文件太小（疑为 HTML 错误页）则弹提示并打开 fallbackUrl
 fn fnUpdaterDownloadInstaller installerUrl fallbackUrl =
 (
-    -- 从 URL 末尾提取文件名，避免 BsKeyTools 与 BsCleanVirus 下载路径冲突
-    local urlParts = filterString installerUrl "/"
-    local exeName  = if urlParts.count > 0 then urlParts[urlParts.count] else "BsKeyTools_Setup.exe"
-    local exePath  = (getDir #temp) + "\\" + exeName
-    local dlOk = false
+    local dlOk    = false
+    local exePath = ""
 
     if installerUrl != undefined and installerUrl != "" do
     (
+        -- 从 URL 末尾提取文件名，避免 BsKeyTools 与 BsCleanVirus 下载路径冲突
+        local urlParts = filterString installerUrl "/"
+        local exeName  = if urlParts.count > 0 then urlParts[urlParts.count] else "BsKeyTools_Setup.exe"
+        exePath = (getDir #temp) + "\\" + exeName
+
         try
         (
-            local wc = dotNetObject "System.Net.WebClient"
+            local wc  = dotNetObject "System.Net.WebClient"
             local uri = dotNetObject "System.Uri" installerUrl
-            wc.DownloadFile uri exePath
+            local mre = dotNetObject "System.Threading.ManualResetEventSlim" false
+
+            -- 异步下载：回调触发 mre，主线程轮询保持 Max UI 不卡死
+            dotNet.addEventHandler wc "DownloadFileCompleted" (fn s e = mre.Set())
+            wc.DownloadFileAsync uri exePath
+
+            while not mre.IsSet do
+            (
+                sleep 100
+                windows.processPostedMessages()
+            )
             wc.Dispose()
 
             if doesFileExist exePath then
             (
                 local fi = dotNetObject "System.IO.FileInfo" exePath
-                -- 大于 500KB 才视为有效 exe（排除 HTML 错误页）
+                -- 大于 500KB 才视为有效 exe（排除 Gitee HTML 错误页）
                 if (fi.Length as integer) > 512000 then
                     dlOk = true
                 else
                 (
-                    try(deleteFile exePath)catch()
-                    format "[BsUpdater] 下载的文件太小，可能是 Gitee 错误页，将打开备用链接\n"
+                    try(deleteFile exePath) catch()
+                    format "[BsUpdater] 下载文件太小，可能是 Gitee 错误页，将打开备用链接\n"
                 )
             )
         )

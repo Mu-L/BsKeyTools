@@ -5,8 +5,8 @@
 * @Version: 1.4.0
 *
 * 对外接口:
-*   fnCheckUpdate versionDatUrl      -- 手动触发检查（始终显示结果）
-*   fnAutoCheckVersion versionDatUrl -- 启动时自动检查（仅发现新版本时弹窗）
+*   fnCheckUpdate versionDatUrl [force:false] -- 手动触发检查（始终显示结果）
+*   fnAutoCheckVersion versionDatUrl          -- 启动时自动检查（仅发现新版本时弹窗）
 *
 * version.dat 格式（两行）：
 *   第一行：BsKeyTools 版本，如 "1.4.0"
@@ -18,25 +18,28 @@ global spm = (dotNetClass "System.Net.ServicePointManager")
 spm.SecurityProtocol = spm.SecurityProtocol.Tls12
 
 -- ── version.dat 拉取 ──────────────────────────────────────────────────
--- 返回 #(bsktVer, bscvVer)，网络失败返回 undefined
+-- 返回 #(bsktVer, bscvVer)，网络失败或内容无效返回 undefined
 fn fnFetchVersionDat versionDatUrl =
 (
-    try
-    (
-        local wc = dotNetObject "System.Net.WebClient"
-        wc.Encoding = (dotNetClass "System.Text.Encoding").UTF8
-        local content = wc.DownloadString versionDatUrl
-        wc.Dispose()
-        local lines = filterString content "\r\n"
-        local bsktVer = if lines.count >= 1 then (trimRight (trimLeft lines[1])) else undefined
-        local bscvVer = if lines.count >= 2 then (trimRight (trimLeft lines[2])) else undefined
-        #(bsktVer, bscvVer)
-    )
-    catch
-    (
-        format "[BsKeyTools] 拉取 version.dat 失败: %\n" (getCurrentException())
-        undefined
-    )
+    local wc = dotNetObject "System.Net.WebClient"
+    wc.Encoding = (dotNetClass "System.Text.Encoding").UTF8
+
+    local content = undefined
+    try (content = wc.DownloadString versionDatUrl)
+    catch (format "[BsKeyTools] 拉取 version.dat 失败: %\n" (getCurrentException()))
+    wc.Dispose() -- 保证释放，无论是否异常
+
+    if content == undefined then return undefined
+
+    local lines    = filterString content "\r\n"
+    local bsktVer  = if lines.count >= 1 then (trimRight (trimLeft lines[1])) else ""
+    local bscvVer  = if lines.count >= 2 then (trimRight (trimLeft lines[2])) else ""
+
+    -- 空字符串视为无效（防止网络返回残缺内容导致误触发更新）
+    if bsktVer == "" do bsktVer = undefined
+    if bscvVer == "" do bscvVer = undefined
+
+    #(bsktVer, bscvVer)
 )
 
 -- ── 跳过版本辅助 ──────────────────────────────────────────────────────
@@ -52,7 +55,6 @@ fn fnSetSkipVersion key ver =
 
 -- ── 单工具更新弹窗 ────────────────────────────────────────────────────
 -- 弹出"发现新版本"对话框，Yes=下载安装包，No=稍后提醒，Cancel=跳过此版本
--- 返回 true 表示用户选择了"稍后提醒"或"跳过"（下次仍需检查）
 fn fnPromptUpdate toolName localVer onlineVer installerUrl fallbackUrl skipKey =
 (
     local bodyText = "发现新版本 " + onlineVer + \
@@ -81,7 +83,8 @@ fn fnPromptUpdate toolName localVer onlineVer installerUrl fallbackUrl skipKey =
 -- ── 对外接口 ──────────────────────────────────────────────────────────
 
 -- 手动检查更新（菜单项触发）：始终显示两个工具的结果
-fn fnCheckUpdate versionDatUrl =
+-- force:true 时跳过版本比较，强制提示下载（用于"强制更新"菜单项）
+fn fnCheckUpdate versionDatUrl force:false =
 (
     local versions = fnFetchVersionDat versionDatUrl
     if versions == undefined then
@@ -96,12 +99,15 @@ fn fnCheckUpdate versionDatUrl =
     local hasUpdate  = false
 
     -- BsKeyTools
-    if onlineBskt != undefined and onlineBskt != curVerBsKeyTools then
+    if onlineBskt != undefined then
     (
-        hasUpdate = true
-        local url  = "https://gitee.com/acebullet/BsKeyTools/releases/download/v" + onlineBskt + "/BsKeyTools_v" + onlineBskt + ".exe"
-        local back = "https://anibullet.github.io/"
-        fnPromptUpdate "BsKeyTools" curVerBsKeyTools onlineBskt url back "SkipVersionBskt"
+        if force or onlineBskt != curVerBsKeyTools then
+        (
+            hasUpdate = true
+            local url  = "https://gitee.com/acebullet/BsKeyTools/releases/download/v" + onlineBskt + "/BsKeyTools_v" + onlineBskt + ".exe"
+            local back = "https://anibullet.github.io/"
+            fnPromptUpdate "BsKeyTools" curVerBsKeyTools onlineBskt url back "SkipVersionBskt"
+        )
     )
 
     -- BsCleanVirus（仅当已安装且 BsKeyTools 版本已知时检查；onlineBskt 用作 release tag）
@@ -118,8 +124,15 @@ fn fnCheckUpdate versionDatUrl =
     )
 
     if not hasUpdate do
-        messageBox ("所有工具均为最新版本：BsKeyTools " + curVerBsKeyTools + "                    ") \
-            title:"BsKeyTools 检查更新" beep:false
+    (
+        if force then
+            -- force 模式但 version.dat 第一行为空（网络返回残缺）
+            messageBox "无法确认在线版本信息，请前往下载页手动检查。                    " \
+                title:"BsKeyTools 强制更新" beep:false
+        else
+            messageBox ("所有工具均为最新版本：BsKeyTools " + curVerBsKeyTools + "                    ") \
+                title:"BsKeyTools 检查更新" beep:false
+    )
     OK
 )
 

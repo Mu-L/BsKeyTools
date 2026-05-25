@@ -57,9 +57,9 @@ try(FileIn ((getDir #scripts) + "\\BulletScripts\\fnSaveLoadConfig.ms"))
 catch(try(massagebox (getCurrentException()));catch();messagebox "加载配置失败，\r\n\r\n建议查看设置中的帮助或重新安装，还有问题烦请联系我...                            " beep:false title:"BsKeyTools")
 stLoadConfigAll.fnLoadConfigBsKeyToolsAll()
 try(FileIn ((getDir #scripts) + "\\BulletScripts\\fnUpdater.ms"))
-catch(try(massagebox (getCurrentException()));catch();messagebox "打开 fnUpdater.ms 失败，可能脚本错误或安装不完全，\r\n\r\n建议查看设置中的帮助或重新安装，还有问题烦请联系我...                            " beep:false title:"BsKeyTools")
+catch(messageBox ("打开 fnUpdater.ms 失败：\r\n" + (getCurrentException()) + "\r\n\r\n建议重新安装，或联系作者。                            ") beep:false title:"BsKeyTools")
 try(FileIn ((getDir #scripts) + "\\BulletScripts\\fnCheckUpdate.ms"))
-catch(try(massagebox (getCurrentException()));catch();messagebox "打开 fnCheckUpdate.ms 失败，可能脚本错误或安装不完全，\r\n\r\n建议查看设置中的帮助或重新安装，还有问题烦请联系我...                            " beep:false title:"BsKeyTools")
+catch(messageBox ("打开 fnCheckUpdate.ms 失败：\r\n" + (getCurrentException()) + "\r\n\r\n建议重新安装，或联系作者。                            ") beep:false title:"BsKeyTools")
 try(FileIn ((getDir #scripts) + "\\BulletScripts\\fnGetColorTheme.ms"))
 catch(try(massagebox (getCurrentException()));catch();messagebox "打开 fnGetColorTheme.ms 失败，可能脚本错误或安装不完全，\r\n\r\n建议查看设置中的帮助或重新安装，还有问题烦请联系我...                            " beep:false title:"BsKeyTools")
 try(FileIn ((getDir #scripts) + "\\BulletScripts\\BsSwitchBtnString.ms"))
@@ -1831,7 +1831,7 @@ rcmenu menuConfig
 	(fnCheckUpdate verUrlBsKeyTools)
 
 	on mItemForceUpdate picked do
-	(fnCheckUpdate verUrlBsKeyTools)
+	(fnCheckUpdate verUrlBsKeyTools force:true)
 
 	-- on mItemUndoVersion picked do 
 	-- (
