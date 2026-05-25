@@ -27,7 +27,7 @@ try (callbacks.removeScripts #systemPostNew id:#BsRefreshRecentFilesNew) catch (
 try (callbacks.removeScripts #systemPostReset id:#BsRefreshRecentFilesReset) catch ()
 
 global curVerBsKeyTools      = "1.4.0"
-global manifestUrlBsKeyTools = "https://gitee.com/acebullet/BsKeyTools/raw/main/_BsKeyTools/manifest.json"
+global verUrlBsKeyTools      = "https://gitee.com/acebullet/BsKeyTools/raw/main/_BsKeyTools/version.dat"
 
 Global BulletConfig       = execute ("@\"" + (getDir #maxData) + "\\BulletConfig.ini\"")  --配置文件路径
 Global startupBsKeyTools  = (getDir #Scripts) + "\\BulletScripts\\StartupMS\\BulletKeyTools.ms"
@@ -1828,10 +1828,10 @@ rcmenu menuConfig
 	)
 
 	on mItemCheckUpdate picked do
-	(fnCheckUpdate curVerBsKeyTools manifestUrlBsKeyTools)
+	(fnCheckUpdate verUrlBsKeyTools)
 
 	on mItemForceUpdate picked do
-	(fnCheckUpdate curVerBsKeyTools manifestUrlBsKeyTools)
+	(fnCheckUpdate verUrlBsKeyTools)
 
 	-- on mItemUndoVersion picked do 
 	-- (
@@ -3767,7 +3767,7 @@ rollout rolBsKeyTools "" width:355 height:250
 		if not rolBsKeyTools.dialogBar then fnRefreshMagicBtn ()
 		if iniIsIcon do fnSwitchIconStyle()
 		if (iniBsAutoCheckUpdate == true) then
-		(fnAutoCheckVersion curVerBsKeyTools manifestUrlBsKeyTools)
+		(fnAutoCheckVersion verUrlBsKeyTools)
 		if iniCollopseType == 1 or iniCollopseType == 2 then
 		(
 			tempTogglePanelPos = (getDialogPos rolBsKeyTools)
