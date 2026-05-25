@@ -9,7 +9,7 @@
 */
 
 -- 尝试下载 installerUrl 到临时目录并启动安装程序
--- 使用 DownloadFileAsync + processPostedMessages 轮询，保持 Max UI 响应
+-- 注意：DownloadFile 为同步调用，下载期间 Max 界面暂时无响应，属正常现象
 -- 下载失败或文件太小（疑为 HTML 错误页）则弹提示并打开 fallbackUrl
 fn fnUpdaterDownloadInstaller installerUrl fallbackUrl =
 (
@@ -27,17 +27,7 @@ fn fnUpdaterDownloadInstaller installerUrl fallbackUrl =
         (
             local wc  = dotNetObject "System.Net.WebClient"
             local uri = dotNetObject "System.Uri" installerUrl
-            local mre = dotNetObject "System.Threading.ManualResetEventSlim" false
-
-            -- 异步下载：回调触发 mre，主线程轮询保持 Max UI 不卡死
-            dotNet.addEventHandler wc "DownloadFileCompleted" (fn s e = mre.Set())
-            wc.DownloadFileAsync uri exePath
-
-            while not mre.IsSet do
-            (
-                sleep 100
-                windows.processPostedMessages()
-            )
+            wc.DownloadFile uri exePath
             wc.Dispose()
 
             if doesFileExist exePath then
