@@ -75,6 +75,7 @@ jobs:
         shell: pwsh
         env:
           RELEASE_VERSION: ${{ needs.check-version.outputs.bskt_version }}
+          PYTHONIOENCODING: utf-8
         run: python scripts/update_manifest.py
 
       - name: Install NSIS
@@ -115,6 +116,7 @@ jobs:
         shell: pwsh
         env:
           RELEASE_VERSION: ${{ needs.check-version.outputs.bskt_version }}
+          PYTHONIOENCODING: utf-8
         run: python scripts/update_manifest.py
 
       - name: Install NSIS
@@ -240,6 +242,8 @@ jobs:
           fi
 
       - name: Mirror to Gitee
+        if: secrets.GITEE_SSH_PRIVATE_KEY != ''
+        continue-on-error: true
         uses: wearerequired/git-mirror-action@master
         env:
           SSH_PRIVATE_KEY: ${{ secrets.GITEE_SSH_PRIVATE_KEY }}
