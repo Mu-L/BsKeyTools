@@ -14,7 +14,6 @@ jobs:
           fetch-depth: 0
 
       - name: Mirror to Gitee
-        continue-on-error: true
         env:
           SSH_PRIVATE_KEY: ${{ secrets.GITEE_SSH_PRIVATE_KEY }}
         run: |
@@ -24,6 +23,8 @@ jobs:
           ssh-keyscan -t ed25519 gitee.com >> ~/.ssh/known_hosts 2>/dev/null
           git remote add gitee git@gitee.com:acebullet/BsKeyTools.git 2>/dev/null || \
             git remote set-url gitee git@gitee.com:acebullet/BsKeyTools.git
-          GIT_SSH_COMMAND="ssh -i ~/.ssh/gitee_key -o StrictHostKeyChecking=no" \
-            git push gitee main --force --tags
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/gitee_key -o StrictHostKeyChecking=no"
+          export GIT_SSH_COMMAND
+          ssh -i ~/.ssh/gitee_key -o StrictHostKeyChecking=no -T git@gitee.com || true
+          git push gitee main --force --tags
           rm -f ~/.ssh/gitee_key
