@@ -79,7 +79,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/check-bs-retarget-list
 
 ## BsRetargetTools Scope
 
-当前 BsRetarget 优化相关文件：
+BsRetarget 优化相关文件：
 
 - `_BsKeyTools/Scripts/BulletScripts/BsRetargetTools.ms`
 - `docs/BsRetargetTools-list-format.md`
@@ -88,7 +88,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/check-bs-retarget-list
 - `tools/check-bs-retarget-lists.ps1`
 - `tools/check-bs-retarget-script.ps1`
 
-不要把 auto-update、manifest、release workflow 等并行工作误当成本任务内容。
+CI/Release 相关文件（与 BsRetarget 任务无关，勿混淆）：
+
+- `.github/workflows/release.yml` -- GitHub Release 自动构建发布
+- `.github/workflows/sync-gitee.yml` -- Gitee 镜像同步
+- `scripts/update_manifest.py` -- version.dat / NSIS 版本号更新
+- `_BsKeyTools/Scripts/BulletScripts/fnCheckUpdate.ms` -- 插件内版本检查（仅 BsKeyTools）
+- `_BsKeyTools/Scripts/BulletScripts/fnUpdater.ms` -- 下载安装包
 
 ## Validation
 

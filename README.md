@@ -4,9 +4,9 @@
 
 # BsKeyTools
 
-**Bullet.S KeyTools — All for Animator**
+**Bullet.S KeyTools -- All for Animator**
 
-*专为 3ds Max 动画师打造的综合动画工具集*
+*3ds Max 动画师综合工具集*
 
 <img src="https://raw.githubusercontent.com/AniBullet/BsKeyTools/main/BsKeyToolsPrev.gif" width="540" alt="BsKeyTools Preview">
 
@@ -21,22 +21,22 @@
 ![dev](https://img.shields.io/github/last-commit/AniBullet/BsKeyTools/dev?style=flat-square&logo=github&label=dev)
 ![main](https://img.shields.io/github/last-commit/AniBullet/BsKeyTools/main?style=flat-square&logo=github&label=main)
 
-[📺 视频教程](https://space.bilibili.com/2031113/lists/560782?type=season) · [📚 帮助文档](https://anibullet.github.io/) · [🌐 AniBullet.com](https://www.anibullet.com/) · [![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/AniBullet/BsKeyTools)
+[视频教程](https://space.bilibili.com/2031113/lists/560782?type=season) · [帮助文档](https://anibullet.github.io/) · [AniBullet.com](https://www.anibullet.com/) · [![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/AniBullet/BsKeyTools)
 
-> **💡** main 分支更新较慢，建议切换 [dev 分支](https://github.com/AniBullet/BsKeyTools/tree/dev) 查看最新进度
+> main 分支更新较慢，建议切换 [dev 分支](https://github.com/AniBullet/BsKeyTools/tree/dev) 查看最新进度
 </div>
 
 <br>
 
-## 🚀 快速开始
+## 快速开始
 
 <div align="center">
 
-[![BsKeyTools.exe](https://img.shields.io/badge/全功能插件-BsKeyTools.exe-orange?style=flat-square&logo=windows)](https://github.com/AniBullet/BsKeyTools/blob/main/_BsKeyTools/_BsKeyTools.exe)
+[![BsKeyTools.exe](https://img.shields.io/badge/全功能插件-BsKeyTools.exe-orange?style=flat-square&logo=windows)](https://github.com/AniBullet/BsKeyTools/releases/latest)
 &nbsp;
-[![BsCleanVirus.exe](https://img.shields.io/badge/仅含杀毒-BsCleanVirus.exe-blue?style=flat-square&logo=windows)](https://github.com/AniBullet/BsKeyTools/blob/main/_BsKeyTools/BsCleanVirus_Standalone.exe)
+[![BsCleanVirus.exe](https://img.shields.io/badge/仅含杀毒-BsCleanVirus.exe-blue?style=flat-square&logo=windows)](https://github.com/AniBullet/BsKeyTools/releases/latest)
 &nbsp;
-[![Releases](https://img.shields.io/badge/📦_所有版本-Releases-success?style=flat-square&logo=github)](https://github.com/AniBullet/BsKeyTools/releases/latest)
+[![Releases](https://img.shields.io/badge/所有版本-Releases-success?style=flat-square&logo=github)](https://github.com/AniBullet/BsKeyTools/releases)
 <br>
 [![蓝奏云](https://img.shields.io/badge/蓝奏云-2333-47b5e6?style=flat-square)](https://anibullet.lanzouw.com/b07cmnqta)
 &nbsp;
@@ -50,12 +50,12 @@
 
 <br>
 
-下载后运行安装程序即可，支持**版本更新自动检测**。
+下载后运行安装程序即可。插件启动时会自动检测 BsKeyTools 新版本并提示更新。
 
 <img src="https://raw.githubusercontent.com/AniBullet/BsKeyTools/main/SetupPrev.gif" width="460" alt="自动安装演示">
 
 <details>
-<summary>&nbsp;🔧 手动安装方式</summary>
+<summary>手动安装方式</summary>
 <br>
 <img src="https://raw.githubusercontent.com/AniBullet/BsKeyTools/main/PreviewRes/10.png" width="460" alt="手动安装">
 <br><br>
@@ -64,68 +64,68 @@
 
 <br>
 
-## ✨ 核心功能
+## 核心功能
 
-> 100+ 工具覆盖动画全流程 · 支持 3ds Max 2014–2026 · 中英双语
+> 100+ 工具覆盖动画全流程，支持 3ds Max 2014--2026，中英双语
 
 <table>
 <tr>
 <td width="50%" valign="top">
 
-### 🎬 动画
+### 动画
 
-- **重定向** — FBX ↔ BIP 互转，内置骨骼映射预设（UE5 / Sekiro / DMC5 / 怪猎 等）
-- **关键帧** — 补间 · 镜像 · 烘焙 · 复制粘贴 · 帧范围管理
-- **轨迹** — 运动轨迹可视化编辑 · Root Motion 提取
-
-</td>
-<td width="50%" valign="top">
-
-### 🦴 绑定 & 蒙皮
-
-- **骨骼** — Biped 工具集 · 链条/飘带绑定 · 扭曲骨骼 · 弹簧控制器
-- **蒙皮** — XR 蒙皮工具 · 权重分区平滑 · Skin 拆合 · 蒙皮换骨
-- **表情** — Morpher 滑条 · 表情控件 · Morph 镜像
-
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-
-### 👁️ 视觉 & 参考
-
-- **GhostTrails** — 残影效果插件（Max 9–2026）
-- **AnimRef** — 视频/图像序列同步播放，集成 FFmpeg
-- **视口** — 剪影 · 洋葱皮 · 构图框 · 快速拍屏 · 多向渲染
+- **重定向** -- FBX / BIP 互转，内置骨骼映射预设（UE5 / Sekiro / DMC5 / 怪猎 等）
+- **关键帧** -- 补间、镜像、烘焙、复制粘贴、帧范围管理
+- **轨迹** -- 运动轨迹可视化编辑、Root Motion 提取
 
 </td>
 <td width="50%" valign="top">
 
-### 📁 管理 & 安全
+### 绑定与蒙皮
 
-- **备份** — 自动备份与版本管理
-- **场景** — 增强图层管理 · 批量重命名 · 批量降版本 · 场景清理
-- **防护** — 脚本病毒实时扫描，可批量杀毒
+- **骨骼** -- Biped 工具集、链条/飘带绑定、扭曲骨骼、弹簧控制器
+- **蒙皮** -- XR 蒙皮工具、权重分区平滑、Skin 拆合、蒙皮换骨
+- **表情** -- Morpher 滑条、表情控件、Morph 镜像
 
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
 
-### 🎮 动作逆向
+### 视觉与参考
 
-- 鬼泣5 · 街霸6 · 怪猎崛起 · RE 引擎
-- Havok · ActorX (PSK/PSA) · XnaLara/XPS
+- **GhostTrails** -- 残影效果插件（Max 9--2026）
+- **AnimRef** -- 视频/图像序列同步播放，集成 FFmpeg
+- **视口** -- 剪影、洋葱皮、构图框、快速拍屏、多向渲染
+
+</td>
+<td width="50%" valign="top">
+
+### 管理与安全
+
+- **备份** -- 自动备份与版本管理
+- **场景** -- 增强图层管理、批量重命名、批量降版本、场景清理
+- **防护** -- 脚本病毒实时扫描与批量杀毒（BsCleanVirus）
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### 动作逆向
+
+- 鬼泣5、街霸6、怪猎崛起、RE 引擎
+- Havok、ActorX (PSK/PSA)、XnaLara/XPS
 - 批量转换 FBX，打通游戏动捕工作流
 
 </td>
 <td width="50%" valign="top">
 
-### ⚡ 工作流
+### 工作流
 
-- **UI** — 灵活停靠 · 可排序功能按钮 · 图标/文字切换
-- **效率** — 时光机快速打开 · 选择集 · 动画库
-- **扩展** — BsScriptHub 远程脚本平台
+- **UI** -- 灵活停靠、可排序功能按钮、图标/文字切换
+- **效率** -- 时光机快速打开、选择集、动画库
+- **扩展** -- BsScriptHub 远程脚本平台
 
 </td>
 </tr>
@@ -133,10 +133,10 @@
 
 <br>
 
-## 🎨 界面预览
+## 界面预览
 
 <details>
-<summary>&nbsp;点击展开查看功能截图</summary>
+<summary>点击展开查看功能截图</summary>
 <br>
 
 <table>
@@ -161,11 +161,11 @@
 
 <br>
 
-## 🤝 参与贡献
+## 参与贡献
 
-欢迎所有形式的贡献！无论是报告 Bug、提出建议还是提交代码。
+欢迎所有形式的贡献 -- 报告 Bug、提出建议或提交代码均可。
 
-1. **Fork** 本仓库 → 创建分支 `feature/xxx` → 提交更改 → 发起 **Pull Request** 到 `dev` 分支
+1. **Fork** 本仓库 -> 创建分支 `feature/xxx` -> 提交更改 -> 发起 **Pull Request** 到 `dev` 分支
 2. 详细贡献指南请参阅 **[CONTRIBUTING.md](CONTRIBUTING.md)**
 
 ### 贡献者
@@ -176,7 +176,7 @@
 
 <br>
 
-## 🙏 致谢
+## 致谢
 
 感谢以下开源项目与社区贡献者的支持：
 
@@ -194,7 +194,7 @@ Crazyone · 包包 · 东见云 · 祥子 · SiChun Yuan · 动画大白 · 哈�
 
 <br>
 
-## 💬 交流社区
+## 交流社区
 
 <div align="center">
 
@@ -202,13 +202,13 @@ Crazyone · 包包 · 东见云 · 祥子 · SiChun Yuan · 动画大白 · 哈�
 &nbsp;
 [![Q群2](https://img.shields.io/badge/交流群2-907481113-blue?style=flat-square&logo=tencentqq)](https://qm.qq.com/q/FZ2gBKJeYE)
 &nbsp;
-[![Links](https://img.shields.io/badge/🔗_社交链接-bio.site-ff69b4?style=flat-square)](https://bio.site/aniBullet)
+[![Links](https://img.shields.io/badge/社交链接-bio.site-ff69b4?style=flat-square)](https://bio.site/aniBullet)
 
 </div>
 
 <br>
 
-## 📊 项目动态
+## 项目动态
 
 <div align="center">
 
@@ -222,9 +222,7 @@ Crazyone · 包包 · 东见云 · 祥子 · SiChun Yuan · 动画大白 · 哈�
 
 <br>
 
-<!-- Repobeats：访问 https://repobeats.axiom.co 用 GitHub 登录并选择本仓库，获取专属 embed 链接替换下方 URL -->
 ![Repobeats analytics](https://repobeats.axiom.co/api/embed/5ab5214baf4e0099084a5454ae3e6f7e56e87f1c.svg "Repobeats analytics image")
-
 
 </div>
 
@@ -235,7 +233,7 @@ Crazyone · 包包 · 东见云 · 祥子 · SiChun Yuan · 动画大白 · 哈�
 <div align="center">
 <br>
 <details>
-<summary><b>⚠️ 免责声明</b></summary>
+<summary><b>免责声明</b></summary>
 
 >- 个人业余学习作品，无任何商业用途，一切仅代表个人
 >- 部分工具引用和参考其他脚本，均有注明，若有侵权请联系删除
@@ -245,8 +243,8 @@ Crazyone · 包包 · 东见云 · 祥子 · SiChun Yuan · 动画大白 · 哈�
 
 <br>
 
-**Since 2019.11** · Copyright © 2019 Bullet.S
+**Since 2019.11** · Copyright (c) 2019 Bullet.S
 
-[![Back to Top](https://img.shields.io/badge/▲_Back_to_Top-grey?style=flat-square)](#readme-top)
+[![Back to Top](https://img.shields.io/badge/Back_to_Top-grey?style=flat-square)](#readme-top)
 
 </div>
