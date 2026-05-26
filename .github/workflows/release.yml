@@ -80,7 +80,9 @@ jobs:
 
       - name: Install NSIS
         shell: pwsh
-        run: choco install nsis --no-progress -y
+        run: |
+          choco install nsis --no-progress -y
+          echo "C:\Program Files (x86)\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Build BsKeyTools installer
         shell: pwsh
@@ -121,7 +123,9 @@ jobs:
 
       - name: Install NSIS
         shell: pwsh
-        run: choco install nsis --no-progress -y
+        run: |
+          choco install nsis --no-progress -y
+          echo "C:\Program Files (x86)\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Build BsCleanVirus installer
         shell: pwsh
@@ -243,9 +247,15 @@ jobs:
 
       - name: Mirror to Gitee
         continue-on-error: true
-        uses: wearerequired/git-mirror-action@master
         env:
           SSH_PRIVATE_KEY: ${{ secrets.GITEE_SSH_PRIVATE_KEY }}
-        with:
-          source-repo:      "git@github.com:AniBullet/BsKeyTools.git"
-          destination-repo: "git@gitee.com:acebullet/BsKeyTools.git"
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/gitee_key
+          chmod 600 ~/.ssh/gitee_key
+          ssh-keyscan -t ed25519 gitee.com >> ~/.ssh/known_hosts 2>/dev/null
+          git remote add gitee git@gitee.com:acebullet/BsKeyTools.git 2>/dev/null || \
+            git remote set-url gitee git@gitee.com:acebullet/BsKeyTools.git
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/gitee_key -o StrictHostKeyChecking=no" \
+            git push gitee main --force --tags
+          rm -f ~/.ssh/gitee_key
