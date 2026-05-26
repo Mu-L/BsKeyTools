@@ -53,10 +53,10 @@ jobs:
 
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "SHOULD_RELEASE=false" >> $GITHUB_OUTPUT
-            echo "Tag $TAG 已存在，跳过发布"
+            echo "Tag $TAG already exists, skipping release"
           else
             echo "SHOULD_RELEASE=true" >> $GITHUB_OUTPUT
-            echo "新版本 $TAG（BsKeyTools $BSKT / BsCleanVirus $BSCV），准备发布"
+            echo "New version $TAG (BsKeyTools $BSKT / BsCleanVirus $BSCV)"
           fi
 
   # ── Job 1: 构建 BsKeyTools 安装包 ─────────────────────────────────────
@@ -145,7 +145,7 @@ jobs:
           path: "_BsKeyTools/BsCleanVirus_v${{ needs.check-version.outputs.bscv_version }}.exe"
           retention-days: 1
 
-  # ── Job 3: 发布到 GitHub + Gitee，更新 version.dat，镜像 ──────────────
+  # ── Job 3: 发布到 GitHub，更新 version.dat ─────────────────────────────
   release:
     needs: [check-version, build-bskeytools, build-bscleanvirus]
     if: needs.check-version.outputs.should_release == 'true'
@@ -168,14 +168,13 @@ jobs:
           path: dist/
           merge-multiple: true
 
-      - name: Create GitHub Release（含 tag，两个安装包挂同一个 release）
+      - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BSKT="${{ needs.check-version.outputs.bskt_version }}"
           BSCV="${{ needs.check-version.outputs.bscv_version }}"
           TAG="${{ needs.check-version.outputs.tag }}"
-          # gh release create 会原子地创建 tag + release，失败时 tag 不会孤立
           gh release create "$TAG" \
             --target main \
             --title "BsKeyTools v$BSKT" \
@@ -183,58 +182,9 @@ jobs:
             "dist/BsKeyTools_v$BSKT.exe" \
             "dist/BsCleanVirus_v$BSCV.exe"
 
-      - name: Create Gitee Release and upload installers
-        env:
-          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
-          BSKT: ${{ needs.check-version.outputs.bskt_version }}
-          BSCV: ${{ needs.check-version.outputs.bscv_version }}
-          TAG:  ${{ needs.check-version.outputs.tag }}
-        run: |
-          python3 - <<PY
-          import json, os
-          payload = {
-              "access_token": os.environ["GITEE_TOKEN"],
-              "tag_name": os.environ["TAG"],
-              "name": f"BsKeyTools v{os.environ['BSKT']}",
-              "body": f"BsKeyTools v{os.environ['BSKT']} | BsCleanVirus v{os.environ['BSCV']}",
-              "target_commitish": "main",
-          }
-          with open("gitee_payload.json", "w", encoding="utf-8") as f:
-              json.dump(payload, f, ensure_ascii=False)
-          PY
-
-          RESP=$(curl -s -X POST "https://gitee.com/api/v5/repos/acebullet/BsKeyTools/releases" \
-            -H "Content-Type: application/json" \
-            --data-binary @gitee_payload.json)
-          RELEASE_ID=$(echo "$RESP" | python3 -c "
-          import sys, json
-          data = json.load(sys.stdin)
-          if 'id' not in data:
-              sys.exit(f'Gitee Release 创建失败: {data}')
-          print(data['id'])
-          ")
-
-          upload_to_gitee() {
-            local label="$1" file="$2"
-            local resp http_code body
-            resp=$(curl -s -w "\n%{http_code}" -X POST \
-              "https://gitee.com/api/v5/repos/acebullet/BsKeyTools/releases/${RELEASE_ID}/attach_files" \
-              -F "access_token=${GITEE_TOKEN}" \
-              -F "file=@$file")
-            http_code=$(echo "$resp" | tail -1)
-            body=$(echo "$resp" | head -n -1)
-            if [ "$http_code" != "201" ]; then
-              echo "❌ $label 上传失败 (HTTP $http_code): $body"
-              exit 1
-            fi
-            echo "✅ $label 上传成功 (HTTP $http_code)"
-          }
-
-          upload_to_gitee "BsKeyTools 安装包"  "dist/BsKeyTools_v${BSKT}.exe"
-          upload_to_gitee "BsCleanVirus 安装包" "dist/BsCleanVirus_v${BSCV}.exe"
-          echo "✅ Gitee Release v${BSKT} 发布完成（含两个安装包）"
-
       - name: Update version.dat and commit to main
+        env:
+          PYTHONIOENCODING: utf-8
         run: |
           python3 scripts/update_manifest.py
           git add _BsKeyTools/version.dat _BsKeyTools/Setup_BsKeyTools.nsi _BsKeyTools/Setup_BsCleanVirus.nsi
