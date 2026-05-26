@@ -245,7 +245,6 @@ jobs:
           fi
 
       - name: Mirror to Gitee
-        continue-on-error: true
         env:
           SSH_PRIVATE_KEY: ${{ secrets.GITEE_SSH_PRIVATE_KEY }}
         run: |
