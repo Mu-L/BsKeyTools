@@ -242,7 +242,6 @@ jobs:
           fi
 
       - name: Mirror to Gitee
-        if: secrets.GITEE_SSH_PRIVATE_KEY != ''
         continue-on-error: true
         uses: wearerequired/git-mirror-action@master
         env:
