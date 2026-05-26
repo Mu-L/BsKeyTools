@@ -193,3 +193,17 @@ jobs:
             git commit -m "chore: update version files → BsKeyTools $BSKT [skip ci]"
             git push origin HEAD:main
           fi
+
+      - name: Mirror to Gitee
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/gitee_key
+          chmod 600 ~/.ssh/gitee_key
+          ssh-keyscan -t ed25519 gitee.com >> ~/.ssh/known_hosts 2>/dev/null
+          git remote add gitee git@gitee.com:acebullet/BsKeyTools.git 2>/dev/null || \
+            git remote set-url gitee git@gitee.com:acebullet/BsKeyTools.git
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/gitee_key -o StrictHostKeyChecking=no" \
+            git push gitee main --force --tags
+          rm -f ~/.ssh/gitee_key
