@@ -194,16 +194,17 @@ jobs:
             git push origin HEAD:main
           fi
 
-      - name: Mirror to Gitee
+      - name: Trigger Gitee mirror pull
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.GITEE_SSH_PRIVATE_KEY }}
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
         run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/gitee_key
-          chmod 600 ~/.ssh/gitee_key
-          ssh-keyscan -t ed25519 gitee.com >> ~/.ssh/known_hosts 2>/dev/null
-          git remote add gitee git@gitee.com:acebullet/BsKeyTools.git 2>/dev/null || \
-            git remote set-url gitee git@gitee.com:acebullet/BsKeyTools.git
-          GIT_SSH_COMMAND="ssh -i ~/.ssh/gitee_key -o StrictHostKeyChecking=no" \
-            git push gitee main --force --tags
-          rm -f ~/.ssh/gitee_key
+          RESP=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://gitee.com/api/v5/repos/acebullet/BsKeyTools/remote_mirror/pull?access_token=${GITEE_TOKEN}")
+          HTTP_CODE=$(echo "$RESP" | tail -1)
+          BODY=$(echo "$RESP" | head -n -1)
+          echo "Gitee mirror pull: HTTP $HTTP_CODE"
+          echo "$BODY"
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "::error::Gitee mirror pull failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
