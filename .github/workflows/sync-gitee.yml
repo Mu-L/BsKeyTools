@@ -1,0 +1,18 @@
+name: Sync to Gitee
+
+# 每次 push main 都镜像代码（发版由 release.yml 处理，这里只同步代码）
+on:
+  push:
+    branches: [main]
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mirror to Gitee
+        uses: wearerequired/git-mirror-action@master
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_SSH_PRIVATE_KEY }}
+        with:
+          source-repo:      "git@github.com:AniBullet/BsKeyTools.git"
+          destination-repo: "git@gitee.com:acebullet/BsKeyTools.git"

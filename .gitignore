@@ -2,6 +2,7 @@
 !.vscode/tasks.json
 !.vscode/settings.json
 !.vscode/build_nsi.ps1
+!.vscode/run_maxscript.ps1
 .venv/*
 .claude/
 

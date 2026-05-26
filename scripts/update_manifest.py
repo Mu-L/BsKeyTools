@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+"""
+update_manifest.py — BsKeyTools 版本文件自动更新脚本
+运行时机：GitHub Actions release workflow 中，发布后提交回 main
+功能：
+  1. 从 BulletKeyTools.ms 读取 BsKeyTools 版本号
+  2. 从 BsCleanVirus.ms 读取 BsCleanVirus 版本号
+  3. 写入 version.dat（单行：BsKeyTools 版本）
+  4. 更新 Setup_BsKeyTools.nsi / Setup_BsCleanVirus.nsi 中的版本号
+"""
+
+import os
+import re
+
+REPO_ROOT      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+VERSION_DAT    = os.path.join(REPO_ROOT, "_BsKeyTools", "version.dat")
+MAIN_MS        = os.path.join(REPO_ROOT, "_BsKeyTools", "Scripts", "BulletScripts", "BulletKeyTools.ms")
+CLEANER_MS     = os.path.join(REPO_ROOT, "_BsKeyTools", "Scripts", "BulletScripts", "BsCleanVirus.ms")
+NSIS_BSKT      = os.path.join(REPO_ROOT, "_BsKeyTools", "Setup_BsKeyTools.nsi")
+NSIS_BSCV      = os.path.join(REPO_ROOT, "_BsKeyTools", "Setup_BsCleanVirus.nsi")
+
+
+def read_bskeytools_version() -> str:
+    with open(MAIN_MS, encoding="utf-8", errors="replace") as f:
+        content = f.read()
+    m = re.search(r'global\s+curVerBsKeyTools\s*=\s*"([^"]+)"', content)
+    if not m:
+        raise RuntimeError(f"无法在 {MAIN_MS} 中找到 curVerBsKeyTools")
+    return m.group(1)
+
+
+def read_bscleanvirus_version() -> str:
+    """从 BsCleanVirus.ms 读取 curVerBsCleanVirus，与 BsKeyTools 读法一致。"""
+    with open(CLEANER_MS, encoding="utf-8", errors="replace") as f:
+        content = f.read()
+    m = re.search(r'global\s+curVerBsCleanVirus\s*=\s*"([^"]+)"', content)
+    if not m:
+        raise RuntimeError(f"无法在 {CLEANER_MS} 中找到 curVerBsCleanVirus")
+    return m.group(1)
+
+
+def validate_release_version(bskt_version: str) -> None:
+    """确保 CI 传入的 RELEASE_VERSION 与脚本内版本一致。"""
+    release_version = os.environ.get("RELEASE_VERSION", "")
+    if not release_version:
+        return
+    if release_version != bskt_version:
+        raise RuntimeError(
+            f"release 版本不一致: RELEASE_VERSION={release_version}, BulletKeyTools.ms={bskt_version}"
+        )
+
+
+def write_version_dat(bskt_version: str) -> None:
+    """写入 version.dat（单行 BsKeyTools 版本，不再包含 BsCleanVirus）。"""
+    with open(VERSION_DAT, "w", encoding="utf-8", newline="\n") as f:
+        f.write(bskt_version + "\n")
+    print(f"[update_manifest] version.dat → {bskt_version}")
+
+
+def update_bskeytools_nsis_version(version: str) -> None:
+    """更新 Setup_BsKeyTools.nsi 中的 PRODUCT_VERSION_NUM。"""
+    if not os.path.isfile(NSIS_BSKT):
+        return
+    with open(NSIS_BSKT, encoding="utf-8", errors="replace") as f:
+        content = f.read()
+    new_content = re.sub(
+        r'(!define\s+PRODUCT_VERSION_NUM\s+")[^"]*(")',
+        lambda m: m.group(1) + version + m.group(2),
+        content,
+    )
+    if new_content != content:
+        with open(NSIS_BSKT, "w", encoding="utf-8", newline="\n") as f:
+            f.write(new_content)
+        print(f"[update_manifest] Setup_BsKeyTools.nsi PRODUCT_VERSION_NUM → {version}")
+
+
+def update_bscleanvirus_nsis_version(version: str) -> None:
+    """更新 Setup_BsCleanVirus.nsi 中的 PRODUCT_VERSION（格式 _vX.X）。"""
+    if not os.path.isfile(NSIS_BSCV):
+        return
+    with open(NSIS_BSCV, encoding="utf-8", errors="replace") as f:
+        content = f.read()
+    new_content = re.sub(
+        r'(!define\s+PRODUCT_VERSION\s+")_v[^"]*(")',
+        lambda m: m.group(1) + "_v" + version + m.group(2),
+        content,
+    )
+    if new_content != content:
+        with open(NSIS_BSCV, "w", encoding="utf-8", newline="\n") as f:
+            f.write(new_content)
+        print(f"[update_manifest] Setup_BsCleanVirus.nsi PRODUCT_VERSION → _v{version}")
+
+
+def main():
+    print("[update_manifest] 开始更新版本文件 ...")
+
+    bskt_version = read_bskeytools_version()
+    bscv_version = read_bscleanvirus_version()
+    validate_release_version(bskt_version)
+
+    print(f"[update_manifest] BsKeyTools: {bskt_version}  BsCleanVirus: {bscv_version}")
+
+    write_version_dat(bskt_version)
+    update_bskeytools_nsis_version(bskt_version)
+    update_bscleanvirus_nsis_version(bscv_version)
+
+    print("[update_manifest] 完成 OK")
+
+
+if __name__ == "__main__":
+    main()

@@ -8,7 +8,6 @@
     "code-runner.saveFileBeforeRun": true,
     "code-runner.clearPreviousOutput": true,
 
-    // MXSPyCOM 可执行文件路径（各机器可在 User Settings 里覆盖此项）
-    // 覆盖方法：Ctrl+Shift+P -> "Open User Settings (JSON)" -> 添加同名键
-    "bskeytools.mxspycomPath": "C:\\MXSPyCOM\\MXSPyCOM.exe"
+    // 可选：通过环境 BSKEYTOOLS_MXSPYCOM_PATH 传给 run_maxscript（任务已注入）；留空则由脚本自行查找。
+    "bskeytools.mxspycomPath": ""
 }
