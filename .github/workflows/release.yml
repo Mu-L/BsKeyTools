@@ -235,8 +235,7 @@ jobs:
           git add _BsKeyTools/version.dat _BsKeyTools/Setup_BsKeyTools.nsi _BsKeyTools/Setup_BsCleanVirus.nsi
           if ! git diff --staged --quiet; then
             BSKT="${{ needs.check-version.outputs.bskt_version }}"
-            BSCV="${{ needs.check-version.outputs.bscv_version }}"
-            git commit -m "chore: update version.dat → BsKeyTools $BSKT / BsCleanVirus $BSCV [skip ci]"
+            git commit -m "chore: update version files → BsKeyTools $BSKT [skip ci]"
             git push origin HEAD:main
           fi
 

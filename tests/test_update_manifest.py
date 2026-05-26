@@ -44,12 +44,12 @@ class UpdateManifestTests(unittest.TestCase):
             self.um.VERSION_DAT = tmp_path
             self.addCleanup(setattr, self.um, "VERSION_DAT", original)
 
-            self.um.write_version_dat("1.4.0", "2.2")
+            self.um.write_version_dat("1.4.0")
 
             with open(tmp_path, encoding="utf-8") as f:
                 lines = f.read().splitlines()
+            self.assertEqual(len(lines), 1)
             self.assertEqual(lines[0], "1.4.0")
-            self.assertEqual(lines[1], "2.2")
         finally:
             os.unlink(tmp_path)
 

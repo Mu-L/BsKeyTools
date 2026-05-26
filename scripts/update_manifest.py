@@ -5,8 +5,8 @@ update_manifest.py — BsKeyTools 版本文件自动更新脚本
 功能：
   1. 从 BulletKeyTools.ms 读取 BsKeyTools 版本号
   2. 从 BsCleanVirus.ms 读取 BsCleanVirus 版本号
-  3. 写入 version.dat（两行：BsKeyTools版本 / BsCleanVirus版本）
-  4. 更新 Setup_BsKeyTools.nsi 中的 PRODUCT_VERSION_NUM
+  3. 写入 version.dat（单行：BsKeyTools 版本）
+  4. 更新 Setup_BsKeyTools.nsi / Setup_BsCleanVirus.nsi 中的版本号
 """
 
 import os
@@ -50,12 +50,11 @@ def validate_release_version(bskt_version: str) -> None:
         )
 
 
-def write_version_dat(bskt_version: str, bscv_version: str) -> None:
-    """写入 version.dat（两行）。第一行 BsKeyTools，第二行 BsCleanVirus。"""
+def write_version_dat(bskt_version: str) -> None:
+    """写入 version.dat（单行 BsKeyTools 版本，不再包含 BsCleanVirus）。"""
     with open(VERSION_DAT, "w", encoding="utf-8", newline="\n") as f:
         f.write(bskt_version + "\n")
-        f.write(bscv_version + "\n")
-    print(f"[update_manifest] version.dat → {bskt_version} / {bscv_version}")
+    print(f"[update_manifest] version.dat → {bskt_version}")
 
 
 def update_bskeytools_nsis_version(version: str) -> None:
@@ -101,7 +100,7 @@ def main():
 
     print(f"[update_manifest] BsKeyTools: {bskt_version}  BsCleanVirus: {bscv_version}")
 
-    write_version_dat(bskt_version, bscv_version)
+    write_version_dat(bskt_version)
     update_bskeytools_nsis_version(bskt_version)
     update_bscleanvirus_nsis_version(bscv_version)
 
